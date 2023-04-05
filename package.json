@@ -1,0 +1,70 @@
+{
+	"name": "@rich-domain",
+	"version": "1.0.0",
+	"description": "Fork from rich-domain by Alessandro Dev",
+	"main": "index.js",
+	"types": "index.d.ts",
+	"author": "Alessandro Dev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/4lessandrodev/rich-domain.git"
+	},
+	"bugs": {
+		"url": "https://github.com/4lessandrodev/rich-domain/issues"
+	},
+	"homepage": "https://github.com/4lessandrodev/rich-domain",
+	"license": "MIT",
+	"engines": {
+		"node": ">=16.x <19"
+	},
+	"devDependencies": {
+		"@types/jest": "^28.1.8",
+		"@types/node": "^18.15.0",
+		"jest": "^28.1.3",
+		"madge": "^6.0.0",
+		"rimraf": "^4.4.0",
+		"ts-jest": "^28.0.5",
+		"ts-node": "^10.8.2",
+		"typescript": "^5.0.2"
+	},
+	"keywords": [
+		"Complexity",
+		"NodeJS",
+		"Business Logic",
+		"DDD",
+		"Domain Driving Design",
+		"Typescript",
+		"DDD-Utils",
+		"Base Entity",
+		"Base Aggregate",
+		"Base Value Object",
+		"Use Cases",
+		"Domain Events",
+		"Clean Architecture"
+	],
+	"scripts": {
+		"test": "jest --runInBand --silent",
+		"test:verbose": "jest --runInBand",
+		"prebuild": "rimraf ./dist && npm run check:circular-deps && ./clear.sh",
+		"postbuild": "cp -r ./dist/* ./",
+		"build": "tsc -p tsconfig.lib.json",
+		"prepublish": "npm run build",
+		"postpublish": "./clear.sh",
+		"check:circular-deps": "madge --circular --extensions ts ./lib",
+		"preexample": "tsc -p tsconfig.example.json",
+		"example": "node ./example/index.js"
+	},
+	"files": [
+		"core/*",
+		"utils/*",
+		"index.js",
+		"index.d.ts",
+		"types.d.ts",
+		"types.js",
+		"package.json",
+		"index.d.ts.map",
+		"index.js.map",
+		"types.d.ts.map",
+		"types.js.map"
+	]
+}
