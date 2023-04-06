@@ -29,7 +29,7 @@ import ID from "./id";
 
 		const id: ID<any> = valueObject as unknown as ID<any>;
 
-		if (isID) return id?.value() as any;
+		if (isID) return id?.value as any;
 
 		// props
 		const voProps = valueObject?.['props'];
@@ -61,7 +61,7 @@ import ID from "./id";
 
 			const id: ID<string> = voProps?.[key] as unknown as ID<string>;
 
-			if (isID) return id.value();
+			if (isID) return id.value;
 
 			const isArray = this.validator.isArray(voProps?.[key]);
 
@@ -122,7 +122,7 @@ import ID from "./id";
 
 		if (isEntity || isAggregate) {
 
-			const id = entity?.id?.value();
+			const id = entity?.id?.value
 
 			const createdAt = entity['props']['createdAt'];
 

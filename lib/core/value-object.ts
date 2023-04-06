@@ -40,6 +40,10 @@ export class ValueObject<Props> extends GettersAndSetters<Props> implements IVal
 	change<Key extends keyof Props>(key: Key, value: Props[Key], validation?: ((value: Props[Key]) => boolean) | undefined): boolean {
 		return super.change(key, value, validation);
 	}
+
+	get value(): Props {
+		return this.props
+	}
 }
 
 export default ValueObject;

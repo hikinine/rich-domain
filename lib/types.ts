@@ -47,7 +47,7 @@ export type EventHandler<T, B> = ICommand<HandlerPayload<T>, Promise<B> | B>;
  */
 export interface UID<T = string> {
 	toShort(): UID<string>;
-	value(): string;
+	value: string;
 	isNew(): boolean;
 	createdAt(): Date;
 	isShort(): boolean;
@@ -232,6 +232,7 @@ export interface IEntity<Props> {
 	get id(): UID<string>;
 	hashCode(): UID<string>;
 	isNew(): boolean;
+	 toObject(entity?: any):  { [key in keyof Props]: any } & EntityMapperPayload 
 	clone(): IEntity<Props>;
 }
 
@@ -240,7 +241,8 @@ export interface IValueObject<Props> {
 //	toObject<T>(adapter?: IAdapter<this, T>): T;
 }
 
-export interface IGettersAndSetters<Props> {}
+export interface IGettersAndSetters {
+}
 
 export interface IAggregate<Props> {
 	//toObject<T>(adapter?: IAdapter<this, T>): T extends {} ? T & EntityMapperPayload : { [key in keyof Props]: any } & EntityMapperPayload;

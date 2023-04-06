@@ -1,14 +1,9 @@
-import { IGettersAndSetters, IHistory, IParentName, ISettings } from "../types";
+import { IGettersAndSetters, IParentName, ISettings } from "../types";
 import util, { Utils } from "../utils/util";
 import validator, { Validator } from "../utils/validator";
-import History from "./history";
 import ID from "./id";
 
-/**
- * @description defines getter and setter to all domain instances.
- */
-export class GettersAndSetters<Props> implements IGettersAndSetters<Props> {
-	private readonly _MetaHistory: IHistory<Props>;
+export class GettersAndSetters<Props> implements IGettersAndSetters{
 	protected validator: Validator = validator;
 	protected static validator: Validator = validator;
 	protected util: Utils = util;
@@ -24,27 +19,16 @@ export class GettersAndSetters<Props> implements IGettersAndSetters<Props> {
 		this.util = util;
 		this.config.disableGetters = !!config?.disableGetters;
 		this.config.disableSetters = !!config?.disableSetters;
-		this._MetaHistory = new History({
-			props: Object.assign({}, { ...this.props }),
-			action: 'create',
-		});
 		this.parentName = parentName;
 	}
 
 	private snapshotSet() {
-		if (typeof this._MetaHistory !== 'undefined') {
-			this._MetaHistory.snapshot({
-				action: 'update',
-				props: Object.assign({}, { ...this.props }),
-				ocurredAt: new Date(),
-				token: ID.short()
-			});
-		}
+	
 	}
 
-	protected	validation(_value: any, _key?: any): boolean;
-	protected	validation(_value: any, _key: any): boolean;
- protected	validation<Key extends keyof Props>(_value: Props[Key], _key: Key): boolean { return true };
+	protected validation(_value: any, _key?: any): boolean;
+	protected validation(_value: any, _key: any): boolean;
+	protected validation<Key extends keyof Props>(_value: Props[Key], _key: Key): boolean { return true };
 
 	protected get<Key extends keyof Props>(key: Key) {
 		if (this.config.disableGetters) {
@@ -69,7 +53,6 @@ export class GettersAndSetters<Props> implements IGettersAndSetters<Props> {
 			 * @returns returns "true" if the value has changed and returns "false" if the value has not changed.
 			 */
 			to: (value: Props[Key], validation?: (value: Props[Key]) => boolean): boolean => {
-				const instance = Reflect.getPrototypeOf(this);
 				if (this.config.disableSetters) {
 					return false;
 				};
@@ -121,14 +104,13 @@ export class GettersAndSetters<Props> implements IGettersAndSetters<Props> {
 	 * @returns returns "true" if the value has changed and returns "false" if the value has not changed.
 	 */
 	protected change<Key extends keyof Props>(key: Key, value: Props[Key], validation?: (value: Props[Key]) => boolean): boolean {
-		const instance = Reflect.getPrototypeOf(this);
 		if (this.config.disableSetters) {
 			return false;
 		};
 
 		if (typeof validation === 'function') {
 			if (!validation(value)) {
-					return false;
+				return false;
 			};
 		}
 		const canUpdate = this.validation(value, key);

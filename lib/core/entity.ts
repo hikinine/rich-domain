@@ -1,7 +1,8 @@
-import { EntityProps, IEntity, ISettings, UID } from "../types";
+import { EntityMapperPayload, EntityProps, IEntity, ISettings, UID } from "../types";
 import AutoMapper from "./auto-mapper";
 import GettersAndSetters from "./getters-and-setters";
 import ID from "./id";
+import ValueObject from "./value-object";
 
 export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> implements IEntity<Props> {
 	protected _id: UID<string>;
@@ -27,14 +28,36 @@ export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> 
 		const equalSerialized = serializedA === serializedB;
 		return equalId && equalSerialized;
 	}
-	
+
 	get id(): UID<string> {
 		return this._id;
 	}
 
+	public toObject(entity?: any):  { [key in keyof Props]: any } & EntityMapperPayload {
+		const self = entity || this
+		const obj = {} as any;
+
+		for (const key in self.props) {
+			const instance = self.props[key];
+			if (instance instanceof ValueObject) {
+				obj[key] = instance.value;
+			}
+
+			if (instance instanceof Entity) {
+				obj[key] = instance.toObject(instance)
+			}
+		}
+
+		obj["id"] = self?.id?.value;
+		obj["createdAt"] = self.props?.createdAt;
+		obj["updatedAt"] = self.props?.updatedAt;
+		
+		return obj
+	}
+
 	hashCode(): UID<string> {
 		const name = Reflect.getPrototypeOf(this);
-		return ID.create(`[Entity@${name?.constructor?.name}]:${this.id.value()}`);
+		return ID.create(`[Entity@${name?.constructor?.name}]:${this.id.value}`);
 	}
 
 	isNew(): boolean {
@@ -47,7 +70,7 @@ export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> 
 		const entity = Reflect.construct(instance!.constructor, args);
 		return entity
 	}
-	
+
 }
 
 export default Entity;
