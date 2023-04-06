@@ -2,26 +2,28 @@ import ValueObject from "./value-object";
 
 
 export class EntityAssert<Props> {
-  private props: Props;
+  private props: Props | null;
+  private isDone: boolean
   private internalKeyState?: keyof Props;
-  private stateRequired: boolean
-  private instanceError: typeof Error = Error
+  private stateRequired?: boolean
+  private instanceError?: typeof Error = Error
 
   constructor(props: Props) {
     this.stateRequired = true
+    this.isDone = false
     this.props = props
   }
 
   private get value() {
     if (this.internalKeyState) {
-      return this.props[this.internalKeyState];
+      return (this.props as Props)[this.internalKeyState];
     }
     return null;
   }
 
   throws(instanceError: typeof Error | any) {
     this.instanceError = instanceError
-    return this  as Pick<EntityAssert<Props>, "key">;
+    return this as Pick<EntityAssert<Props>, "key">;
   }
 
   key(keyName: keyof Props) {
@@ -50,14 +52,24 @@ export class EntityAssert<Props> {
 
     if (!this.value) {
       if (this.stateRequired) {
-        throw new this.instanceError(exception)
+        throw new this.instanceError!(exception)
       }
     }
 
     else if (!(this.value instanceof constructor)) {
-      throw new this.instanceError(exception)
+      throw new this.instanceError!(exception)
     }
 
-    return this as Pick<EntityAssert<Props>, "key">;
+    return this as Pick<EntityAssert<Props>, "key" | "free">;
+  }
+
+  free() {
+    this.props = null;
+    delete this.internalKeyState
+    delete this.stateRequired
+    delete this.instanceError
+
+    if (!this.isDone)
+      this.isDone = true
   }
 }

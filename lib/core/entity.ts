@@ -1,4 +1,4 @@
-import { EntityMapperPayload, EntityProps, IEntity, IParentName, UID } from "../types";
+import { EntityMapperPayload, EntityProps, IEntity, IExtends, UID } from "../types";
 import validator from "../utils/validator";
 import { EntityAssert } from "./assert";
 import ID from "./id";
@@ -8,7 +8,7 @@ export class Entity<Props extends EntityProps> implements IEntity<Props> {
 	protected _id: UID<string>;
 	protected props: Props
 	protected assert: EntityAssert<Props>;
-	private _parentName: IParentName = "Entity";
+	private _extends: IExtends = "Entity";
 
 	constructor(props: Props) {
 		this._id = Entity.generateOrBuildID(props?.id);
@@ -20,8 +20,8 @@ export class Entity<Props extends EntityProps> implements IEntity<Props> {
 		this.assert = new EntityAssert<Props>(props)
 	}
 
-	get parentName() {
-		return this._parentName
+	get extends() {
+		return this._extends
 	}
 	get createdAt() {
 		return this.props?.createdAt;

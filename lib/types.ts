@@ -254,7 +254,7 @@ export interface IAggregate<Props> {
 	deleteEvent(eventName: string): void;
 }
 
-export type IParentName = 'ValueObject' | 'Entity';
+export type IExtends = 'ValueObject' | 'Entity';
 
 
 export interface IAutoMapper<Props> {

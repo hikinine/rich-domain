@@ -1,14 +1,14 @@
-import { IParentName, IValueObject } from "../types";
+import { IExtends, IValueObject } from "../types";
 
 export class ValueObject<Value> implements IValueObject<Value> {
 	protected _value: Value
-	private _parentName: IParentName = "ValueObject"
+	private _extends: IExtends = "ValueObject"
 	constructor(value: Value) {
 		this._value = value
 	}
 
-	get parentName() {
-		return this._parentName
+	get extends() {
+		return this._extends
 	}
 	get value(): Value {
 		return this._value
