@@ -1,14 +1,22 @@
-import { IValueObject } from "../types";
-import GettersAndSetters from "./getters-and-setters";
+import { IParentName, IValueObject } from "../types";
 
-export class ValueObject<Props> extends GettersAndSetters<Props> implements IValueObject<Props> {
-	constructor(props: Props) {
-		super(props, 'ValueObject');
+export class ValueObject<Value> implements IValueObject<Value> {
+	protected _value: Value
+	private _parentName: IParentName = "ValueObject"
+	constructor(value: Value) {
+		this._value = value
 	}
 
-	isEqual(other: ValueObject<Props>): boolean {
-		const currentProps = Object.assign({}, {}, { ...this.props });
-		const providedProps = Object.assign({}, {}, { ...other.props });
+	get parentName() {
+		return this._parentName
+	}
+	get value(): Value {
+		return this._value
+	}
+	
+	isEqual(other: ValueObject<Value>): boolean {
+		const currentProps = Object.assign({}, {}, { ...this._value });
+		const providedProps = Object.assign({}, {}, { ...other._value });
 		delete currentProps?.['createdAt'];
 		delete currentProps?.['updatedAt'];
 		delete providedProps?.['createdAt'];
@@ -16,16 +24,14 @@ export class ValueObject<Props> extends GettersAndSetters<Props> implements IVal
 		return JSON.stringify(currentProps) === JSON.stringify(providedProps);
 	}
 
-	clone(): ValueObject<Props> {
+	clone(): ValueObject<Value> {
 		const instance = Reflect.getPrototypeOf(this);
-		const args = [this.props];
+		const args = [this._value];
 		const obj = Reflect.construct(instance!.constructor, args);
 		return obj;
 	}
 
-	get value(): Props {
-		return this.props
-	}
+
 }
 
 export default ValueObject;

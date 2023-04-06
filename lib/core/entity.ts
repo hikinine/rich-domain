@@ -1,20 +1,36 @@
-import { EntityMapperPayload, EntityProps, IEntity, UID } from "../types";
+import { EntityMapperPayload, EntityProps, IEntity, IParentName, UID } from "../types";
+import validator from "../utils/validator";
 import { EntityAssert } from "./assert";
-import GettersAndSetters from "./getters-and-setters";
 import ID from "./id";
 import ValueObject from "./value-object";
 
-export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> implements IEntity<Props> {
+export class Entity<Props extends EntityProps> implements IEntity<Props> {
 	protected _id: UID<string>;
+	protected props: Props
 	protected assert: EntityAssert<Props>;
+	private _parentName: IParentName = "Entity";
 
 	constructor(props: Props) {
-		super(Object.assign({}, { createdAt: new Date(), updatedAt: new Date() }, { ...props }), 'Entity');
-		const isID = GettersAndSetters.validator.isID(props?.['id']);
-		const isStringOrNumber = GettersAndSetters.validator.isString(props?.['id']) || GettersAndSetters.validator.isNumber(props?.['id']);
-		this._id = isStringOrNumber ? ID.create(props?.['id']) : isID ? props?.['id'] : ID.create();
-
+		this._id = Entity.generateOrBuildID(props?.id);
+		props.id = this._id
+		const now = Date.now()
+		props.createdAt = new Date(props.createdAt || now)
+		props.updatedAt = new Date(props.updatedAt || now)
+		this.props = props
 		this.assert = new EntityAssert<Props>(props)
+	}
+
+	get parentName() {
+		return this._parentName
+	}
+	get createdAt() {
+		return this.props?.createdAt;
+	}
+	get updatedAt() {
+		return this.props?.updatedAt;
+	}
+	get id(): UID<string> {
+		return this._id;
 	}
 
 	isEqual(other: Entity<Props>): boolean {
@@ -31,12 +47,10 @@ export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> 
 		return equalId && equalSerialized;
 	}
 
-	get id(): UID<string> {
-		return this._id;
-	}
+
 
 	public toObject(): { [key in keyof Props]: any } & EntityMapperPayload {
-		const self =  this as any
+		const self = this as any
 		const obj = {} as any
 
 		obj["id"] = self?.id?.value;
@@ -45,14 +59,15 @@ export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> 
 			if (key === "id") continue;
 			if (key === "createdAt") continue;
 			if (key === "updatedAt") continue;
-			
+
 			const instance = self.props[key];
 			if (instance instanceof ValueObject)
 				obj[key] = instance.value;
 			else if (instance instanceof Entity)
 				obj[key] = instance.toObject()
-			else
+			else {
 				obj[key] = instance
+			}
 
 		}
 
@@ -76,8 +91,13 @@ export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> 
 		const entity = Reflect.construct(instance!.constructor, args);
 		return entity
 	}
-	
 
+	static generateOrBuildID(id?: UID<string>): UID<string> {
+		const isID = validator.isID(id);
+		const isStringOrNumber = validator.isString(id) || validator.isNumber(id);
+		const newId = isStringOrNumber ? ID.create(id) : isID ? id : ID.create();
+		return newId!
+	}
 }
 
 export default Entity;

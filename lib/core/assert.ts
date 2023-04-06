@@ -3,7 +3,7 @@ import ValueObject from "./value-object";
 
 export class EntityAssert<Props> {
   private props: Props;
-  private _key?: keyof Props;
+  private internalKeyState?: keyof Props;
   private stateRequired: boolean
   private instanceError: typeof Error = Error
 
@@ -13,8 +13,8 @@ export class EntityAssert<Props> {
   }
 
   private get value() {
-    if (this._key) {
-      return this.props[this._key];
+    if (this.internalKeyState) {
+      return this.props[this.internalKeyState];
     }
     return null;
   }
@@ -25,7 +25,7 @@ export class EntityAssert<Props> {
   }
 
   key(keyName: keyof Props) {
-    this._key = keyName
+    this.internalKeyState = keyName
     this.stateRequired = false;
     return this as Pick<EntityAssert<Props>, "isRequired" | "nullable">;
   }
