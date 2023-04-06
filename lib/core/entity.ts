@@ -76,6 +76,7 @@ export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> 
 		const entity = Reflect.construct(instance!.constructor, args);
 		return entity
 	}
+	
 
 }
 

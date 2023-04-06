@@ -19,7 +19,7 @@ export class EntityAssert<Props> {
     return null;
   }
 
-  throws(instanceError: typeof Error) {
+  throws(instanceError: typeof Error | any) {
     this.instanceError = instanceError
     return this  as Pick<EntityAssert<Props>, "key">;
   }
@@ -54,7 +54,7 @@ export class EntityAssert<Props> {
       }
     }
 
-    if (!(this.value instanceof constructor)) {
+    else if (!(this.value instanceof constructor)) {
       throw new this.instanceError(exception)
     }
 
