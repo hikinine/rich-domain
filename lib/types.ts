@@ -232,7 +232,7 @@ export interface IEntity<Props> {
 	get id(): UID<string>;
 	hashCode(): UID<string>;
 	isNew(): boolean;
-	 toObject(entity?: any):  { [key in keyof Props]: any } & EntityMapperPayload 
+	 toObject():  { [key in keyof Props]: any } & EntityMapperPayload 
 	clone(): IEntity<Props>;
 }
 

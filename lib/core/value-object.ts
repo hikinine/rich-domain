@@ -1,12 +1,9 @@
-import { IAdapter, ISettings, IValueObject } from "../types";
-import AutoMapper from "./auto-mapper";
+import { IValueObject } from "../types";
 import GettersAndSetters from "./getters-and-setters";
 
 export class ValueObject<Props> extends GettersAndSetters<Props> implements IValueObject<Props> {
-	protected autoMapper: AutoMapper<Props>;
-	constructor(props: Props, config?: ISettings) {
-		super(props, 'ValueObject', config);
-		this.autoMapper = new AutoMapper();
+	constructor(props: Props) {
+		super(props, 'ValueObject');
 	}
 
 	isEqual(other: ValueObject<Props>): boolean {
@@ -21,24 +18,9 @@ export class ValueObject<Props> extends GettersAndSetters<Props> implements IVal
 
 	clone(): ValueObject<Props> {
 		const instance = Reflect.getPrototypeOf(this);
-		const args = [this.props, this.config];
+		const args = [this.props];
 		const obj = Reflect.construct(instance!.constructor, args);
 		return obj;
-	}
-
-	toObject<T>(adapter?: IAdapter<this, T>): T {
-		if (adapter && typeof adapter?.build === 'function') return adapter.build(this).value();
-		return this.autoMapper.valueObjectToObj(this) as unknown as T;
-	}
-
-	protected set<Key extends keyof Props>(key: Key): {
-		to: (value: Props[Key], validation?: ((value: Props[Key]) => boolean) | undefined) => boolean;
-	} {
-		return super.set(key);
-	}
-
-	change<Key extends keyof Props>(key: Key, value: Props[Key], validation?: ((value: Props[Key]) => boolean) | undefined): boolean {
-		return super.change(key, value, validation);
 	}
 
 	get value(): Props {

@@ -1,4 +1,4 @@
-import { EntityProps, EventHandler, IAggregate, IHandle, IReplaceOptions, ISettings, UID } from "../types";
+import { EntityProps, EventHandler, IAggregate, IHandle, IReplaceOptions, UID } from "../types";
 import DomainEvent from "./domain-event";
 import Entity from "./entity";
 import DomainEvents from "./events";
@@ -6,8 +6,8 @@ import ID from "./id";
 
  export class Aggregate<Props extends EntityProps> extends Entity<Props> implements IAggregate<Props> {
 
-	constructor(props: Props, config?: ISettings) { 
-		super(props, config);
+	constructor(props: Props) { 
+		super(props);
 	}
 
 	public hashCode(): UID<string> {

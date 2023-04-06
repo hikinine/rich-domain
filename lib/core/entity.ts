@@ -1,18 +1,20 @@
-import { EntityMapperPayload, EntityProps, IEntity, ISettings, UID } from "../types";
-import AutoMapper from "./auto-mapper";
+import { EntityMapperPayload, EntityProps, IEntity, UID } from "../types";
+import { EntityAssert } from "./assert";
 import GettersAndSetters from "./getters-and-setters";
 import ID from "./id";
 import ValueObject from "./value-object";
 
 export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> implements IEntity<Props> {
 	protected _id: UID<string>;
-	protected autoMapper: AutoMapper<Props>;
-	constructor(props: Props, config?: ISettings) {
-		super(Object.assign({}, { createdAt: new Date(), updatedAt: new Date() }, { ...props }), 'Entity', config);
-		const isID = this.validator.isID(props?.['id']);
-		const isStringOrNumber = this.validator.isString(props?.['id']) || this.validator.isNumber(props?.['id']);
+	protected assert: EntityAssert<Props>;
+
+	constructor(props: Props) {
+		super(Object.assign({}, { createdAt: new Date(), updatedAt: new Date() }, { ...props }), 'Entity');
+		const isID = GettersAndSetters.validator.isID(props?.['id']);
+		const isStringOrNumber = GettersAndSetters.validator.isString(props?.['id']) || GettersAndSetters.validator.isNumber(props?.['id']);
 		this._id = isStringOrNumber ? ID.create(props?.['id']) : isID ? props?.['id'] : ID.create();
-		this.autoMapper = new AutoMapper();
+
+		this.assert = new EntityAssert<Props>(props)
 	}
 
 	isEqual(other: Entity<Props>): boolean {
@@ -33,25 +35,29 @@ export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> 
 		return this._id;
 	}
 
-	public toObject(entity?: any):  { [key in keyof Props]: any } & EntityMapperPayload {
-		const self = entity || this
-		const obj = {} as any;
-
-		for (const key in self.props) {
-			const instance = self.props[key];
-			if (instance instanceof ValueObject) {
-				obj[key] = instance.value;
-			}
-
-			if (instance instanceof Entity) {
-				obj[key] = instance.toObject(instance)
-			}
-		}
+	public toObject(): { [key in keyof Props]: any } & EntityMapperPayload {
+		const self =  this as any
+		const obj = {} as any
 
 		obj["id"] = self?.id?.value;
+
+		for (const key in self.props) {
+			if (key === "id") continue;
+			if (key === "createdAt") continue;
+			if (key === "updatedAt") continue;
+			
+			const instance = self.props[key];
+			if (instance instanceof ValueObject)
+				obj[key] = instance.value;
+			else if (instance instanceof Entity)
+				obj[key] = instance.toObject()
+			else
+				obj[key] = instance
+
+		}
+
 		obj["createdAt"] = self.props?.createdAt;
 		obj["updatedAt"] = self.props?.updatedAt;
-		
 		return obj
 	}
 
@@ -66,7 +72,7 @@ export class Entity<Props extends EntityProps> extends GettersAndSetters<Props> 
 
 	clone(): Entity<Props> {
 		const instance = Reflect.getPrototypeOf(this);
-		const args = [this.props, this.config];
+		const args = [this.props];
 		const entity = Reflect.construct(instance!.constructor, args);
 		return entity
 	}
