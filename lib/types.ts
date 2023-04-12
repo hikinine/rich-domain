@@ -40,7 +40,7 @@ export interface IResult<T, D = string, M = {}> {
  */
 export type Payload<T, D = string, M = {}> = IResult<T, D, M>;
 export type HandlerPayload<T> = { aggregate: T, eventName: string };
-export type EventHandler<T, B> = ICommand<HandlerPayload<T>, Promise<B> | B>;
+export type EventHandler<T, B = void> = ICommand<HandlerPayload<T>, Promise<B> | B>;
 
 /**
  * 
@@ -184,10 +184,10 @@ export type IPropsValidation<T> = { [P in keyof Required<T>]: (value: T[P]) => b
  * @param createdAt the current date time the event was created.
  * @param callback the event handler to be executed on dispatch.
  */
-export interface IDomainEvent<T> {
+export interface IDomainEventPayload<T> {
 	aggregate: T;
 	createdAt: Date;
-	callback: IHandle<T>;
+	callback: DomainEvent<T>;
 }
 
 /**
@@ -195,12 +195,12 @@ export interface IDomainEvent<T> {
  * @var eventName is optional value as string or undefine.
  * @method dispatch is the method to be executed on dispatch the event.
  */
-export interface IHandle<T> {
+export interface DomainEvent<T> {
 	/**
 	 * @description eventName is optional value. Default is className
 	 */
 	eventName?: string;
-	dispatch(event: IDomainEvent<T>, handler: EventHandler<T, void>): Promise<void> | void;
+	dispatch(event: IDomainEventPayload<T>, handler: EventHandler<T, void>): Promise<void> | void;
 }
 
 /**
@@ -217,7 +217,7 @@ export interface IDispatchOptions {
  * @description Event options
  */
 export interface IEvent<G> {
-	event: IDomainEvent<G>;
+	event: IDomainEventPayload<G>;
 	replace?: boolean;
 }
 
@@ -232,13 +232,14 @@ export interface IEntity<Props> {
 	get id(): UID<string>;
 	hashCode(): UID<string>;
 	isNew(): boolean;
-	 toObject():  { [key in keyof Props]: any } & EntityMapperPayload 
+	toObject(): { [key in keyof Props]: any } & EntityMapperPayload
 	clone(): IEntity<Props>;
 }
 
-export interface IValueObject<Props> {
-	clone(): IValueObject<Props>;
-//	toObject<T>(adapter?: IAdapter<this, T>): T;
+export interface IValueObject<Value> {
+	clone(): IValueObject<Value>;
+	isEqual(other: IValueObject<Value>): boolean
+	valueIsEqual(value: Value): boolean
 }
 
 export interface IGettersAndSetters {
@@ -250,7 +251,7 @@ export interface IAggregate<Props> {
 	hashCode(): UID<string>;
 	isNew(): boolean;
 	clone(): IEntity<Props>;
-	addEvent(event: IHandle<IAggregate<Props>>, replace?: IReplaceOptions): void;
+	addEvent(event: DomainEvent<IAggregate<Props>>, replace?: IReplaceOptions): void;
 	deleteEvent(eventName: string): void;
 }
 

@@ -1,5 +1,5 @@
-import { Aggregate, DomainEvents, ID, Result, ValueObject } from "../../lib/core";
-import { ISettings, IResult, IHandle, IDomainEvent, UID } from "../../lib/types";
+import { Aggregate, ID, ValueObject } from "../../lib/core";
+import { IDomainEventPayload, IHandle, IResult, ISettings, UID } from "../../lib/types";
 
 describe('aggregate', () => {
 
@@ -250,7 +250,7 @@ describe('aggregate', () => {
 
 			class Handler implements IHandle<UserAgg> {
 				eventName: string = 'Handler Event';
-				dispatch(event: IDomainEvent<UserAgg>): void | Promise<void> {
+				dispatch(event: IDomainEventPayload<UserAgg>): void | Promise<void> {
 					console.log(event.aggregate.toObject());
 				}
 			}
@@ -274,7 +274,7 @@ describe('aggregate', () => {
 				constructor(){
 					this.eventName = "hello"
 				}
-				dispatch(event: IDomainEvent<UserAgg>): void | Promise<void> {
+				dispatch(event: IDomainEventPayload<UserAgg>): void | Promise<void> {
 					console.log(event.aggregate.toObject());
 				}
 			}
@@ -297,7 +297,7 @@ describe('aggregate', () => {
 				constructor(){
 					this.eventName = "helloA"
 				}
-				dispatch(event: IDomainEvent<UserAgg>): void | Promise<void> {
+				dispatch(event: IDomainEventPayload<UserAgg>): void | Promise<void> {
 					console.log(event.aggregate.toObject());
 				}
 			}
@@ -306,7 +306,7 @@ describe('aggregate', () => {
 				constructor(){
 					this.eventName = "helloB"
 				}
-				dispatch(event: IDomainEvent<UserAgg>): void | Promise<void> {
+				dispatch(event: IDomainEventPayload<UserAgg>): void | Promise<void> {
 					console.log(event.aggregate.toObject());
 				}
 			}
@@ -327,7 +327,7 @@ describe('aggregate', () => {
 
 			class Handler implements IHandle<UserAgg> {
 				eventName: string = 'Handler Event';
-				dispatch(event: IDomainEvent<UserAgg>): void | Promise<void> {
+				dispatch(event: IDomainEventPayload<UserAgg>): void | Promise<void> {
 					console.log(event.aggregate.toObject());
 				}
 			}
@@ -347,7 +347,7 @@ describe('aggregate', () => {
 
 			class Handler implements IHandle<UserAgg> {
 				eventName = undefined;
-				dispatch(event: IDomainEvent<UserAgg>): void | Promise<void> {
+				dispatch(event: IDomainEventPayload<UserAgg>): void | Promise<void> {
 					console.log(event.aggregate.toObject());
 				}
 			}

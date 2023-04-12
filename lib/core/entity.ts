@@ -10,7 +10,14 @@ export class Entity<Props extends EntityProps> implements IEntity<Props> {
 	protected assert: EntityAssert<Props>;
 	private _extends: IExtends = "Entity";
 
+	static transform: (props: any) => void
+	static validate: (props: any) => void
+
 	constructor(props: Props) {
+		const instance = this.constructor as typeof Entity<Props>
+		instance?.transform?.(props);
+		instance?.validate?.(props)
+
 		this._id = Entity.generateOrBuildID(props?.id);
 		props.id = this._id
 		const now = Date.now()
@@ -50,30 +57,29 @@ export class Entity<Props extends EntityProps> implements IEntity<Props> {
 
 
 	public toObject(): { [key in keyof Props]: any } & EntityMapperPayload {
-		const self = this as any
-		const obj = {} as any
 
-		obj["id"] = self?.id?.value;
-
-		for (const key in self.props) {
-			if (key === "id") continue;
-			if (key === "createdAt") continue;
-			if (key === "updatedAt") continue;
-
-			const instance = self.props[key];
-			if (instance instanceof ValueObject)
-				obj[key] = instance.value;
-			else if (instance instanceof Entity)
-				obj[key] = instance.toObject()
-			else {
-				obj[key] = instance
-			}
-
+		const initialValues: any = {
+			id: this?.id?.value,
 		}
+		const obj = Object
+			.entries(this.props)
+			.reduce((accumulator, [key, instance]) => {
+				if (key === "id") return accumulator;
+				if (instance instanceof ValueObject) {
+					accumulator[key] = instance.value
+				}
+				else if (instance instanceof Entity) {
+					accumulator[key] = instance.toObject()
+				}
+				else {
+					accumulator[key] = instance
+				}
+				return accumulator
+			}, initialValues)
 
-		obj["createdAt"] = self.props?.createdAt;
-		obj["updatedAt"] = self.props?.updatedAt;
 		return obj
+
+		
 	}
 
 	hashCode(): UID<string> {
@@ -92,7 +98,7 @@ export class Entity<Props extends EntityProps> implements IEntity<Props> {
 		return entity
 	}
 
-	static generateOrBuildID(id?: UID<string>): UID<string> {
+	private static generateOrBuildID(id?: UID<string>): UID<string> {
 		const isID = validator.isID(id);
 		const isStringOrNumber = validator.isString(id) || validator.isNumber(id);
 		const newId = isStringOrNumber ? ID.create(id) : isID ? id : ID.create();
