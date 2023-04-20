@@ -1,51 +1,57 @@
-import { DomainEvent, EntityProps, EventHandler, IAggregate, IDomainEventPayload, IReplaceOptions, UID } from "../types";
-import { DomainEventPayload } from "./domain-event-payload";
-import Entity from "./entity";
-import ID from "./id";
+import { Id } from "./Id";
+import { DomainEvent } from "./domain-event";
+import { Entity } from "./entity";
+import { DomainEventImplementation, DomainEventReplaceOptions, EntityProps, IDomainEvent } from "./types";
 
-export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> implements IAggregate<Props> {
-	private domainEvents: IDomainEventPayload<IAggregate<Props>>[]
+export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
 
-	constructor(props: Props) {
-		super(props);
-		this.domainEvents = []
-	}
+  private domainEvents: Array<IDomainEvent<Aggregate<Props>>>;
 
+  constructor(props: Props) {
+    super(props)
+    this.domainEvents = new Array<IDomainEvent<Aggregate<Props>>>();
+  }
 
-	public hashCode(): UID<string> {
-		const name = Reflect.getPrototypeOf(this);
-		return ID.create(`[Aggregate@${name?.constructor.name}]:${this.id.value}`);
-	}
+  public hashCode() {
+    const name = Reflect.getPrototypeOf(this);
+    return new Id(`[Aggregate@${name?.constructor.name}]:${this.id.value}`);
+  }
 
-	dispatchEvent(eventName: string, handler?: EventHandler<IAggregate<Props>>) {
-		const callback = handler || ({ execute: (): void => { } });
+  public addEvent(
+    eventImplementation: DomainEventImplementation,
+    replace?: DomainEventReplaceOptions
+  ) {
+    const domainEvent = new DomainEvent<Aggregate<Props>>(this, eventImplementation);
 
-		for (const event of this.domainEvents) {
-			if (event.aggregate.id.equal(this.id) && event.callback.eventName === eventName) {
-				event.callback.dispatch(event, callback)
-				this.deleteEvent(eventName)
-			}
-		}
-	}
+    const shouldReplace = replace === 'REPLACE_DUPLICATED';
+    if (Boolean(shouldReplace)) {
+      this.removeEvent(domainEvent.eventName);
+    }
+    this.domainEvents.push(domainEvent);
+  }
 
-	addEvent(eventToAdd: DomainEvent<IAggregate<Props>>, replace?: IReplaceOptions): void {
-		const doReplace = replace === 'REPLACE_DUPLICATED';
-		const event = new DomainEventPayload(this, eventToAdd);
-		const target = Reflect.getPrototypeOf(event.callback);
-		const eventName = event.callback?.eventName ?? target?.constructor.name as string;
-		event.callback.eventName = eventName;
-		if (!!doReplace) this.deleteEvent(eventName);
-		this.domainEvents.push(event);
-	}
+  public clearEvents() {
+    this.domainEvents.splice(0, this.domainEvents.length);
+  }
+  
+  public removeEvent(eventName: string) {
+    this.domainEvents = this.domainEvents.filter(
+      (domainEvent) => domainEvent.eventName !== eventName
+    );
+  }
 
-	deleteEvent(eventName: string): void {
-	
-		this.domainEvents = this.domainEvents.filter(
-			domainEvent => (domainEvent.callback.eventName !== eventName) 
-		);
-	}
+  public dispatch(eventName: string, eventPublisher: any) {
+    for (const event of this.domainEvents) {
+      if (event.aggregate.id.equal(this.id) && event.eventName === eventName) {
+        eventPublisher.publish(event);
+        this.removeEvent(eventName);
+      }
+    }
+  }
+
+  public dispatchAll(eventPublisher: any) {
+    for (const event of this.domainEvents) {
+      eventPublisher.publish(event);
+    }
+  }
 }
-export default Aggregate;
-
-
-

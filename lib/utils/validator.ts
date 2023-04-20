@@ -1,4 +1,4 @@
-import { Aggregate, Entity, ID, ValueObject } from "../core";
+import { Aggregate, Entity, Id, ValueObject } from "../core";
 
 export class Validator {
 	private static instance: Validator = null as unknown as Validator;
@@ -57,21 +57,21 @@ export class Validator {
 	isFunction(props: any): boolean {
 		return typeof props === 'function';
 	}
-	isEntity(props: any): boolean {
+	isEntity(props: any): props is Entity<any> {
 		const isEntity = props instanceof Entity;
 		return !Validator.instance.isAggregate(props) && isEntity;
 	}
 	isAggregate(props: any): boolean {
 		return props instanceof Aggregate;
 	}
-	isValueObject(props: any): boolean {
+	isValueObject(props: any): props is ValueObject<unknown> {
 		return props instanceof ValueObject;
 	}
 	isSymbol(props: any): boolean {
 		return typeof props === 'symbol';
 	}
 	isID(props: any): boolean {
-		return props instanceof ID;
+		return props instanceof Id;
 	}
 	number(target: number) {
 		return {

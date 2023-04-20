@@ -1,109 +1,93 @@
-import { EntityMapperPayload, EntityProps, IEntity, IExtends, UID } from "../types";
 import validator from "../utils/validator";
-import { EntityAssert } from "./assert";
-import ID from "./id";
-import ValueObject from "./value-object";
-
-export class Entity<Props extends EntityProps> implements IEntity<Props> {
-	protected _id: UID<string>;
-	protected props: Props
-	protected assert: EntityAssert<Props>;
-	private _extends: IExtends = "Entity";
-
-	static transform: (props: any) => void
-	static validate: (props: any) => void
-
-	constructor(props: Props) {
-		const instance = this.constructor as typeof Entity<Props>
-		instance?.transform?.(props);
-		instance?.validate?.(props)
-
-		this._id = Entity.generateOrBuildID(props?.id);
-		props.id = this._id
-		const now = Date.now()
-		props.createdAt = new Date(props.createdAt || now)
-		props.updatedAt = new Date(props.updatedAt || now)
-		this.props = props
-		this.assert = new EntityAssert<Props>(props)
-	}
-
-	get extends() {
-		return this._extends
-	}
-	get createdAt() {
-		return this.props?.createdAt;
-	}
-	get updatedAt() {
-		return this.props?.updatedAt;
-	}
-	get id(): UID<string> {
-		return this._id;
-	}
-
-	isEqual(other: Entity<Props>): boolean {
-		const currentProps = Object.assign({}, {}, { ...this.props });
-		const providedProps = Object.assign({}, {}, { ...other.props });
-		delete currentProps?.['createdAt'];
-		delete currentProps?.['updatedAt'];
-		delete providedProps?.['createdAt'];
-		delete providedProps?.['updatedAt'];
-		const equalId = this.id.equal(other.id);
-		const serializedA = JSON.stringify(currentProps);
-		const serializedB = JSON.stringify(providedProps);
-		const equalSerialized = serializedA === serializedB;
-		return equalId && equalSerialized;
-	}
+import { Id } from "./Id";
+import { AutoMapper } from "./auto-mapper";
+import { EntityProps } from "./types";
 
 
+export abstract class Entity<Props extends EntityProps> {
+  public constructorName = "Entity"
+  protected _id: Id;
+  protected props: Props
+  protected autoMapper: AutoMapper<Props>
 
-	public toObject(): { [key in keyof Props]: any } & EntityMapperPayload {
+  constructor(props: Props) {
+    this.transformAndValidate(props)
+    this.registerTimestampSignature(props)
+    this.autoMapper = new AutoMapper<Props>()
 
-		const initialValues: any = {
-			id: this?.id?.value,
-		}
-		const obj = Object
-			.entries(this.props)
-			.reduce((accumulator, [key, instance]) => {
-				if (key === "id") return accumulator;
-				if (instance instanceof ValueObject) {
-					accumulator[key] = instance.value
-				}
-				else if (instance instanceof Entity) {
-					accumulator[key] = instance.toObject()
-				}
-				else {
-					accumulator[key] = instance
-				}
-				return accumulator
-			}, initialValues)
+    const id = this.generateOrAssignId(props)
+    this._id = id;
+    props.id = id;
 
-		return obj
+    this.props = props
+  }
 
-		
-	}
+  get createdAt() {
+    return this.props?.createdAt;
+  }
+  get updatedAt() {
+    return this.props?.updatedAt;
+  }
+  get id(): Id {
+    return this._id;
+  }
 
-	hashCode(): UID<string> {
-		const name = Reflect.getPrototypeOf(this);
-		return ID.create(`[Entity@${name?.constructor?.name}]:${this.id.value}`);
-	}
+  public clone(): Entity<Props> {
+    const instance = Reflect.getPrototypeOf(this);
+    const args = [this.props];
+    const entity = Reflect.construct(instance!.constructor, args);
+    return entity
+  }
 
-	isNew(): boolean {
-		return this.id.isNew();
-	}
+  public isNew(): boolean {
+    return this.id.isNew();
+  }
 
-	clone(): Entity<Props> {
-		const instance = Reflect.getPrototypeOf(this);
-		const args = [this.props];
-		const entity = Reflect.construct(instance!.constructor, args);
-		return entity
-	}
+  public toPrimitives() {
+    return this.autoMapper.entityToObj(this.props)
+  }
 
-	private static generateOrBuildID(id?: UID<string>): UID<string> {
-		const isID = validator.isID(id);
-		const isStringOrNumber = validator.isString(id) || validator.isNumber(id);
-		const newId = isStringOrNumber ? ID.create(id) : isID ? id : ID.create();
-		return newId!
-	}
+  public hashCode(): Id {
+    const name = Reflect.getPrototypeOf(this);
+    return new Id(`[Entity@${name?.constructor?.name}]:${this.id.value}`);
+  }
+
+  public isEqual(other: Entity<Props>): boolean {
+    const currentProps = Object.assign({}, {}, { ...this.props });
+    const providedProps = Object.assign({}, {}, { ...other.props });
+    delete currentProps?.['createdAt'];
+    delete currentProps?.['updatedAt'];
+    delete providedProps?.['createdAt'];
+    delete providedProps?.['updatedAt'];
+    const equalId = this.id.equal(other.id);
+    const serializedA = JSON.stringify(currentProps);
+    const serializedB = JSON.stringify(providedProps);
+    const equalSerialized = serializedA === serializedB;
+    return equalId && equalSerialized;
+  }
+
+
+
+  private generateOrAssignId(props: Props) {
+    const { id } = props
+    const isID = validator.isID(id);
+    const isString = validator.isString(id)
+    const newId = isString ? new Id(id as any) : isID ? id : new Id();
+    return newId! as Id
+  }
+
+  private transformAndValidate(props: Props) {
+    const instance = this.constructor as typeof Entity<Props>
+    instance?.transform?.(props);
+    instance?.validate?.(props)
+  }
+
+  private registerTimestampSignature(props: Props) {
+    const now = Date.now()
+    props.createdAt = new Date(props.createdAt || now)
+    props.updatedAt = new Date(props.updatedAt || now)
+  }
+
+  protected static transform: (props: any) => void
+  protected static validate: (props: any) => void
 }
-
-export default Entity;

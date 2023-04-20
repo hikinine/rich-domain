@@ -1,59 +1,49 @@
-import { IExtends, IValueObject } from "../types";
 
-export abstract class ValueObject<Value> implements IValueObject<Value> {
-	protected _value: Value
-	private _extends: IExtends = "ValueObject"
+import { AutoMapper } from "./auto-mapper";
 
-	
-	static transform: (props: any) => void
-	static validate: (props: any) => void
+export abstract class ValueObject<Value> {
+  public constructorName = "ValueObject"
+  protected _value: Value
+  protected autoMapper: AutoMapper<Value>
 
-	constructor(value: Value) {
-		const instance = this.constructor as typeof ValueObject<Value>
-		instance?.transform?.(value);
-		instance?.validate?.(value)
+  constructor(value: Value) {
+    const instance = this.constructor as typeof ValueObject<Value>
+    const transformedValue = instance?.transform?.(value);
+    instance?.validate?.(transformedValue)
 
-		this._value = value
-	}
-
-	get extends() {
-		return this._extends
-	}
-	get value(): Value {
-		return this._value
-	}
-
-	valueIsEqual(value: Value): boolean {
-		if (typeof value === "object" && (typeof this.value === "object")) {
-			const serializedA = JSON.stringify(this.value);
-			const serializedB = JSON.stringify(value);
-			return serializedA === serializedB;
-		}
-		else {
-			return this.value === value
-		}
-	}
-	isEqual(other: ValueObject<Value>): boolean {
-		const value = other.value;
-		
-		if (typeof value === "object" && (typeof this.value === "object")) {
-			const serializedA = JSON.stringify(this.value);
-			const serializedB = JSON.stringify(value);
-			return serializedA === serializedB;
-		}
-		else {
-			return this.value === value
-		}
-	}
-
-	clone(): ValueObject<Value> {
-		const instance = Reflect.getPrototypeOf(this);
-		const args = [this._value];
-		const obj = Reflect.construct(instance!.constructor, args);
-		return obj;
-	}
+    this._value = transformedValue
+    this.autoMapper = new AutoMapper<Value>()
+  }
 
 
+  get value(): { [Parameters in keyof Value]: any } | Value {
+    return this.autoMapper.valueObjectToObj(this)
+  }
+
+  public isEqual(other: ValueObject<Value>): boolean {
+    const value = other.value;
+
+    if (typeof value === "object" && (typeof this.value === "object")) {
+      const serializedA = JSON.stringify(this.value);
+      const serializedB = JSON.stringify(value);
+      return serializedA === serializedB;
+    }
+    else {
+      return this.value === value
+    }
+  }
+
+  public clone(): ValueObject<Value> {
+    const instance = Reflect.getPrototypeOf(this);
+    const args = [this._value];
+    const obj = Reflect.construct(instance!.constructor, args);
+    return obj;
+  }
+
+  protected static transform(props: any){
+    return props
+  }
+  protected static validate: (props: any) => void
 }
 
 export default ValueObject;
