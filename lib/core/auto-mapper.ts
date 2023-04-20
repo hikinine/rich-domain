@@ -12,8 +12,7 @@ export class AutoMapper<Props> {
 
 		if (typeof value !== "object") return value;
 
-		const obj = Object
-			.entries(value as any)
+		const obj = Object.entries(value as any)
 			.reduce((accumulator, [key, instance]) => {
 				if (instance instanceof Array) {
 					accumulator[key] = instance.map((item) => {
@@ -47,8 +46,7 @@ export class AutoMapper<Props> {
 
 		const initialValues: any = { id: entity?.id?._value };
 		
-		const obj = Object
-			.entries(entity.props)
+		const obj = Object.entries(entity.props)
 			.reduce((accumulator, [key, instance]) => {
 				if (key === "id") return accumulator;
 

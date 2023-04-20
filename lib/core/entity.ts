@@ -31,7 +31,12 @@ export abstract class Entity<Props extends EntityProps> {
   get id(): Id {
     return this._id;
   }
-
+  
+  public enforceBusinessRules() {
+    const instance = this.constructor as typeof Entity<Props>
+    instance?.validate?.(this.props)
+  }
+  
   public clone(): Entity<Props> {
     const instance = Reflect.getPrototypeOf(this);
     const args = [this.props];
@@ -44,13 +49,15 @@ export abstract class Entity<Props extends EntityProps> {
   }
 
   public toPrimitives() {
-    return this.autoMapper.entityToObj(this.props)
+    return this.autoMapper.entityToObj(this)
   }
 
   public hashCode(): Id {
     const name = Reflect.getPrototypeOf(this);
     return new Id(`[Entity@${name?.constructor?.name}]:${this.id.value}`);
   }
+
+
 
   public isEqual(other: Entity<Props>): boolean {
     const currentProps = Object.assign({}, {}, { ...this.props });
