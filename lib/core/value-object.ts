@@ -1,13 +1,13 @@
 
 import { AutoMapper } from "./auto-mapper";
 
-export abstract class ValueObject<Value> {
+export abstract class BaseValueObject<Value> {
   public constructorName = "ValueObject"
   protected _value: Value
   protected autoMapper: AutoMapper<Value>
 
   constructor(value: Value) {
-    const instance = this.constructor as typeof ValueObject<Value>
+    const instance = this.constructor as typeof BaseValueObject<Value>
     const transformedValue = instance?.transform?.(value);
     instance?.validate?.(transformedValue)
 
@@ -20,7 +20,7 @@ export abstract class ValueObject<Value> {
     return this.autoMapper.valueObjectToObj(this)
   }
 
-  public isEqual(other: ValueObject<Value>): boolean {
+  public isEqual(other: BaseValueObject<Value>): boolean {
     const value = other.value;
 
     if (typeof value === "object" && (typeof this.value === "object")) {
@@ -33,7 +33,7 @@ export abstract class ValueObject<Value> {
     }
   }
 
-  public clone(): ValueObject<Value> {
+  public clone(): BaseValueObject<Value> {
     const instance = Reflect.getPrototypeOf(this);
     const args = [this._value];
     const obj = Reflect.construct(instance!.constructor, args);
@@ -46,4 +46,3 @@ export abstract class ValueObject<Value> {
   protected static validate: (props: any) => void
 }
 
-export default ValueObject;

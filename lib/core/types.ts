@@ -1,3 +1,5 @@
+import { DomainError } from "./domain-error";
+
 export type EntityProps = {
   id?: IdImplementation,
   createdAt?: Date,
@@ -15,9 +17,7 @@ export interface IdImplementation {
 }
 
 export type DomainEventReplaceOptions = 'REPLACE_DUPLICATED' | 'UPDATE' | 'KEEP';
-export interface DomainEventImplementation {
-  eventName: string
-}
+
 export interface IDomainEvent<T> {
   aggregate: T;
   createdAt: Date;
@@ -28,4 +28,13 @@ export interface EntityMapperPayload {
   id: string 
   createdAt: Date 
   updatedAt: Date
+}
+
+export interface EventPublisher<AggregateType> {
+  publish(event: IDomainEvent<AggregateType> ): void;
+}
+
+export interface Rules {
+  Error: DomainError;
+  isBrokenIf(): boolean;
 }

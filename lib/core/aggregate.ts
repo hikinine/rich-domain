@@ -1,15 +1,15 @@
 import { Id } from "./Id";
 import { DomainEvent } from "./domain-event";
-import { Entity } from "./entity";
-import { DomainEventImplementation, DomainEventReplaceOptions, EntityProps, IDomainEvent } from "./types";
+import { BaseEntity } from "./entity";
+import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } from "./types";
 
-export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
+export abstract class BaseAggregate<Props extends EntityProps> extends BaseEntity<Props> {
 
-  private domainEvents: Array<IDomainEvent<Aggregate<Props>>>;
+  private domainEvents: Array<IDomainEvent<BaseAggregate<Props>>>;
 
   constructor(props: Props) {
     super(props)
-    this.domainEvents = new Array<IDomainEvent<Aggregate<Props>>>();
+    this.domainEvents = new Array<IDomainEvent<BaseAggregate<Props>>>();
   }
 
   public hashCode() {
@@ -18,12 +18,11 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
   }
 
   public addEvent(
-    eventImplementation: DomainEventImplementation,
+    domainEvent: DomainEvent<BaseAggregate<Props>>,
     replace?: DomainEventReplaceOptions
   ) {
-    const domainEvent = new DomainEvent<Aggregate<Props>>(this, eventImplementation);
-
     const shouldReplace = replace === 'REPLACE_DUPLICATED';
+    
     if (Boolean(shouldReplace)) {
       this.removeEvent(domainEvent.eventName);
     }
@@ -33,14 +32,14 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
   public clearEvents() {
     this.domainEvents.splice(0, this.domainEvents.length);
   }
-  
+
   public removeEvent(eventName: string) {
     this.domainEvents = this.domainEvents.filter(
       (domainEvent) => domainEvent.eventName !== eventName
     );
   }
 
-  public dispatch(eventName: string, eventPublisher: any) {
+  public dispatch(eventName: string, eventPublisher: EventPublisher<BaseAggregate<Props>>) {
     for (const event of this.domainEvents) {
       if (event.aggregate.id.equal(this.id) && event.eventName === eventName) {
         eventPublisher.publish(event);
@@ -49,7 +48,7 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
     }
   }
 
-  public dispatchAll(eventPublisher: any) {
+  public dispatchAll(eventPublisher: EventPublisher<BaseAggregate<Props>>) {
     for (const event of this.domainEvents) {
       eventPublisher.publish(event);
     }

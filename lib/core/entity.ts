@@ -1,25 +1,44 @@
 import validator from "../utils/validator";
 import { Id } from "./Id";
 import { AutoMapper } from "./auto-mapper";
+import { EntityMetaHistory } from "./history";
 import { EntityProps } from "./types";
 
 
-export abstract class Entity<Props extends EntityProps> {
+export abstract class BaseEntity<Props extends EntityProps> {
   public constructorName = "Entity"
   protected _id: Id;
   protected props: Props
+  protected proxy: Props
   protected autoMapper: AutoMapper<Props>
+  protected metaHistory: EntityMetaHistory<Props>
 
+
+  get history() {
+    return this.metaHistory
+  }
   constructor(props: Props) {
-    this.transformAndValidate(props)
     this.registerTimestampSignature(props)
-    this.autoMapper = new AutoMapper<Props>()
 
     const id = this.generateOrAssignId(props)
     this._id = id;
     props.id = id;
-
+    
+    this.metaHistory = new EntityMetaHistory<Props>(props)
+    this.autoMapper = new AutoMapper<Props>()
     this.props = props
+    
+    this.proxy = new Proxy<Props>(this.props, {
+      set: (target, prop, value, receiver) => {
+        const oldValue = Reflect.get(target, prop, receiver)
+        Reflect.set(target, prop, value, receiver)
+        this.metaHistory.addSnapshot(this.props, prop, oldValue, value, this)
+        return true;
+      },
+
+    })
+
+    this.props = this.proxy
   }
 
   get createdAt() {
@@ -31,13 +50,8 @@ export abstract class Entity<Props extends EntityProps> {
   get id(): Id {
     return this._id;
   }
-  
-  public enforceBusinessRules() {
-    const instance = this.constructor as typeof Entity<Props>
-    instance?.validate?.(this.props)
-  }
-  
-  public clone(): Entity<Props> {
+
+  public clone(): BaseEntity<Props> {
     const instance = Reflect.getPrototypeOf(this);
     const args = [this.props];
     const entity = Reflect.construct(instance!.constructor, args);
@@ -59,7 +73,7 @@ export abstract class Entity<Props extends EntityProps> {
 
 
 
-  public isEqual(other: Entity<Props>): boolean {
+  public isEqual(other: BaseEntity<Props>): boolean {
     const currentProps = Object.assign({}, {}, { ...this.props });
     const providedProps = Object.assign({}, {}, { ...other.props });
     delete currentProps?.['createdAt'];
@@ -83,18 +97,9 @@ export abstract class Entity<Props extends EntityProps> {
     return newId! as Id
   }
 
-  private transformAndValidate(props: Props) {
-    const instance = this.constructor as typeof Entity<Props>
-    instance?.transform?.(props);
-    instance?.validate?.(props)
-  }
-
   private registerTimestampSignature(props: Props) {
     const now = Date.now()
     props.createdAt = new Date(props.createdAt || now)
     props.updatedAt = new Date(props.updatedAt || now)
   }
-
-  protected static transform: (props: any) => void
-  protected static validate: (props: any) => void
 }
