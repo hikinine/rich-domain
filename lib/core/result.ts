@@ -47,9 +47,9 @@ export const ok = <Error, Result>(a?: Result): Either<Error, Result> => {
   return new Ok<Error, Result>(a!);
 };
 
-export const combine = <Error, Result>(results: Either<Error, Result>[]): Either<Error[], Result[]> => {
-  const errors: Error[] = [];
-  const values: Result[] = [];
+export const combine = (results: Either<any, any>[]): Either<any[], any[]> => {
+  const errors: any[] = [];
+  const values: any[] = [];
 
   for (const result of results) {
     if (result.isFail()) {
