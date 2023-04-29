@@ -8,8 +8,10 @@ import {
   BaseValueObject,
   DomainEvent,
 } from './core';
+import { BaseAdapter } from './core/adapter';
 import { DomainError as BaseDomainError } from './core/domain-error';
 
+import * as BaseRepository from './core/repository';
 import * as ResultBase from './core/result';
 
 export const DomainError = BaseDomainError;
@@ -18,13 +20,19 @@ export class Result {
   static fail = ResultBase.fail
   static combine = ResultBase.combine
 }
-
+export class Repository {
+  static Read = BaseRepository.ReadRepository
+  static Write = BaseRepository.WriteRepository
+  static WriteAndRead = BaseRepository.WriteAndRead
+  static Impl = BaseRepository.RepositoryImpl
+}
+export type Collection<T> = T[]
 export const ok = ResultBase.ok
 export const fail = ResultBase.fail
 export const Ok = ResultBase.Ok
 export const Fail = ResultBase.Fail
 export type Either<Error, Result> = ResultBase.Either<Error, Result>
-
+export const Adapter = BaseAdapter
 
 export namespace Domain {
   export const Entity = BaseEntity;
