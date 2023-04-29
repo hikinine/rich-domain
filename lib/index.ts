@@ -8,8 +8,8 @@ import {
   BaseValueObject,
   DomainEvent,
 } from './core';
-import { BaseAdapter } from './core/adapter';
 import { DomainError as BaseDomainError } from './core/domain-error';
+export { BaseAdapter as Adapter } from './core/adapter';
 
 import * as BaseRepository from './core/repository';
 import * as ResultBase from './core/result';
@@ -32,7 +32,6 @@ export const fail = ResultBase.fail
 export const Ok = ResultBase.Ok
 export const Fail = ResultBase.Fail
 export type Either<Error, Result> = ResultBase.Either<Error, Result>
-export const Adapter = BaseAdapter
 
 export namespace Domain {
   export const Entity = BaseEntity;
