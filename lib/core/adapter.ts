@@ -1,7 +1,5 @@
-import { BaseAggregate } from './aggregate';
-import { Either } from './result';
+import { Either } from "./result";
 
-export abstract class BaseAdapter<Aggregate extends BaseAggregate<any>, Model = any> {
-  public abstract toDomain(data: Model): Either<any, Aggregate>;
-  public abstract toPersistence(data: Aggregate): Either<any, Model>
+export abstract class BaseAdapter<From, To> {
+  public abstract build(data: From): Either<any ,To>
 }

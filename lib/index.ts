@@ -9,10 +9,10 @@ import {
   DomainEvent,
 } from './core';
 import { DomainError as BaseDomainError } from './core/domain-error';
-export { BaseAdapter as Adapter } from './core/adapter';
-
 import * as BaseRepository from './core/repository';
 import * as ResultBase from './core/result';
+export { BaseAdapter as Adapter } from './core/adapter';
+export * from "./core/pagination";
 
 export const DomainError = BaseDomainError;
 export class Result {
