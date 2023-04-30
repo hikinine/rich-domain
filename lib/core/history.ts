@@ -11,7 +11,6 @@ export class EntityMetaHistory<T>{
       from: any,
       to: any,
     },
-    debug: string
   }[]
   
   constructor(props: T) {
@@ -21,12 +20,11 @@ export class EntityMetaHistory<T>{
     this.snapshots = [  ]
   }
 
-  public addSnapshot(props: T, update: any, from: any, to: any, ref: any) {
+  public addSnapshot(props: T, update: any, from: any, to: any) {
     this.snapshots.push({
       timestamp: new Date(),
       props: JSON.parse(JSON.stringify(props)),
-      trace: { update,  from,   to, },
-      debug: `${ref?.hashCode?.()?.value} updated key: '${update}'. From: '${from}' to: '${to}'`
+      trace: { update,  from,   to, },    
     })
   }
   

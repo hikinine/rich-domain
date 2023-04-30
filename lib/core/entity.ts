@@ -31,7 +31,7 @@ export abstract class BaseEntity<Props extends EntityProps> {
       set: (target, prop, value, receiver) => {
         const oldValue = Reflect.get(target, prop, receiver)
         Reflect.set(target, prop, value, receiver)
-        this.metaHistory.addSnapshot(this.props, prop, oldValue, value, this)
+        this.metaHistory.addSnapshot(this.props, prop, oldValue, value)
         return true;
       },
     })
