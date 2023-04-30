@@ -9,7 +9,6 @@ export abstract class BaseEntity<Props extends EntityProps> {
   public constructorName = "Entity"
   protected _id: Id;
   protected props: Props
-  protected proxy: Props
   protected autoMapper: AutoMapper<Props>
   protected metaHistory: EntityMetaHistory<Props>
 
@@ -23,22 +22,20 @@ export abstract class BaseEntity<Props extends EntityProps> {
     const id = this.generateOrAssignId(props)
     this._id = id;
     props.id = id;
-    
+
     this.metaHistory = new EntityMetaHistory<Props>(props)
     this.autoMapper = new AutoMapper<Props>()
     this.props = props
-    
-    this.proxy = new Proxy<Props>(this.props, {
+
+    const proxy = new Proxy<Props>(this.props, {
       set: (target, prop, value, receiver) => {
         const oldValue = Reflect.get(target, prop, receiver)
         Reflect.set(target, prop, value, receiver)
         this.metaHistory.addSnapshot(this.props, prop, oldValue, value, this)
         return true;
       },
-
     })
-
-    this.props = this.proxy
+    this.props = proxy
   }
 
   get createdAt() {
