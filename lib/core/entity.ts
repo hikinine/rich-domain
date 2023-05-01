@@ -27,14 +27,25 @@ export abstract class BaseEntity<Props extends EntityProps> {
     this.autoMapper = new AutoMapper<Props>()
     this.props = props
 
-    const proxy = new Proxy<Props>(this.props, {
-      set: (target, prop, value, receiver) => {
-        const oldValue = Reflect.get(target, prop, receiver)
-        Reflect.set(target, prop, value, receiver)
-        this.metaHistory.addSnapshot(this.props, prop, oldValue, value)
-        return true;
-      },
-    })
+    const self = this;
+    const handler = function (): ProxyHandler<Props> {
+      return {
+        get: function (target, prop) {
+          if (['[object Object]', '[object Array]'].indexOf(Object.prototype.toString.call(target[prop])) > -1) {
+            return new Proxy(target[prop], handler());
+          }
+          return target[prop];
+        },
+        set: function (target, prop, value, receiver) {
+          const oldValue = Reflect.get(target, prop, receiver)
+          self.metaHistory.addSnapshot(self.props, prop, oldValue, value)
+          Reflect.set(target, prop, value, receiver)
+          return true;
+        }
+      };
+    };
+
+    const proxy = new Proxy<Props>(this.props, handler());
     this.props = proxy
   }
 
