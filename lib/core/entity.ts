@@ -1,3 +1,4 @@
+import { isProxy } from "util/types";
 import validator from "../utils/validator";
 import { Id } from "./Id";
 import { AutoMapper } from "./auto-mapper";
@@ -31,7 +32,7 @@ export abstract class BaseEntity<Props extends EntityProps> {
     const handler = function (): ProxyHandler<Props> {
       return {
         get: function (target, prop) {
-          if (['[object Object]', '[object Array]'].indexOf(Object.prototype.toString.call(target[prop])) > -1) {
+          if (!isProxy(target) &&  (['[object Object]', '[object Array]'].indexOf(Object.prototype.toString.call(target[prop])) > -1)) {
             return new Proxy(target[prop], handler());
           }
           return target[prop];
@@ -43,6 +44,7 @@ export abstract class BaseEntity<Props extends EntityProps> {
           return true;
         }
       };
+      
     };
 
     const proxy = new Proxy<Props>(this.props, handler());
