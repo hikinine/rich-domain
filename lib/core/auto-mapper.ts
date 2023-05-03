@@ -18,14 +18,14 @@ export class AutoMapper<Props> {
 				if (instance instanceof Array) {
 					accumulator[key] = instance.map((item) => {
 						if (item?.constructorName === "ValueObject")
-							return item?._value
+							return item?.value
 						else
 							return item
 					})
 				}
 				else {
 					if ((instance as any)?.constructorName === "ValueObject")
-						accumulator[key] = (instance as any)?._value
+						accumulator[key] = (instance as any)?.value
 					else
 						accumulator[key] = instance;
 				}
@@ -54,7 +54,7 @@ export class AutoMapper<Props> {
 				if (instance instanceof Array) {
 					accumulator[key] = instance.map((item) => {
 						if (item.constructorName === "ValueObject")
-							return item?._value
+							return item?.value
 						else if (item.constructorName === "Entity")
 							return item?.toPrimitives?.()
 						else
@@ -63,7 +63,7 @@ export class AutoMapper<Props> {
 				}
 				else {
 					if ((instance as any)?.constructorName === "ValueObject") {
-						accumulator[key] = (instance as any)?._value
+						accumulator[key] = (instance as any)?.value
 					}
 					else if ((instance as any).constructorName === "Entity") {
 						accumulator[key] = (instance as any)?.toPrimitives?.()
