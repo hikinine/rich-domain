@@ -1,9 +1,9 @@
-export type ResultError = { message?: string; code?: string | number; metadata?: any; }
+export type ResultError = { message: string }
 export type Either<Error extends ResultError, Result> = Fail<Error, Result> | Ok<Error, Result>;
 export type PromiseEither<Error extends ResultError, Result> = Promise<Either<Error, Result>>;
 
 
-export class Fail<Error extends ResultError , Result> {
+export class Fail<Error extends ResultError, Result> {
   readonly _value: Error;
 
   constructor(value: Error) {

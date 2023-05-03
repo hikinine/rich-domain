@@ -1,3 +1,4 @@
+
 import { EntityMapperPayload } from "./types";
 
 export class AutoMapper<Props> {
@@ -10,7 +11,7 @@ export class AutoMapper<Props> {
 	valueObjectToObj(valueObject: any): { [key in keyof Props]: any } {
 		const value = valueObject._value
 
-		if (typeof value !== "object" || value === null) return value;
+		if (typeof value !== "object" || value === null || value instanceof Date) return value;
 
 		const obj = Object.entries(value as any)
 			.reduce((accumulator, [key, instance]) => {

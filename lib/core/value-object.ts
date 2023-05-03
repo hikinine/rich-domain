@@ -7,11 +7,7 @@ export abstract class BaseValueObject<Value> {
   protected autoMapper: AutoMapper<Value>
 
   constructor(value: Value) {
-    const instance = this.constructor as typeof BaseValueObject<Value>
-    const transformedValue = instance?.transform?.(value);
-    instance?.validate?.(transformedValue)
-
-    this._value = transformedValue
+    this._value = value
     this.autoMapper = new AutoMapper<Value>()
   }
 
@@ -39,10 +35,5 @@ export abstract class BaseValueObject<Value> {
     const obj = Reflect.construct(instance!.constructor, args);
     return obj;
   }
-
-  protected static transform(props: any){
-    return props
-  }
-  protected static validate: (props: any) => void
 }
 

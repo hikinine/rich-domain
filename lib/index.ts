@@ -26,6 +26,7 @@ export class Repository {
   static WriteAndRead = BaseRepository.WriteAndRead
   static Impl = BaseRepository.RepositoryImpl
 }
+export type Maybe<T> = T | null | undefined
 export type Collection<T> = T[]
 export const ok = ResultBase.ok
 export const fail = ResultBase.fail

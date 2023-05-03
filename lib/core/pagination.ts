@@ -1,4 +1,4 @@
-export type PaginationCriteria<Model> = {
+export type PaginationCriteria<Model = any> = {
   offset: number;
   limit: number;
   orderBy?: [keyof Model, "asc" | "desc"];
