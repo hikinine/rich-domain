@@ -1,7 +1,9 @@
-export type Either<Error, Result> = Fail<Error, Result> | Ok<Error, Result>;
-export type PromiseEither<Error, Result> = Promise<Either<Error, Result>>;
+export type ResultError = { message?: string; code?: string | number; metadata?: any; }
+export type Either<Error extends ResultError, Result> = Fail<Error, Result> | Ok<Error, Result>;
+export type PromiseEither<Error extends ResultError, Result> = Promise<Either<Error, Result>>;
 
-export class Fail<Error, Result> {
+
+export class Fail<Error extends ResultError , Result> {
   readonly _value: Error;
 
   constructor(value: Error) {
@@ -20,7 +22,7 @@ export class Fail<Error, Result> {
   }
 }
 
-export class Ok<Error, Result> {
+export class Ok<Error extends ResultError, Result> {
   private readonly _value: Result;
 
   constructor(value: Result) {
@@ -39,16 +41,16 @@ export class Ok<Error, Result> {
   }
 }
 
-export const fail = <Error, Result>(l: Error): Either<Error, Result> => {
+export const fail = <Error extends ResultError, Result>(l: Error): Either<Error, Result> => {
   return new Fail(l);
 };
 
-export const ok = <Error, Result>(a?: Result): Either<Error, Result> => {
+export const ok = <Error extends ResultError, Result>(a?: Result): Either<Error, Result> => {
   return new Ok<Error, Result>(a!);
 };
 
-export const combine = (results: Either<any, any>[]): Either<any[], any[]> => {
-  const errors: any[] = [];
+export const combine = (results: Either<any, any>[]): Either<any, any[]> => {
+  const errors: any = [];
   const values: any[] = [];
 
   for (const result of results) {

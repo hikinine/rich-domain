@@ -31,7 +31,7 @@ export const ok = ResultBase.ok
 export const fail = ResultBase.fail
 export const Ok = ResultBase.Ok
 export const Fail = ResultBase.Fail
-export type Either<Error, Result> = ResultBase.Either<Error, Result>
+export type Either<Error extends ResultBase.ResultError, Result> = ResultBase.Either<Error, Result>
 
 export namespace Domain {
   export const Entity = BaseEntity;
@@ -55,14 +55,14 @@ export namespace Domain {
   };
 
 
-  export interface Service<R extends Either<unknown, unknown>> {
+  export interface Service<R extends Either<any, unknown>> {
     execute(e?: any): Promise<R>
   }
 }
 
 export namespace Application {
   export interface EventPublisher<AggregateType> extends BaseEventPublisher<AggregateType> { }
-  export interface Usecase<R extends Either<unknown, unknown>> {
+  export interface Usecase<R extends Either<any, unknown>> {
     execute(e?: any): Promise<R>
   }
 }

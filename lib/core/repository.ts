@@ -5,22 +5,22 @@ import { Either } from "./result";
 
 
 export abstract class ReadRepository<Aggregate extends BaseAggregate<any>> {
-  abstract find<T extends unknown = any>(criteria?: PaginationCriteria<T>): Promise<Either<unknown, Pagination<Aggregate>>>
-  abstract findById(id: string): Promise<Either<unknown, Aggregate>>
+  abstract find<T extends unknown = any>(criteria?: PaginationCriteria<T>): Promise<Either<any, Pagination<Aggregate>>>
+  abstract findById(id: string): Promise<Either<any, Aggregate>>
 }
 
 export abstract class WriteRepository<Aggregate extends BaseAggregate<any>> {
-  abstract create(entity: Aggregate): Promise<Either<unknown, void>>
-  abstract update(entity: Aggregate): Promise<Either<unknown, void>>
-  abstract delete(id: string): Promise<Either<unknown, void>>
+  abstract create(entity: Aggregate): Promise<Either<any, void>>
+  abstract update(entity: Aggregate): Promise<Either<any, void>>
+  abstract delete(id: string): Promise<Either<any, void>>
 }
 
 export abstract class WriteAndRead<Aggregate extends BaseAggregate<any>> {
-  abstract find<T extends unknown = any>(criteria?: PaginationCriteria<T>): Promise<Either<unknown, Pagination<Aggregate>>>
-  abstract findById(id: string): Promise<Either<unknown, Aggregate>>
-  abstract create(entity: Aggregate): Promise<Either<unknown, void>>
-  abstract update(entity: Aggregate): Promise<Either<unknown, void>>
-  abstract delete(id: string): Promise<Either<unknown, void>>
+  abstract find<T extends unknown = any>(criteria?: PaginationCriteria<T>): Promise<Either<any, Pagination<Aggregate>>>
+  abstract findById(id: string): Promise<Either<any, Aggregate>>
+  abstract create(entity: Aggregate): Promise<Either<any, void>>
+  abstract update(entity: Aggregate): Promise<Either<any, void>>
+  abstract delete(id: string): Promise<Either<any, void>>
 }
 
 export abstract class RepositoryImpl<Aggregate extends BaseAggregate<any>> extends WriteAndRead<Aggregate> {
