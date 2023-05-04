@@ -50,20 +50,15 @@ export const ok = <Error extends ResultError, Result>(a?: Result): Either<Error,
 };
 
 export const combine = (results: Either<any, any>[]): Either<any, any[]> => {
-  const errors: any = [];
   const values: any[] = [];
 
-  for (const result of results) {
+  for (const result of results) {    
     if (result.isFail()) {
-      errors.push(result.getValue());
-    } else {
-      values.push(result.getValue());
+      return fail(result.getValue());
     }
+    
+    values.push(result.getValue());
   }
 
-  if (errors.length > 0) {
-    return fail(errors);
-  } else {
-    return ok(values);
-  }
+  return ok(values);
 };
