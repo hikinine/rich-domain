@@ -6,13 +6,14 @@ export * as Repository from "./core/repository";
 export * as RepositoryError from "./core/repository-errors";
 export * as Result from './core/result';
 export * from "./core/types";
-import { Id as BaseId } from "./core/Id";
-import { Aggregate as BaseAggregate } from "./core/aggregate";
-import { DomainEvent as BaseDomainEvent } from "./core/domain-event";
-import { Entity as BaseEntity } from "./core/entity";
-import { Either } from "./core/result";
-import { EntityProps as BaseEntityProps, EventPublisher as BaseEventPublisher } from "./core/types";
-import { ValueObject as BaseValueObject } from "./core/value-object";
+export { Either };
+  import { Id as BaseId } from "./core/Id";
+  import { Aggregate as BaseAggregate } from "./core/aggregate";
+  import { DomainEvent as BaseDomainEvent } from "./core/domain-event";
+  import { Entity as BaseEntity } from "./core/entity";
+  import { Either } from './core/result';
+  import { EntityProps as BaseEntityProps, EventPublisher as BaseEventPublisher } from "./core/types";
+  import { ValueObject as BaseValueObject } from "./core/value-object";
 
 export type Maybe<T> = T | null | undefined
 export type Collection<T> = T[]
