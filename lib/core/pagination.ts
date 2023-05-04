@@ -1,7 +1,17 @@
-export type PaginationCriteria<Model = any> = {
+export class PaginationCriteria<Model = any> {
   offset: number;
   limit: number;
   orderBy?: [keyof Model, "asc" | "desc"];
+
+  constructor(props: {
+    offset: number;
+    limit: number;
+    orderBy?: [keyof Model, "asc" | "desc"];
+  }) {
+    this.offset = props.offset;
+    this.limit = props.limit;
+    this.orderBy = props.orderBy;
+  }
 }
 
 export type PaginationResult<Model> = {
@@ -21,7 +31,7 @@ export class Pagination<Aggregate> {
     this.currentPage = Math.floor(criteria.offset / criteria.limit) + 1
     this.totalPages = Math.ceil(result.total / criteria.limit)
     this.results = result.data.length
-    this.totalResults = result.data.length
+    this.totalResults = result.total
     this.orderBy = criteria?.orderBy?.join?.(" ")
     this.data = result.data
   }

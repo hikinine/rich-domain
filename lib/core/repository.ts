@@ -6,7 +6,7 @@ import { Either } from "./result";
 
 
 export abstract class ReadRepository<Aggregate extends BaseAggregate<any>> {
-  abstract find(criteria?: PaginationCriteria): Promise<Either<RepositoryQueryError, Pagination<Aggregate>>>
+  abstract find(criteria: PaginationCriteria): Promise<Either<RepositoryQueryError, Pagination<Aggregate>>>
   abstract findById(id: string): Promise<Either<RepositoryQueryError, Aggregate>>
 }
 
@@ -17,7 +17,7 @@ export abstract class WriteRepository<Aggregate extends BaseAggregate<any>> {
 }
 
 export abstract class WriteAndRead<Aggregate extends BaseAggregate<any>> {
-  abstract find(criteria?: PaginationCriteria): Promise<Either<RepositoryQueryError, Pagination<Aggregate>>>
+  abstract find(criteria: PaginationCriteria): Promise<Either<RepositoryQueryError, Pagination<Aggregate>>>
   abstract findById(id: string): Promise<Either<RepositoryQueryError, Aggregate>>
   abstract create(entity: Aggregate): Promise<Either<RepositoryPersistenceError, void>>
   abstract update(entity: Aggregate): Promise<Either<RepositoryPersistenceError, void>>
