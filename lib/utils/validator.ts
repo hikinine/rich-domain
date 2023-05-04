@@ -1,4 +1,4 @@
-import { BaseAggregate as Aggregate, BaseEntity as Entity, Id, BaseValueObject as ValueObject } from "../core";
+import { Aggregate, Entity, Id, ValueObject } from "../core";
 
 export class Validator {
 	private static instance: Validator = null as unknown as Validator;

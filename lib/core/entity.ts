@@ -5,7 +5,7 @@ import { EntityMetaHistory } from "./history";
 import { EntityProps } from "./types";
 
 
-export abstract class BaseEntity<Props extends EntityProps> {
+export abstract class Entity<Props extends EntityProps> {
   public constructorName = "Entity"
   protected _id: Id;
   protected props: Props
@@ -61,7 +61,7 @@ export abstract class BaseEntity<Props extends EntityProps> {
     return this._id;
   }
 
-  public clone(): BaseEntity<Props> {
+  public clone(): Entity<Props> {
     const instance = Reflect.getPrototypeOf(this);
     const args = [this.props];
     const entity = Reflect.construct(instance!.constructor, args);
@@ -78,12 +78,12 @@ export abstract class BaseEntity<Props extends EntityProps> {
 
   public hashCode(): Id {
     const name = Reflect.getPrototypeOf(this);
-    return new Id(`[Entity@${name?.constructor?.name}]:${this.id.value}`);
+    return  Id.create(`[Entity@${name?.constructor?.name}]:${this.id.value}`).getValue() as Id;
   }
 
 
 
-  public isEqual(other: BaseEntity<Props>): boolean {
+  public isEqual(other: Entity<Props>): boolean {
     const currentProps = Object.assign({}, {}, { ...this.props });
     const providedProps = Object.assign({}, {}, { ...other.props });
     delete currentProps?.['createdAt'];
@@ -103,7 +103,7 @@ export abstract class BaseEntity<Props extends EntityProps> {
     const { id } = props
     const isID = validator.isID(id);
     const isString = validator.isString(id)
-    const newId = isString ? new Id(id as any) : isID ? id : new Id();
+    const newId = isString ?  Id.create(id as any).getValue() : isID ? id :  Id.create().getValue();
     return newId! as Id
   }
 

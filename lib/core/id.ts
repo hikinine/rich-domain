@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { Either, ok } from "./result";
 import { IdImplementation } from "./types";
 
 /**
@@ -11,7 +12,10 @@ export class Id implements IdImplementation{
   private _isNew: boolean;
   private _createdAt: Date;
 
-  constructor(id?: string) {
+  public static create(id?: string): Either<any, Id> {
+    return ok(new Id(id))
+  }
+  private constructor(id?: string) {
     this._createdAt = new Date();
     
     

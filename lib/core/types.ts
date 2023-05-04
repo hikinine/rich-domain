@@ -1,6 +1,4 @@
-import { DomainError } from "./domain-error";
-
-export type EntityProps = {
+export interface EntityProps {
   id?: IdImplementation,
   createdAt?: Date,
   updatedAt?: Date
@@ -32,9 +30,4 @@ export interface EntityMapperPayload {
 
 export interface EventPublisher<AggregateType> {
   publish(event: IDomainEvent<AggregateType> ): void;
-}
-
-export interface Rules {
-  Error: DomainError;
-  isBrokenIf(): boolean;
 }

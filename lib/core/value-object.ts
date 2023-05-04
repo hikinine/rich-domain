@@ -1,7 +1,7 @@
 
 import { AutoMapper } from "./auto-mapper";
 
-export abstract class BaseValueObject<Value> {
+export abstract class ValueObject<Value> {
   public constructorName = "ValueObject"
   protected _value: Value
   protected autoMapper: AutoMapper<Value>
@@ -16,7 +16,7 @@ export abstract class BaseValueObject<Value> {
     return this.autoMapper.valueObjectToObj(this)
   }
 
-  public isEqual(other: BaseValueObject<Value>): boolean {
+  public isEqual(other: ValueObject<Value>): boolean {
     const value = other.value;
 
     if (typeof value === "object" && (typeof this.value === "object")) {
@@ -29,7 +29,7 @@ export abstract class BaseValueObject<Value> {
     }
   }
 
-  public clone(): BaseValueObject<Value> {
+  public clone(): ValueObject<Value> {
     const instance = Reflect.getPrototypeOf(this);
     const args = [this._value];
     const obj = Reflect.construct(instance!.constructor, args);
