@@ -6,6 +6,7 @@ export * as Repository from "./core/repository";
 export * as RepositoryError from "./core/repository-errors";
 export * as Result from './core/result';
 export * from "./core/types";
+export * from "./decorators";
 export { Either };
   import { Id as BaseId } from "./core/Id";
   import { Aggregate as BaseAggregate } from "./core/aggregate";

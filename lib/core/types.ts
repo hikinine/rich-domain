@@ -29,5 +29,5 @@ export interface EntityMapperPayload {
 }
 
 export interface EventPublisher<AggregateType> {
-  publish(event: IDomainEvent<AggregateType> ): void;
+  publish(event: IDomainEvent<AggregateType> ): void | Promise<void>;
 }

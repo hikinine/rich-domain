@@ -48,9 +48,9 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
     }
   }
 
-  public dispatchAll(eventPublisher: EventPublisher<Aggregate<Props>>) {
+  public async dispatchAll(eventPublisher: EventPublisher<Aggregate<Props>>) {
     for (const event of this.domainEvents) {
-      eventPublisher.publish(event);
+      await eventPublisher.publish(event);
     }
   }
 }
