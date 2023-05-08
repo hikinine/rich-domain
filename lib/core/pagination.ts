@@ -1,15 +1,11 @@
-export class PaginationCriteria<Model = any> {
+export class PaginationCriteria {
   offset: number;
   limit: number;
-  orderBy?: [keyof Model, "asc" | "desc"];
+  orderBy?: [string, "asc" | "desc"];
 
-  constructor(props: {
-    offset: number;
-    limit: number;
-    orderBy?: [keyof Model, "asc" | "desc"];
-  }) {
-    this.offset = props.offset;
-    this.limit = props.limit;
+  constructor(props: PaginationCriteria) {
+    this.offset = Number(props.offset || 0);
+    this.limit = Number(props.limit || 10);
     this.orderBy = props.orderBy;
   }
 }
@@ -20,19 +16,32 @@ export type PaginationResult<Model> = {
 }
 
 export class Pagination<Aggregate> {
+  public readonly query: {
+    currentPage: number
+    totalPages: number
+    totalResults: number
+    timestamp: number
+    config: {
+      offset: number 
+      limit: number
+      orderBy?: string
+    }
+  }
   public readonly data: Aggregate[]
-  public readonly currentPage: number
-  public readonly totalPages: number
-  public readonly results: number
-  public readonly totalResults: number
-  public readonly orderBy?: string
 
-  constructor(criteria: PaginationCriteria<any>, result: PaginationResult<any>) {
-    this.currentPage = Math.floor(criteria.offset / criteria.limit) + 1
-    this.totalPages = Math.ceil(result.total / criteria.limit)
-    this.results = result.data.length
-    this.totalResults = result.total
-    this.orderBy = criteria?.orderBy?.join?.(" ")
+  constructor(criteria: PaginationCriteria, result: PaginationResult<any>) {
+
     this.data = result.data
+    this.query = {
+      currentPage: Math.floor(criteria.offset / criteria.limit) + 1,
+      totalPages: Math.ceil(result.total / criteria.limit),
+      totalResults: result.total,
+      config: {
+        offset: criteria.offset,
+        limit: criteria.limit,
+        orderBy: criteria?.orderBy?.join?.(" "),
+      },
+      timestamp: Date.now(),
+    }
   }
 }

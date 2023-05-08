@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import ShortUUID from 'short-uuid';
 import { Either, ok } from "./result";
 import { IdImplementation } from "./types";
 
@@ -7,21 +8,22 @@ import { IdImplementation } from "./types";
  * @method create
  * @param value as string
  */
+const short = ShortUUID()
 export class Id implements IdImplementation{
   private _value: string;
   private _isNew: boolean;
   private _createdAt: Date;
 
-  public static create(id?: string): Either<any, Id> {
+  public static create(id?: string): Either<never, Id> {
     return ok(new Id(id))
   }
   private constructor(id?: string) {
     this._createdAt = new Date();
-    
+  
     
     if (typeof id === 'undefined') {
       const uuid = randomUUID()
-      this._value = uuid;
+      this._value = short.fromUUID(uuid);
       this._isNew = true
     }
     else {
@@ -41,6 +43,9 @@ export class Id implements IdImplementation{
    */
   get value(): string {
     return this._value;
+  }
+  get longValue(): string {
+    return short.toUUID(this._value)
   }
 
   isNew(): boolean {
