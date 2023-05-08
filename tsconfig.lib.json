@@ -6,6 +6,7 @@
 		"removeComments": false,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
+		"esModuleInterop": true,
 		"skipDefaultLibCheck": false,
 		"skipLibCheck": false,
 		"declarationMap": true,
