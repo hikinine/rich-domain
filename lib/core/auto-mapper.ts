@@ -1,4 +1,5 @@
 
+import { Id } from "./Id";
 import { EntityMapperPayload } from "./types";
 
 export class AutoMapper<Props> {
@@ -26,6 +27,9 @@ export class AutoMapper<Props> {
 				else {
 					if ((instance as any)?.constructorName === "ValueObject")
 						accumulator[key] = (instance as any)?.value
+					else if ((instance as any) instanceof Id) {
+						accumulator[key] = (instance as any)?._value
+					}
 					else
 						accumulator[key] = instance;
 				}
@@ -46,7 +50,7 @@ export class AutoMapper<Props> {
 	entityToObj(entity: any): { [key in keyof Props]: any } & EntityMapperPayload {
 
 		const initialValues: any = { id: entity?.id?._value };
-		
+
 		const obj = Object.entries(entity.props)
 			.reduce((accumulator, [key, instance]) => {
 				if (key === "id") return accumulator;
@@ -67,6 +71,9 @@ export class AutoMapper<Props> {
 					}
 					else if ((instance as any).constructorName === "Entity") {
 						accumulator[key] = (instance as any)?.toPrimitives?.()
+					}
+					else if ((instance as any) instanceof Id) {
+						accumulator[key] = (instance as any)?._value
 					}
 					else {
 						accumulator[key] = instance

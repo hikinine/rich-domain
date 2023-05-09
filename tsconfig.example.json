@@ -12,8 +12,7 @@
 		"target": "ES2020",
 		"strict": true,
 		"lib": ["ES2020"],
-		"outDir": "./example",
-		"esModuleInterop": true
+		"outDir": "./example"
 	},
 	"include": ["example/*"],
 	"exclude": ["/**/*.spec.ts", "/*.spec.ts", "tests", "*/tests", "lib/*"]
