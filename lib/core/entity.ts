@@ -18,35 +18,40 @@ export abstract class Entity<Props extends EntityProps> {
   }
   constructor(props: Props) {
     this.registerTimestampSignature(props)
-
     const id = this.generateOrAssignId(props)
     this._id = id;
     props.id = id;
-
+    
     this.metaHistory = new EntityMetaHistory<Props>(props)
     this.autoMapper = new AutoMapper<Props>()
     this.props = props
-
     const self = this;
-
-    const handler = function (): ProxyHandler<Props> {
+    const handler = function (keyProp?: string): ProxyHandler<Props> {
       return {
         get: function (target, prop) {
-          if (['[object Object]', '[object Array]'].indexOf(Object.prototype.toString.call(target[prop])) > -1) {
-            return new Proxy(target[prop], handler());
+          if (
+            //should refactor. typeof object && !== null doesnt work somehow
+            ['[object Object]', '[object Array]'].indexOf(
+              Object.prototype.toString.call(target[prop]),
+            ) > -1
+          ) {
+            return new Proxy(target[prop], handler(prop as string));
           }
-          return target[prop];
+          return Reflect.get(target, prop);
         },
         set: function (target, prop, value, receiver) {
           const oldValue = Reflect.get(target, prop, receiver)
-          self.metaHistory.addSnapshot(self.props, prop, oldValue, value)
+          if (!Array.isArray(receiver)) {
+            self.metaHistory.addSnapshot(self.props, prop, oldValue, value)
+          }
+          else if (prop !== 'length') {
+            self.metaHistory.addSnapshot(self.props, keyProp, oldValue, value, Number(prop))
+          }
           Reflect.set(target, prop, value, receiver)
           return true;
-        }
+        },
       };
     };
-
-
     const proxy = new Proxy<Props>(this.props, handler());
     this.props = proxy
   }
@@ -78,10 +83,8 @@ export abstract class Entity<Props extends EntityProps> {
 
   public hashCode(): Id {
     const name = Reflect.getPrototypeOf(this);
-    return  Id.create(`[Entity@${name?.constructor?.name}]:${this.id.value}`).getValue() as Id;
+    return Id.create(`[Entity@${name?.constructor?.name}]:${this.id.value}`).getValue() as Id;
   }
-
-
 
   public isEqual(other: Entity<Props>): boolean {
     const currentProps = Object.assign({}, {}, { ...this.props });
@@ -103,7 +106,7 @@ export abstract class Entity<Props extends EntityProps> {
     const { id } = props
     const isID = validator.isID(id);
     const isString = validator.isString(id)
-    const newId = isString ?  Id.create(id as any).getValue() : isID ? id :  Id.create().getValue();
+    const newId = isString ? Id.create(id as any).getValue() : isID ? id : Id.create().getValue();
     return newId! as Id
   }
 

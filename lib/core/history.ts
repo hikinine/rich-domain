@@ -1,17 +1,21 @@
+
+export type Snapshots<T> = {
+  props: T,
+  timestamp: Date,
+  trace: {
+    update: string,
+    position?: number,
+    from: any,
+    to: any,
+    
+  },
+}
 export class EntityMetaHistory<T>{
 
   public restartOnFinish: boolean
   public returnCurrentOnReversion: boolean
   public initialProps: T
-  public snapshots: {
-    props: T,
-    timestamp: Date,
-    trace: {
-      update: string,
-      from: any,
-      to: any,
-    },
-  }[]
+  public snapshots: Snapshots<T>[]
   
   constructor(props: T) {
     this.restartOnFinish = false
@@ -20,12 +24,17 @@ export class EntityMetaHistory<T>{
     this.snapshots = [  ]
   }
 
-  public addSnapshot(props: T, update: any, from: any, to: any) {
-    this.snapshots.push({
+  public addSnapshot(props: T, update: any, from: any, to: any, position?: number) {
+    const snapshot: Snapshots<T> = {
       timestamp: new Date(),
       props: JSON.parse(JSON.stringify(props)),
-      trace: { update,  from,   to, },    
-    })
+      trace: { update,  from,   to, }, 
+    };
+
+    if (typeof position !== 'undefined') {
+      snapshot.trace.position = position
+    }
+    this.snapshots.push(snapshot)
   }
   
 }
