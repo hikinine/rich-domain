@@ -2,6 +2,7 @@ import validator from "../utils/validator";
 import { Id } from "./Id";
 import { AutoMapper } from "./auto-mapper";
 import { EntityMetaHistory } from "./history";
+import { proxyHandler } from "./proxy";
 import { EntityProps } from "./types";
 
 
@@ -25,35 +26,8 @@ export abstract class Entity<Props extends EntityProps> {
     this.metaHistory = new EntityMetaHistory<Props>(props)
     this.autoMapper = new AutoMapper<Props>()
     this.props = props
-    const self = this;
-    const handler = function (keyProp?: string): ProxyHandler<Props> {
-      return {
-        get: function (target, prop) {
-          if (
-            //should refactor. typeof object && !== null doesnt work somehow
-            ['[object Object]', '[object Array]'].indexOf(
-              Object.prototype.toString.call(target[prop]),
-            ) > -1
-          ) {
-            return new Proxy(target[prop], handler(prop as string));
-          }
-          return Reflect.get(target, prop);
-        },
-        set: function (target, prop, value, receiver) {
-          const oldValue = Reflect.get(target, prop, receiver)
-          if (!Array.isArray(receiver)) {
-            self.metaHistory.addSnapshot(self.props, prop, oldValue, value)
-          }
-          else if (prop !== 'length') {
-            self.metaHistory.addSnapshot(self.props, keyProp, oldValue, value, Number(prop))
-          }
-          Reflect.set(target, prop, value, receiver)
-          return true;
-        },
-      };
-    };
-    const proxy = new Proxy<Props>(this.props, handler());
-    this.props = proxy
+    const proxy = new Proxy<Props>(this.props, proxyHandler(this));
+    this.props = proxy;
   }
 
   get createdAt() {

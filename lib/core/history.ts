@@ -1,14 +1,16 @@
 
+export type SnapshotTrace = {
+  update: string,
+  position?: number,
+  action?: string
+  from?: any,
+  to?: any,
+  
+}
 export type Snapshots<T> = {
   props: T,
-  timestamp: Date,
-  trace: {
-    update: string,
-    position?: number,
-    from: any,
-    to: any,
-    
-  },
+  timestamp?: Date,
+  trace: SnapshotTrace,
 }
 export class EntityMetaHistory<T>{
 
@@ -24,15 +26,25 @@ export class EntityMetaHistory<T>{
     this.snapshots = [  ]
   }
 
-  public addSnapshot(props: T, update: any, from: any, to: any, position?: number) {
+  public addSnapshot(data: Snapshots<T>) {
     const snapshot: Snapshots<T> = {
       timestamp: new Date(),
-      props: JSON.parse(JSON.stringify(props)),
-      trace: { update,  from,   to, }, 
+      props: JSON.parse(JSON.stringify(data.props)),
+      trace: {
+        update: data.trace.update
+      }, 
     };
 
-    if (typeof position !== 'undefined') {
-      snapshot.trace.position = position
+    if (!data.trace.action) {
+      snapshot.trace.from = data.trace.from
+      snapshot.trace.to = data.trace.to
+    }
+    else {
+      snapshot.trace.action = data.trace.action
+    }
+
+    if (typeof data.trace.position !== 'undefined') {
+      snapshot.trace.position = data.trace.position
     }
     this.snapshots.push(snapshot)
   }
