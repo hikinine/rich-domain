@@ -13,6 +13,13 @@ export class HttpError {
   ) { }
 }
 
+export class ApplicationLevelError {
+  constructor(
+    public readonly message: string,
+    public readonly metadata?: any
+  ) { }
+}
+
 export class RepositoryError {
   constructor(
     public readonly message: string,

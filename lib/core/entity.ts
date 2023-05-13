@@ -1,5 +1,6 @@
 import validator from "../utils/validator";
 import { Id } from "./Id";
+import { EntityAssert } from "./assert";
 import { AutoMapper } from "./auto-mapper";
 import { EntityMetaHistory } from "./history";
 import { proxyHandler } from "./proxy";
@@ -17,18 +18,41 @@ export abstract class Entity<Props extends EntityProps> {
   get history() {
     return this.metaHistory
   }
-  constructor(props: Props) {
+  constructor(input: Props) {
+    const assert = new EntityAssert(input)
+
+    const instance = this.constructor as typeof Entity<Props>
+    const props = instance?.transform?.(input);
+    instance?.instanceOfValidation?.(props, assert)
+    instance?.rulesOnCreate?.(props)
+
     this.registerTimestampSignature(props)
     const id = this.generateOrAssignId(props)
     this._id = id;
     props.id = id;
-    
+
     this.metaHistory = new EntityMetaHistory<Props>(props)
     this.autoMapper = new AutoMapper<Props>()
     this.props = props
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
   }
+
+  public static instanceOfValidation<Props extends EntityProps>(
+    props: Props,
+    assert: EntityAssert<Props>
+  ) {
+    return props && assert
+  }
+  public static transform<Props extends EntityProps>(props: Props) {
+    return props
+  }
+  public static rulesOnCreate<Props extends EntityProps>(props: Props) {
+    if (!props) return false
+    return true
+  }
+
+
 
   get createdAt() {
     return this.props?.createdAt;
@@ -57,7 +81,7 @@ export abstract class Entity<Props extends EntityProps> {
 
   public hashCode(): Id {
     const name = Reflect.getPrototypeOf(this);
-    return Id.create(`[Entity@${name?.constructor?.name}]:${this.id.value}`).getValue() as Id;
+    return new Id(`[Entity@${name?.constructor?.name}]:${this.id.value}`)
   }
 
   public isEqual(other: Entity<Props>): boolean {
@@ -80,7 +104,7 @@ export abstract class Entity<Props extends EntityProps> {
     const { id } = props
     const isID = validator.isID(id);
     const isString = validator.isString(id)
-    const newId = isString ? Id.create(id as any).getValue() : isID ? id : Id.create().getValue();
+    const newId = isString ? new Id(id as any) : isID ? id : new Id()
     return newId! as Id
   }
 

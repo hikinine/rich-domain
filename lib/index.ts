@@ -25,17 +25,17 @@ export namespace Domain {
   export const ValueObject = BaseValueObject
   export const Event = BaseDomainEvent
   export const Id = BaseId
-  export type UUID4 = BaseId
+  export type Id = BaseId
   export type EntityProps = BaseEntityProps
   
-  export interface Service<R extends Either<any, unknown>> {
+  export interface Service<R> {
     execute(e?: any): Promise<R>
   }
 }
 
 export namespace Application {
   export interface EventPublisher<AggregateType> extends BaseEventPublisher<AggregateType> { }
-  export interface Usecase<R extends Either<any, unknown>> {
+  export interface Usecase<R> {
     execute(e?: any): Promise<R>
   }
 }
