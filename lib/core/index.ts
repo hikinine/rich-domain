@@ -1,5 +1,6 @@
 export * from "./Id"
 export * from "./aggregate"
+export * from "./assert"
 export * from "./auto-mapper"
 export * from "./domain-event"
 export * from "./entity"
