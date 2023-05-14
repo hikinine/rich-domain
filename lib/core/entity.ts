@@ -21,7 +21,7 @@ export abstract class Entity<Props extends EntityProps> {
   constructor(input: Props) {
     const assert = new EntityAssert(input)
 
-    const instance = this.constructor as typeof Entity<Props>
+    const instance = this.constructor as typeof Entity<any>
     const props = instance?.transform?.(input);
     instance?.instanceOfValidation?.(assert, props)
     instance?.rulesOnCreate?.(props)
@@ -36,21 +36,21 @@ export abstract class Entity<Props extends EntityProps> {
     this.props = props
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
-    
+
     instance?.onCreate?.(this)
   }
 
-  static onCreate(entity: any): any { }
-  static instanceOfValidation(
+  protected static onCreate(entity: any): any { return Boolean(entity) }
+  protected static instanceOfValidation(
     assert: EntityAssert<any>,
     props?: any
   ): any {
     return props && assert
   }
-  static transform(props: any): any {
+  protected static transform(props: any): any {
     return props
   }
-  static rulesOnCreate(props: any): any {
+  protected static rulesOnCreate(props: any): any {
     return Boolean(props)
   }
 
