@@ -23,7 +23,7 @@ export abstract class Entity<Props extends EntityProps> {
 
     const instance = this.constructor as typeof Entity<Props>
     const props = instance?.transform?.(input);
-    instance?.instanceOfValidation?.(props, assert)
+    instance?.instanceOfValidation?.(assert, props)
     instance?.rulesOnCreate?.(props)
 
     this.registerTimestampSignature(props)
@@ -36,20 +36,22 @@ export abstract class Entity<Props extends EntityProps> {
     this.props = props
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
+    
+    instance?.onCreate?.(this)
   }
 
-  public static instanceOfValidation<Props extends EntityProps>(
-    props: Props,
-    assert: EntityAssert<Props>
-  ) {
+  static onCreate(entity: any): any { }
+  static instanceOfValidation(
+    assert: EntityAssert<any>,
+    props?: any
+  ): any {
     return props && assert
   }
-  public static transform<Props extends EntityProps>(props: Props) {
+  static transform(props: any): any {
     return props
   }
-  public static rulesOnCreate<Props extends EntityProps>(props: Props) {
-    if (!props) return false
-    return true
+  static rulesOnCreate(props: any): any {
+    return Boolean(props)
   }
 
 
