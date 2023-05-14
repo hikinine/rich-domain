@@ -27,6 +27,8 @@ export namespace Domain {
   export const Event = BaseDomainEvent
   export const Id = BaseId
   export type Id = BaseId
+  export type Aggregate<T extends EntityProps> = BaseAggregate<T>
+  export type Entity<T extends EntityProps> = BaseEntity<T>
   export type EntityProps = BaseEntityProps
   
   export interface Service<R> {
