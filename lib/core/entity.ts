@@ -18,7 +18,7 @@ export abstract class Entity<Props extends EntityProps> {
   get history() {
     return this.metaHistory
   }
-  constructor(input: Props) {
+  constructor(input: Props, options?: { isAggregate?: boolean }) {
     const assert = new EntityAssert(input)
 
     const instance = this.constructor as typeof Entity<any>
@@ -37,7 +37,9 @@ export abstract class Entity<Props extends EntityProps> {
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
 
-    instance?.onCreate?.(this)
+    if (!options?.isAggregate) {
+      instance?.onCreate?.(this)
+    }
   }
 
   protected static onCreate(entity: any): any { return Boolean(entity) }

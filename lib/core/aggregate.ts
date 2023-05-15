@@ -5,11 +5,13 @@ import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } 
 
 export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
 
-  private domainEvents: Array<IDomainEvent<Aggregate<Props>>>;
+  private domainEvents: Array<IDomainEvent<Aggregate<Props>>> = []
 
-  constructor(props: Props) {
-    super(props)
-    this.domainEvents = new Array<IDomainEvent<Aggregate<Props>>>();
+  constructor(props: Props, ) {
+    super(props, { isAggregate: true })
+
+    const instance = this.constructor as typeof Entity<any>
+    instance?.onCreate?.(this)
   }
 
   public hashCode() {

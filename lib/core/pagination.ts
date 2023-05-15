@@ -3,10 +3,10 @@ export class PaginationCriteria {
   limit: number;
   orderBy?: [string, "asc" | "desc"];
 
-  constructor(props: PaginationCriteria) {
+  constructor(props: any) {
     this.offset = Number(props.offset || 0);
     this.limit = Number(props.limit || 10);
-    this.orderBy = props.orderBy;
+    this.orderBy = props?.orderBy;
   }
 }
 
