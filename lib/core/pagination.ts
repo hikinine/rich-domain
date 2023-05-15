@@ -14,7 +14,7 @@ export type PaginationResult<Model> = {
   data: Model[];
   total: number;
 }
-
+type AConstructorTypeOf = new (...args: any[]) => any;
 export class Pagination<Aggregate> {
   public readonly query: {
     currentPage: number
@@ -22,7 +22,7 @@ export class Pagination<Aggregate> {
     totalResults: number
     timestamp: number
     config: {
-      offset: number 
+      offset: number
       limit: number
       orderBy?: string
     }
@@ -42,6 +42,13 @@ export class Pagination<Aggregate> {
         orderBy: criteria?.orderBy?.join?.(" "),
       },
       timestamp: Date.now(),
+    }
+  }
+
+  public toPublicView?<T extends AConstructorTypeOf>(clazz: T): Pagination<T> {
+    return {
+      query: this.query,
+      data: this.data.map((item) => new clazz(item))
     }
   }
 }
