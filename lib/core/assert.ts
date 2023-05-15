@@ -1,5 +1,5 @@
 
-export type AssertSchema<T> =  [keyof T, "nullable" | "required", "one" | "each", any, string][]
+export type AssertSchema<T> = [keyof T, "nullable" | "required", "one" | "each", any, string][]
 
 export class EntityAssert<Props> {
   private props: Props | null;
@@ -30,34 +30,35 @@ export class EntityAssert<Props> {
     return null;
   }
 
-  fromSchema<T>(schema: AssertSchema<T>, onMessage: (friendlyProp: string, value: any) => string){ 
+  fromSchema<T>(schema: AssertSchema<T>, onMessage: (friendlyProp: string, value: any) => string) {
     for (const row of schema) {
       const [key, type, ammount, constructor, friendlyProp] = row
 
       const stateRequired = type === "required"
       const stateEach = ammount === "each"
+      const value = (this.props as any)[key as string]
 
       if (!stateEach) {
-        if (!this.value) {
+        if (!value) {
           if (stateRequired) {
             this.errors.push({
-              message: onMessage(friendlyProp as string, this.value),
+              message: onMessage(friendlyProp as string, value),
               metadata: {
                 key: key as string,
-                value: this.value,
+                value: value,
                 shouldBeRequired: true,
                 notInstanceof: false
               }
             })
           }
-  
+
         }
-        else if (!(this.value instanceof constructor)) {
+        else if (!(value instanceof constructor)) {
           this.errors.push({
-            message: onMessage(friendlyProp as string, this.value),
+            message: onMessage(friendlyProp as string, value),
             metadata: {
               key: key as string,
-              value: this.value,
+              value: value,
               shouldBeRequired: false,
               notInstanceof: true
             }
@@ -65,35 +66,34 @@ export class EntityAssert<Props> {
         }
       }
       else {
-        if (!Array.isArray(this.value)) {
+        if (!Array.isArray(value)) {
           this.errors.push({
             message: `Internal Error. The property ${key as string} should be an array`,
             metadata: {} as any
           });
           continue;
-
         }
-    
-        for (const value of this.value as Array<any>) {
-          if (value) {
+
+        for (const currentValue of value as Array<any>) {
+          if (currentValue) {
             if (stateRequired) {
               this.errors.push({
-                message: onMessage(friendlyProp as string, this.value),
+                message: onMessage(friendlyProp as string, value),
                 metadata: {
                   key: key as string,
-                  value: this.value,
+                  value: currentValue,
                   shouldBeRequired: true,
                   notInstanceof: false
                 }
               })
             }
           }
-          else if (!(this.value instanceof constructor)) {
+          else if (!(currentValue instanceof constructor)) {
             this.errors.push({
-              message: onMessage(friendlyProp as string, this.value),
+              message: onMessage(friendlyProp as string, value),
               metadata: {
                 key: key as string,
-                value: this.value,
+                value: currentValue,
                 shouldBeRequired: false,
                 notInstanceof: true
               }
@@ -101,10 +101,11 @@ export class EntityAssert<Props> {
           }
         }
       }
-     
+
 
     }
-   }
+    return this.validate()
+  }
   key(keyName: keyof Props) {
     this.internalKeyState = keyName
     this.stateRequired = false;
@@ -152,7 +153,7 @@ export class EntityAssert<Props> {
         this.stateValidate.notInstanceof = true
       }
     }
-    
+
     return this as Pick<EntityAssert<Props>, "message">;
   }
 
