@@ -5,7 +5,7 @@ export type SnapshotTrace = {
   action?: string
   from?: any,
   to?: any,
-  
+
 }
 export type Snapshots<T> = {
   props: T,
@@ -14,16 +14,18 @@ export type Snapshots<T> = {
 }
 export class EntityMetaHistory<T>{
 
-  public restartOnFinish: boolean
-  public returnCurrentOnReversion: boolean
   public initialProps: T
   public snapshots: Snapshots<T>[]
-  
+
   constructor(props: T) {
-    this.restartOnFinish = false
-    this.returnCurrentOnReversion = true 
-    this.initialProps = Object.assign({}, {...props})
-    this.snapshots = [  ]
+    this.initialProps = Object.assign({}, { ...props })
+    this.snapshots = []
+  }
+
+  public hasChange(key: string) {
+    return this.snapshots.some(
+      (snapshot) => snapshot.trace.update === key
+    )
   }
 
   public addSnapshot(data: Snapshots<T>) {
@@ -32,7 +34,7 @@ export class EntityMetaHistory<T>{
       props: JSON.parse(JSON.stringify(data.props)),
       trace: {
         update: data.trace.update
-      }, 
+      },
     };
 
     if (!data.trace.action) {
@@ -48,5 +50,5 @@ export class EntityMetaHistory<T>{
     }
     this.snapshots.push(snapshot)
   }
-  
+
 }

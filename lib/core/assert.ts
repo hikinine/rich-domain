@@ -75,7 +75,7 @@ export class EntityAssert<Props> {
         }
 
         for (const currentValue of value as Array<any>) {
-          if (currentValue) {
+          if (!currentValue) {
             if (stateRequired) {
               this.errors.push({
                 message: onMessage(friendlyProp as string, value),

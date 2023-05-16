@@ -6,9 +6,25 @@ export abstract class ValueObject<Value> {
   protected _value: Value
   protected autoMapper: AutoMapper<Value>
 
-  constructor(value: Value) {
+  constructor(input: Value) {
+    const instance = this.constructor as typeof ValueObject<any>
+    const value = instance?.transform?.(input);
+    instance?.instanceOfValidation?.( value)
+    instance?.rulesOnCreate?.(value)
+
     this._value = value
     this.autoMapper = new AutoMapper<Value>()
+
+  }
+
+  protected static instanceOfValidation(props?: any): any {
+    return props
+  }
+  protected static transform(props: any): any {
+    return props
+  }
+  protected static rulesOnCreate(props: any): any {
+    return props
   }
 
 

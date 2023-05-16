@@ -38,7 +38,7 @@ export namespace Domain {
 
 export namespace Application {
   export interface EventPublisher<AggregateType> extends BaseEventPublisher<AggregateType> { }
-  export interface Usecase<R> {
-    execute(e?: any): Promise<R>
+  export interface Usecase<I, R> {
+    execute(e?: I): Promise<R>
   }
 }
