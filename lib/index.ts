@@ -31,14 +31,14 @@ export namespace Domain {
   export type Entity<T extends EntityProps> = BaseEntity<T>
   export type EntityProps = BaseEntityProps
   
-  export interface Service<R> {
-    execute(e?: any): Promise<R>
+  export interface Service<I, O> {
+    execute(e?: I): Promise<O>
   }
 }
 
 export namespace Application {
   export interface EventPublisher<AggregateType> extends BaseEventPublisher<AggregateType> { }
-  export interface Usecase<I, R> {
-    execute(e?: I): Promise<R>
+  export interface Usecase<I, O> {
+    execute(e?: I): Promise<O>
   }
 }

@@ -1,9 +1,12 @@
+
 export interface EntityProps {
   id?: IdImplementation,
   createdAt?: Date,
   updatedAt?: Date
 }
-
+export type IEntity = {
+  id: any
+}
 export interface IdImplementation {
 	value: string;
 	isNew(): boolean;

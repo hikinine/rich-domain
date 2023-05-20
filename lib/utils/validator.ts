@@ -61,7 +61,7 @@ export class Validator {
 		const isEntity = props instanceof Entity;
 		return !Validator.instance.isAggregate(props) && isEntity;
 	}
-	isAggregate(props: any): boolean {
+	isAggregate(props: any): props is Entity<any> {
 		return props instanceof Aggregate;
 	}
 	isValueObject(props: any): props is ValueObject<unknown> {
