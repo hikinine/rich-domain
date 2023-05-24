@@ -3,11 +3,13 @@ import { DomainEvent } from "./domain-event";
 import { Entity } from "./entity";
 import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } from "./types";
 
+
+const DOMAIN_EVENTS = Symbol();
 export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
 
-  private domainEvents: Array<IDomainEvent<Aggregate<Props>>> = []
+  private [DOMAIN_EVENTS]: IDomainEvent<Aggregate<Props>>[] = []
 
-  constructor(props: Props, ) {
+  constructor(props: Props,) {
     super(props, { isAggregate: true })
 
     const instance = this.constructor as typeof Entity<any>
@@ -28,31 +30,36 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
     if (Boolean(shouldReplace)) {
       this.removeEvent(domainEvent.eventName);
     }
-    this.domainEvents.push(domainEvent);
+    this[DOMAIN_EVENTS].push(domainEvent);
   }
 
   public clearEvents() {
-    this.domainEvents.splice(0, this.domainEvents.length);
+    this[DOMAIN_EVENTS].splice(0, this[DOMAIN_EVENTS].length);
   }
 
   public removeEvent(eventName: string) {
-    this.domainEvents = this.domainEvents.filter(
+    this[DOMAIN_EVENTS] = this[DOMAIN_EVENTS].filter(
       (domainEvent) => domainEvent.eventName !== eventName
     );
   }
 
-  public dispatch(eventName: string, eventPublisher: EventPublisher<Aggregate<Props>>) {
-    for (const event of this.domainEvents) {
+  public async dispatch(eventName: string, eventPublisher: EventPublisher<Aggregate<Props>>) {
+    const promisesQueue = [] as any[];
+    for (const event of this[DOMAIN_EVENTS]) {
       if (event.aggregate.id.equal(this.id) && event.eventName === eventName) {
-        eventPublisher.publish(event);
+        promisesQueue.push(eventPublisher.publish(event))
         this.removeEvent(eventName);
       }
     }
+    await Promise.all(promisesQueue);
   }
 
   public async dispatchAll(eventPublisher: EventPublisher<Aggregate<Props>>) {
-    for (const event of this.domainEvents) {
-      await eventPublisher.publish(event);
+    const promisesQueue = [] as any[];
+    for (const event of this[DOMAIN_EVENTS]) {
+      promisesQueue.push(eventPublisher.publish(event))
     }
+    await Promise.all(promisesQueue);
+    this.clearEvents();
   }
 }
