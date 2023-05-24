@@ -6,7 +6,6 @@ export class EntityValidation<Props> {
   private isDone: boolean
   private internalKeyState?: keyof Props;
   private stateRequired?: boolean
-  private stateValidate = { shouldBeRequired: false, notInstanceof: false }
   private errors = [] as {
     message: string,
     metadata: {

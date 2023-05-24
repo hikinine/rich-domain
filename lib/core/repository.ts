@@ -20,7 +20,7 @@ export abstract class ReadRepository<Aggregate extends BaseAggregate<any>> {
 export abstract class WriteRepository<Aggregate extends BaseAggregate<any>> {
   abstract create(entity: Aggregate, options?: WriteOptions): Promise<void>
   abstract update(entity: Aggregate, options?: WriteOptions): Promise<void>
-  abstract delete(id: string, options?: WriteOptions): Promise<void>
+  abstract delete(entity: Aggregate, options?: WriteOptions): Promise<void>
 }
 
 export abstract class WriteAndRead<Aggregate extends BaseAggregate<any>> {
@@ -28,7 +28,7 @@ export abstract class WriteAndRead<Aggregate extends BaseAggregate<any>> {
   abstract findById(id: string): Promise<Aggregate | null>
   abstract create(entity: Aggregate, options?: WriteOptions): Promise<void>
   abstract update(entity: Aggregate, options?: WriteOptions): Promise<void>
-  abstract delete(id: string, options?: WriteOptions): Promise<void>
+  abstract delete(entity: Aggregate, options?: WriteOptions): Promise<void>
 }
 
 export abstract class Impl<Aggregate extends BaseAggregate<any>> extends WriteAndRead<Aggregate> {
