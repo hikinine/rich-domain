@@ -1,7 +1,7 @@
 
 export type AssertSchema<T> = [keyof T, "nullable" | "required", "one" | "each", any, string][]
 
-export class EntityAssert<Props> {
+export class EntityValidation<Props> {
   private props: Props | null;
   private isDone: boolean
   private internalKeyState?: keyof Props;
@@ -23,14 +23,7 @@ export class EntityAssert<Props> {
     this.props = props
   }
 
-  private get value() {
-    if (this.internalKeyState) {
-      return (this.props as Props)[this.internalKeyState];
-    }
-    return null;
-  }
-
-  fromSchema<T>(schema: AssertSchema<T>, onMessage: (friendlyProp: string, value: any) => string) {
+  fromSchema<T>(schema: AssertSchema<T>, options: { onError: (friendlyProp: string, value: any) => string }) {
     for (const row of schema) {
       const [key, type, ammount, constructor, friendlyProp] = row
 
@@ -42,7 +35,7 @@ export class EntityAssert<Props> {
         if (!value) {
           if (stateRequired) {
             this.errors.push({
-              message: onMessage(friendlyProp as string, value),
+              message: options.onError(friendlyProp as string, value),
               metadata: {
                 key: key as string,
                 value: value,
@@ -55,7 +48,7 @@ export class EntityAssert<Props> {
         }
         else if (!(value instanceof constructor)) {
           this.errors.push({
-            message: onMessage(friendlyProp as string, value),
+            message: options.onError(friendlyProp as string, value),
             metadata: {
               key: key as string,
               value: value,
@@ -78,7 +71,7 @@ export class EntityAssert<Props> {
           if (!currentValue) {
             if (stateRequired) {
               this.errors.push({
-                message: onMessage(friendlyProp as string, value),
+                message: options.onError(friendlyProp as string, value),
                 metadata: {
                   key: key as string,
                   value: currentValue,
@@ -90,7 +83,7 @@ export class EntityAssert<Props> {
           }
           else if (!(currentValue instanceof constructor)) {
             this.errors.push({
-              message: onMessage(friendlyProp as string, value),
+              message: options.onError(friendlyProp as string, value),
               metadata: {
                 key: key as string,
                 value: currentValue,
@@ -106,73 +99,8 @@ export class EntityAssert<Props> {
     }
     return this.validate()
   }
-  key(keyName: keyof Props) {
-    this.internalKeyState = keyName
-    this.stateRequired = false;
-    this.stateValidate = {
-      shouldBeRequired: false,
-      notInstanceof: false
-    }
-    return this as Pick<EntityAssert<Props>, "isRequired" | "nullable">;
-  }
 
-  nullable() {
-    this.stateRequired = false
-    return this as Pick<EntityAssert<Props>, "instanceOf" | "eachInstanceof">;
-  }
-  isRequired() {
-    this.stateRequired = true
-    return this as Pick<EntityAssert<Props>, "instanceOf" | "eachInstanceof">;
-  }
-
-  instanceOf(constructor: any) {
-    if (!this.value) {
-      if (this.stateRequired) {
-        this.stateValidate.shouldBeRequired = true
-      }
-    }
-    else if (!(this.value instanceof constructor)) {
-      this.stateValidate.notInstanceof = true
-    }
-
-    return this as Pick<EntityAssert<Props>, "message">;
-  }
-
-  eachInstanceof(constructor: any) {
-    if (!Array.isArray(this.value)) {
-      this.stateValidate.notInstanceof = true
-    }
-
-    for (const value of this.value as Array<any>) {
-      if (value) {
-        if (this.stateRequired) {
-          this.stateValidate.shouldBeRequired = true
-        }
-      }
-      else if (!(this.value instanceof constructor)) {
-        this.stateValidate.notInstanceof = true
-      }
-    }
-
-    return this as Pick<EntityAssert<Props>, "message">;
-  }
-
-
-  message(message: string) {
-    this.errors.push({
-      message,
-      metadata: {
-        key: this.internalKeyState as string,
-        value: this.value,
-        shouldBeRequired: this.stateValidate.shouldBeRequired,
-        notInstanceof: this.stateValidate.notInstanceof
-      }
-    })
-    return this as Pick<EntityAssert<Props>, "key" | "validate">;
-  }
-
-
-  validate() {
+  private validate() {
     this.free()
     return {
       hasErrors: () => {

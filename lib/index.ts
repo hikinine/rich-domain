@@ -1,6 +1,6 @@
 
 export { BaseAdapter as Adapter } from './core/adapter';
-export * from './core/assert';
+export * from './core/entity-validation';
 export * from './core/errors';
 export * from "./core/pagination";
 export * as Repository from "./core/repository";

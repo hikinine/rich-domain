@@ -13,17 +13,50 @@ export type Snapshots<T> = {
   timestamp?: Date,
   trace: SnapshotTrace,
 }
+
+export type SnapshotCallbacks<T> = {
+  onAddedSnapshot?: (snapshot: Snapshots<T>) => void
+}
 export class EntityMetaHistory<T>{
   public initialProps: T
   public _currentProps: T
   public snapshots: Snapshots<T>[]
+  private callbacks?:  SnapshotCallbacks<T>
 
-  constructor(props: T) {
+  constructor(props: T, callbacks?: SnapshotCallbacks<T>) {
     this._currentProps = props;
     this.initialProps = Object.assign({}, { ...props })
     this.snapshots = []
+    this.callbacks = callbacks
   }
 
+  public addSnapshot(data: Snapshots<T>) {
+    const snapshot: Snapshots<T> = {
+      timestamp: new Date(),
+      props: Object.assign({}, { ...data.props }),
+      trace: {
+        update: data.trace.update
+      },
+    };
+
+    if (!data.trace.action) {
+      snapshot.trace.from = data.trace.from
+      snapshot.trace.to = data.trace.to
+    }
+    else {
+      snapshot.trace.action = data.trace.action
+    }
+
+    if (typeof data.trace.position !== 'undefined') {
+      snapshot.trace.position = data.trace.position
+    }
+    this.snapshots.push(snapshot)
+
+    if (this.callbacks?.onAddedSnapshot) {
+      this.callbacks.onAddedSnapshot(snapshot)
+    }
+  }
+  
   get currentProps() {
     return this._currentProps
   }
@@ -118,27 +151,5 @@ export class EntityMetaHistory<T>{
     }, [] as T[])
   }
 
-  public addSnapshot(data: Snapshots<T>) {
-    const snapshot: Snapshots<T> = {
-      timestamp: new Date(),
-      props: Object.assign({}, { ...data.props }),
-      trace: {
-        update: data.trace.update
-      },
-    };
-
-    if (!data.trace.action) {
-      snapshot.trace.from = data.trace.from
-      snapshot.trace.to = data.trace.to
-    }
-    else {
-      snapshot.trace.action = data.trace.action
-    }
-
-    if (typeof data.trace.position !== 'undefined') {
-      snapshot.trace.position = data.trace.position
-    }
-    this.snapshots.push(snapshot)
-  }
 
 }

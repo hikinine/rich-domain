@@ -1,12 +1,14 @@
 import validator from "../utils/validator";
 import { Id } from "./Id";
-import { EntityAssert } from "./assert";
 import { AutoMapper } from "./auto-mapper";
 import { EntityMetaHistory } from "./history";
 import { proxyHandler } from "./proxy";
 import { EntityProps } from "./types";
 
 
+export interface EntityConfig {
+  isAggregate?: boolean
+}
 export abstract class Entity<Props extends EntityProps> {
   public constructorName = "Entity"
   protected _id: Id;
@@ -18,20 +20,23 @@ export abstract class Entity<Props extends EntityProps> {
   get history() {
     return this.metaHistory
   }
-  constructor(input: Props, options?: { isAggregate?: boolean }) {
-    const assert = new EntityAssert(input)
+  constructor(input: Props, options?: EntityConfig) {
 
     const instance = this.constructor as typeof Entity<any>
     const props = instance?.transform?.(input);
-    instance?.instanceOfValidation?.(assert, props)
-    instance?.rulesOnCreate?.(props)
+    instance?.validation?.(props)
+    instance?.rules?.(props)
 
     this.registerTimestampSignature(props)
     const id = this.generateOrAssignId(props)
     this._id = id;
     props.id = id;
 
-    this.metaHistory = new EntityMetaHistory<Props>(props)
+    this.metaHistory = new EntityMetaHistory<Props>(props, {
+      onAddedSnapshot: (snapshot) => {
+        instance?.onChange(this, snapshot)
+      }
+    })
     this.autoMapper = new AutoMapper<Props>()
     this.props = props
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
@@ -42,20 +47,29 @@ export abstract class Entity<Props extends EntityProps> {
     }
   }
 
+  protected static onChange(entity: any, snapshot: any): any { return Boolean(entity & snapshot) }
   protected static onCreate(entity: any): any { return Boolean(entity) }
-  protected static instanceOfValidation(
-    assert: EntityAssert<any>,
+  protected static validation(
     props?: any
   ): any {
-    return props && assert
+    return props
   }
   protected static transform(props: any): any {
     return props
   }
-  protected static rulesOnCreate(props: any): any {
+  protected static rules(props: any): any {
     return Boolean(props)
   }
 
+  protected validate() {
+    const instance = this.constructor as typeof Entity<any>
+    instance?.validation?.(this.props);
+  }
+
+  protected ensureBusinessRules() {
+    const instance = this.constructor as typeof Entity<any>
+    instance?.rules?.(this.props);
+  }
 
 
   get createdAt() {
