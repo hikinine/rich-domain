@@ -1,5 +1,5 @@
+import lodash from "lodash"
 import Validator from "../utils/validator"
-
 export type SnapshotTrace = {
   update: string,
   position?: number,
@@ -25,7 +25,7 @@ export class EntityMetaHistory<T>{
 
   constructor(props: T, callbacks?: SnapshotCallbacks<T>) {
     this._currentProps = props;
-    this.initialProps = JSON.parse(JSON.stringify(props));
+    this.initialProps = lodash.cloneDeep(props)
     this.snapshots = []
     this.callbacks = callbacks
   }
@@ -33,7 +33,7 @@ export class EntityMetaHistory<T>{
   public addSnapshot(data: Snapshots<T>) {
     const snapshot: Snapshots<T> = {
       timestamp: new Date(),
-      props: Object.assign({}, { ...data.props }),
+      props: lodash.cloneDeep(data.props),
       trace: {
         update: data.trace.update
       },

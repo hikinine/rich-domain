@@ -32,16 +32,16 @@ export abstract class Entity<Props extends EntityProps> {
     this._id = id;
     props.id = id;
 
-    this.metaHistory = new EntityMetaHistory<Props>(props, {
-      onAddedSnapshot: (snapshot) => {
-        instance?.onChange(this, snapshot)
-      }
-    })
+
     this.autoMapper = new AutoMapper<Props>()
     this.props = props
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
-
+    this.metaHistory = new EntityMetaHistory<Props>(proxy, {
+      onAddedSnapshot: (snapshot) => {
+        instance?.onChange(this, snapshot)
+      }
+    })
     if (!options?.isAggregate) {
       instance?.onCreate?.(this)
     }
