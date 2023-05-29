@@ -49,6 +49,16 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
     );
   }
 
+  public getEvents() {
+    return this[DOMAIN_EVENTS];
+  }
+
+  public hasEvent(eventName: string) {
+    return this[DOMAIN_EVENTS].some(
+      (domainEvent) => domainEvent.eventName === eventName
+    );
+  }
+
   public async dispatch(eventName: string, eventPublisher: EventPublisher<any>) {
     const promisesQueue = [] as any[];
     for (const event of this[DOMAIN_EVENTS]) {
