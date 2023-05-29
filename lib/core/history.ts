@@ -25,7 +25,7 @@ export class EntityMetaHistory<T>{
 
   constructor(props: T, callbacks?: SnapshotCallbacks<T>) {
     this._currentProps = props;
-    this.initialProps = Object.assign({}, { ...props })
+    this.initialProps = JSON.parse(JSON.stringify(props));
     this.snapshots = []
     this.callbacks = callbacks
   }

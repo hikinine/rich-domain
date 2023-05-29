@@ -8,13 +8,13 @@ export type IEntity = {
   id: any
 }
 export interface IdImplementation {
-	value: string;
-	isNew(): boolean;
-	createdAt(): Date;
-	equal(id: IdImplementation): boolean;
-	deepEqual(id: IdImplementation): boolean;
-	cloneAsNew(): IdImplementation;
-	clone(): IdImplementation;
+  value: string;
+  isNew(): boolean;
+  createdAt(): Date;
+  equal(id: IdImplementation): boolean;
+  deepEqual(id: IdImplementation): boolean;
+  cloneAsNew(): IdImplementation;
+  clone(): IdImplementation;
 }
 
 export type DomainEventReplaceOptions = 'REPLACE_DUPLICATED' | 'UPDATE' | 'KEEP';
@@ -26,8 +26,8 @@ export interface IDomainEvent<T> {
 }
 
 export interface EntityMapperPayload {
-  id: string 
-  createdAt: Date 
+  id: string
+  createdAt: Date
   updatedAt: Date
 }
 

@@ -4,8 +4,8 @@ export class PaginationCriteria {
   orderBy?: [string, "asc" | "desc"];
 
   constructor(props: any) {
-    this.offset = Number(props.offset || 0);
-    this.limit = Number(props.limit || 10);
+    this.offset = Number(props.offset) || 0;
+    this.limit = Number(props.limit) || 10;
     this.orderBy = props?.orderBy;
   }
 }
@@ -13,8 +13,8 @@ export class PaginationCriteria {
 export type PaginationResult<Model> = {
   data: Model[];
   total: number;
-} 
-type ConstructorTypeof<T> = new (...args:any[]) => T;
+}
+type ConstructorTypeof<T> = new (...args: any[]) => T;
 export class Pagination<Aggregate> {
   public readonly query: {
     currentPage: number

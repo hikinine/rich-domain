@@ -6,8 +6,7 @@ import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } 
 
 const DOMAIN_EVENTS = Symbol();
 export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
-
-  private [DOMAIN_EVENTS]: IDomainEvent<Aggregate<Props>>[] = []
+  private [DOMAIN_EVENTS]: IDomainEvent<any>[] = []
 
   constructor(props: Props,) {
     super(props, { isAggregate: true })
@@ -16,13 +15,20 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
     instance?.onCreate?.(this)
   }
 
+  
+  public static fromPlainObject<T = any>(plain: any): T {
+    const props = plain.props;
+    const aggregate = Reflect.construct(this, [props]);
+    return aggregate
+  }
+
   public hashCode() {
     const name = Reflect.getPrototypeOf(this);
     return new Id(`[Aggregate@${name?.constructor.name}]:${this.props.id}`)
   }
 
   public addEvent(
-    domainEvent: DomainEvent<Aggregate<Props>>,
+    domainEvent: DomainEvent<any>,
     replace?: DomainEventReplaceOptions
   ) {
     const shouldReplace = replace === 'REPLACE_DUPLICATED';
@@ -43,7 +49,7 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
     );
   }
 
-  public async dispatch(eventName: string, eventPublisher: EventPublisher<Aggregate<Props>>) {
+  public async dispatch(eventName: string, eventPublisher: EventPublisher<any>) {
     const promisesQueue = [] as any[];
     for (const event of this[DOMAIN_EVENTS]) {
       if (event.aggregate.id.equal(this.id) && event.eventName === eventName) {
@@ -54,7 +60,7 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
     await Promise.all(promisesQueue);
   }
 
-  public async dispatchAll(eventPublisher: EventPublisher<Aggregate<Props>>) {
+  public async dispatchAll(eventPublisher: EventPublisher<any>) {
     const promisesQueue = [] as any[];
     for (const event of this[DOMAIN_EVENTS]) {
       promisesQueue.push(eventPublisher.publish(event))

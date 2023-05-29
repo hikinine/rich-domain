@@ -82,6 +82,14 @@ export abstract class Entity<Props extends EntityProps> {
     return this._id;
   }
 
+
+  public static fromPlainObject<T = any>(plain: any): T {
+    const props = plain.props;
+    const entity = Reflect.construct(this, [props]);
+    return entity
+  }
+
+
   public clone(): Entity<Props> {
     const instance = Reflect.getPrototypeOf(this);
     const args = [this.props];
