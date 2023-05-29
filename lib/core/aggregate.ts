@@ -50,13 +50,13 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
   }
 
 
-  public getEvents<T>(eventName?: string): DomainEvent<T>[] | [] {
+  public getEvents<T = IDomainEvent<any>>(eventName?: string): T[] {
     if (eventName) {
       return this[DOMAIN_EVENTS].filter(
         (domainEvent) => domainEvent.eventName === eventName
-      ) as DomainEvent<T>[];
+      ) as T[];
     }
-    return this[DOMAIN_EVENTS];
+    return this[DOMAIN_EVENTS] as T[]
   }
 
   public hasEvent(eventName: string) {
