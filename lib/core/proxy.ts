@@ -5,6 +5,7 @@ export  const proxyHandler = function <Props extends object>(self: any, keyProp?
       if (typeof val === 'function') {
         if (['push', 'pop', 'shift', 'unshift', 'slice'].includes(prop)) {
           return function (...args: any[]) {
+            const result = Array.prototype[prop].apply(target, args);
             self.metaHistory.addSnapshot({
               props: self.props,
               trace: {
@@ -13,7 +14,7 @@ export  const proxyHandler = function <Props extends object>(self: any, keyProp?
               }
             });
 
-            return Array.prototype[prop].apply(target, args);
+            return result
           };
         }
       }
@@ -25,11 +26,13 @@ export  const proxyHandler = function <Props extends object>(self: any, keyProp?
       ) {
         return new Proxy(target[prop], proxyHandler(self, prop as string));
       }
+
       return Reflect.get(target, prop);
     },
 
     set: function (target, prop, value, receiver) {
       const oldValue = Reflect.get(target, prop, receiver);
+      Reflect.set(target, prop, value, receiver);
       if (!Array.isArray(receiver)) {
         self.metaHistory.addSnapshot({
           props: self.props,
@@ -40,7 +43,7 @@ export  const proxyHandler = function <Props extends object>(self: any, keyProp?
           }
         });
       }
-      Reflect.set(target, prop, value, receiver);
+
       return true;
     },
   };
