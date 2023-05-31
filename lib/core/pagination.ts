@@ -8,6 +8,10 @@ export class PaginationCriteria {
     this.limit = Number(props.limit) || 10;
     this.orderBy = props?.orderBy;
   }
+
+  public maxLimit(number: number) {
+    this.limit = Math.min(this.limit, number);
+  }
 }
 
 export type PaginationResult<Model> = {
