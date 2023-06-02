@@ -78,8 +78,24 @@ export abstract class Entity<Props extends EntityProps> {
   get updatedAt() {
     return this.props?.updatedAt;
   }
+  get createdBy() {
+    return this.props?.createdBy || null;
+  }
+  get updatedBy() {
+    return this.props?.updatedBy || null;
+  }
+
   get id(): Id {
     return this._id;
+  }
+
+  public setAuthor(createdBy: string) {
+    this.props.createdBy = createdBy;
+    this.props.updatedBy = createdBy;
+  }
+
+  public setAuthorChange(updatedBy: string) {
+    this.props.updatedBy = updatedBy;
   }
 
 

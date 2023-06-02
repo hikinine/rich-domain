@@ -15,7 +15,7 @@ export class PaginationCriteria {
 }
 
 export type PaginationResult<Model> = {
-  data: Model[];
+  result: Model[];
   total: number;
 }
 type ConstructorTypeof<T> = new (...args: any[]) => T;
@@ -31,15 +31,15 @@ export class Pagination<Aggregate> {
       orderBy?: string
     }
   }
-  public readonly data: Aggregate[]
+  public readonly result: Aggregate[]
 
-  constructor(criteria: PaginationCriteria, result: PaginationResult<any>) {
+  constructor(criteria: PaginationCriteria, paginationResult: PaginationResult<any>) {
 
-    this.data = result.data
+    this.result = paginationResult.result
     this.query = {
       currentPage: Math.floor(criteria.offset / criteria.limit) + 1,
-      totalPages: Math.ceil(result.total / criteria.limit),
-      totalResults: result.total,
+      totalPages: Math.ceil(paginationResult.total / criteria.limit),
+      totalResults: paginationResult.total,
       config: {
         offset: criteria.offset,
         limit: criteria.limit,
@@ -52,7 +52,7 @@ export class Pagination<Aggregate> {
   public toPublicView<T>(clazz: ConstructorTypeof<T>): Pagination<T> {
     return {
       query: this.query,
-      data: this.data.map((item) => new clazz(item))
+      result: this.result.map((item) => new clazz(item))
     } as Pagination<T>
   }
 }

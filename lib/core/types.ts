@@ -3,6 +3,8 @@ export interface EntityProps {
   id?: IdImplementation,
   createdAt?: Date,
   updatedAt?: Date
+  createdBy?: string,
+  updatedBy?: string,
 }
 export type IEntity = {
   id: any
