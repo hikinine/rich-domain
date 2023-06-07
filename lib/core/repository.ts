@@ -18,16 +18,18 @@ export abstract class ReadRepository<Aggregate extends BaseAggregate<any>> {
 }
 
 export abstract class WriteRepository<Aggregate extends BaseAggregate<any>> {
-  abstract create(entity: Aggregate, options?: WriteOptions): Promise<void>
-  abstract update(entity: Aggregate, options?: WriteOptions): Promise<void>
+  abstract create?(entity: Aggregate, options?: WriteOptions): Promise<void>
+  abstract update?(entity: Aggregate, options?: WriteOptions): Promise<void>
+  abstract save(entity: Aggregate, options?: WriteOptions): Promise<void>
   abstract delete(entity: Aggregate, options?: WriteOptions): Promise<void>
 }
 
 export abstract class WriteAndRead<Aggregate extends BaseAggregate<any>> {
   abstract find(criteria: PaginationCriteria): Promise<Pagination<Aggregate> | null>
   abstract findById(id: string): Promise<Aggregate | null>
-  abstract create(entity: Aggregate, options?: WriteOptions): Promise<void>
-  abstract update(entity: Aggregate, options?: WriteOptions): Promise<void>
+  abstract save(entity: Aggregate, options?: WriteOptions): Promise<void>
+  abstract create?(entity: Aggregate, options?: WriteOptions): Promise<void>
+  abstract update?(entity: Aggregate, options?: WriteOptions): Promise<void>
   abstract delete(entity: Aggregate, options?: WriteOptions): Promise<void>
 }
 
