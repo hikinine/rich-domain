@@ -62,8 +62,24 @@ export class EntityMetaHistory<T>{
   }
 
   public hasChange(key: string) {
+    const relationships = key.split('.')
+
     return this.snapshots.some(
-      (snapshot) => snapshot.trace.update === key
+      (snapshot) =>  {
+        const updateKeys = snapshot.trace.update.split('.')
+        if (updateKeys.length === 1) {
+          const [singleKey] = updateKeys
+          return relationships.includes(singleKey)
+        }
+        else {
+          for (const multKey of updateKeys) {
+            if (relationships.includes(multKey)) {
+              return true
+            }
+          }
+          return false;
+        }
+      }
     )
   }
 

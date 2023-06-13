@@ -1,4 +1,4 @@
-export  const proxyHandler = function <Props extends object>(self: any, keyProp?: string): ProxyHandler<Props> {
+export const proxyHandler = function <Props extends object>(self: any, keyProp: string[] = []): ProxyHandler<Props> {
   return {
     get: function (target, prop: string) {
       const val = Reflect.get(target, prop);
@@ -9,7 +9,7 @@ export  const proxyHandler = function <Props extends object>(self: any, keyProp?
             self.metaHistory.addSnapshot({
               props: self.props,
               trace: {
-                update: keyProp!,
+                update: keyProp?.join(".")!,
                 action: prop
               }
             });
@@ -24,7 +24,7 @@ export  const proxyHandler = function <Props extends object>(self: any, keyProp?
           Object.prototype.toString.call(target[prop]),
         ) > -1
       ) {
-        return new Proxy(target[prop], proxyHandler(self, prop as string));
+        return new Proxy(target[prop], proxyHandler(self, [...(keyProp || []), prop]));
       }
 
       return Reflect.get(target, prop);
@@ -34,10 +34,13 @@ export  const proxyHandler = function <Props extends object>(self: any, keyProp?
       const oldValue = Reflect.get(target, prop, receiver);
       Reflect.set(target, prop, value, receiver);
       if (!Array.isArray(receiver)) {
+        let prefix = keyProp?.join?.(".");
+        if (prefix) prefix += ".";
+
         self.metaHistory.addSnapshot({
           props: self.props,
           trace: {
-            update: prop as string,
+            update: prefix + (prop as string),
             from: oldValue,
             to: value,
           }
