@@ -21,7 +21,7 @@ export class EntityMetaHistory<T>{
   public initialProps: T
   public _currentProps: T
   public snapshots: Snapshots<T>[]
-  private callbacks?:  SnapshotCallbacks<T>
+  private callbacks?: SnapshotCallbacks<T>
 
   constructor(props: T, callbacks?: SnapshotCallbacks<T>) {
     this._currentProps = props;
@@ -56,7 +56,7 @@ export class EntityMetaHistory<T>{
       this.callbacks.onAddedSnapshot(snapshot)
     }
   }
-  
+
   get currentProps() {
     return this._currentProps
   }
@@ -65,7 +65,7 @@ export class EntityMetaHistory<T>{
     const relationships = key.split('.')
 
     return this.snapshots.some(
-      (snapshot) =>  {
+      (snapshot) => {
         const updateKeys = snapshot.trace.update.split('.')
         if (updateKeys.length === 1) {
           const [singleKey] = updateKeys
@@ -104,20 +104,19 @@ export class EntityMetaHistory<T>{
     currentValues: T[]
   ) {
     return currentValues.reduce((acc, currentValue) => {
-      let isEntity = false;
+      let shouldUpdate = false;
       const found = initialValues.find((a) => {
         if (Validator.isValueObject(a)) {
           return a.isEqual(currentValue as any);
         }
         else if (Validator.isEntity(a) || Validator.isAggregate(a)) {
-          const foundEquals = a.isEqual(currentValue as any)
-            || a.id.equal((currentValue as any)?.id)
 
-          if (foundEquals) {
-            isEntity = true;
-          }
+          const sameID = a.id.value === (currentValue as any).id?.value;
+          const sameProps = a.isEqual(currentValue as any)
+  
+          if (sameID && !sameProps) shouldUpdate = true;
 
-          return foundEquals
+          return sameID
         }
         else {
           return a === currentValue
@@ -125,7 +124,7 @@ export class EntityMetaHistory<T>{
       })
 
 
-      if (found && isEntity) {
+      if (found && shouldUpdate) {
         acc.toUpdate.push(currentValue)
       }
       if (!found) {

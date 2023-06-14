@@ -9,21 +9,21 @@ export abstract class ValueObject<Value> {
   constructor(input: Value) {
     const instance = this.constructor as typeof ValueObject<any>
     const value = instance?.transform?.(input);
-    instance?.instanceOfValidation?.( value)
-    instance?.rulesOnCreate?.(value)
+    instance?.validation?.( value)
+    instance?.rules?.(value)
 
     this._value = value
     this.autoMapper = new AutoMapper<Value>()
 
   }
 
-  protected static instanceOfValidation(props?: any): any {
+  protected static validation(props?: any): any {
     return props
   }
   protected static transform(props: any): any {
     return props
   }
-  protected static rulesOnCreate(props: any): any {
+  protected static rules(props: any): any {
     return props
   }
 

@@ -1,3 +1,4 @@
+import lodash from "lodash";
 import validator from "../utils/validator";
 import { Id } from "./Id";
 import { AutoMapper } from "./auto-mapper";
@@ -12,6 +13,8 @@ export interface EntityConfig {
 export abstract class Entity<Props extends EntityProps> {
   public constructorName = "Entity"
   protected _id: Id;
+  protected _createdAt: Date = new Date();
+  protected _updatedAt: Date = new Date();
   protected props: Props
   protected autoMapper: AutoMapper<Props>
   protected metaHistory: EntityMetaHistory<Props>
@@ -21,7 +24,6 @@ export abstract class Entity<Props extends EntityProps> {
     return this.metaHistory
   }
   constructor(input: Props, options?: EntityConfig) {
-
     const instance = this.constructor as typeof Entity<any>
     const props = instance?.transform?.(input);
     instance?.validation?.(props)
@@ -73,10 +75,10 @@ export abstract class Entity<Props extends EntityProps> {
 
 
   get createdAt() {
-    return this.props?.createdAt;
+    return this._createdAt;
   }
   get updatedAt() {
-    return this.props?.updatedAt;
+    return this._updatedAt;
   }
   get createdBy() {
     return this.props?.createdBy || null;
@@ -127,17 +129,11 @@ export abstract class Entity<Props extends EntityProps> {
   }
 
   public isEqual(other: Entity<Props>): boolean {
-    const currentProps = Object.assign({}, {}, { ...this.props });
-    const providedProps = Object.assign({}, {}, { ...other.props });
-    delete currentProps?.['createdAt'];
-    delete currentProps?.['updatedAt'];
-    delete providedProps?.['createdAt'];
-    delete providedProps?.['updatedAt'];
+   
+    const currentProps =  lodash.cloneDeep(this.props)
+    const providedProps =  lodash.cloneDeep(other.props)
     const equalId = this.id.equal(other.id);
-    const serializedA = JSON.stringify(currentProps);
-    const serializedB = JSON.stringify(providedProps);
-    const equalSerialized = serializedA === serializedB;
-    return equalId && equalSerialized;
+    return equalId && lodash.isEqual(currentProps, providedProps);
   }
 
 
@@ -152,7 +148,10 @@ export abstract class Entity<Props extends EntityProps> {
 
   private registerTimestampSignature(props: Props) {
     const now = Date.now()
-    props.createdAt = new Date(props.createdAt || now)
-    props.updatedAt = new Date(props.updatedAt || now)
+    this._createdAt = new Date(props.createdAt || now)
+    this._updatedAt = new Date(props.updatedAt || now)
+
+    delete props?.createdAt 
+    delete props?.updatedAt
   }
 }
