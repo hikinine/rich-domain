@@ -2,8 +2,10 @@ import lodash from "lodash";
 import validator from "../utils/validator";
 import { Id } from "./Id";
 import { AutoMapper } from "./auto-mapper";
+import { EntityValidation } from "./entity-validation";
+import { DomainError } from "./errors";
 import { EntityMetaHistory } from "./history";
-import { HooksConfig } from "./hooks";
+import { HooksConfig, defaultOnValidationError } from "./hooks";
 import { proxyHandler } from "./proxy";
 import { EntityProps } from "./types";
 
@@ -28,8 +30,6 @@ export abstract class Entity<Props extends EntityProps> {
   constructor(input: Props, options?: EntityConfig) {
     const instance = this.constructor as typeof Entity<any>
     const props = instance?.hooks?.transformBeforeCreate?.(input) as Props || input
-    instance?.hooks?.validation?.(props)
-    instance?.hooks.rules?.(props)
 
     this.registerTimestampSignature(props)
     const id = this.generateOrAssignId(props)
@@ -46,25 +46,43 @@ export abstract class Entity<Props extends EntityProps> {
         instance?.hooks?.onChange?.(this as Entity<Props>, snapshot)
       }
     })
+
+    this.internalValidation(instance)
+    instance?.hooks.rules?.(props);
+
     if (!options?.isAggregate) {
       instance?.hooks?.onCreate?.(this as Entity<Props>)
     }
   }
 
-  /**
-   * Dispatch Entity Hook Validation
-   */
-  protected revalidate() {
+  private internalValidation(instance: typeof Entity<Props>) {
+    if (instance?.hooks?.schema) {
+      const validator = new EntityValidation(this.props)
+      const validation = validator.fromSchema(instance?.hooks?.schema, {
+        onError: instance?.hooks?.onValidationError || defaultOnValidationError,
+      })
+
+      if (validation.hasErrors()) {
+        const [{ message, metadata }] = validation.errors;
+        throw new DomainError(message, metadata);
+      }
+    } 
+  }
+  // Dispatch Entity Hook Validation
+  revalidate() {
     const instance = this.constructor as typeof Entity<any>
-    instance?.hooks?.validation?.(this.props);
+    this.internalValidation(instance)
   }
 
-  /**
-   * Dispatch Entity Hook  Rules
-   */
-  protected ensureBusinessRules() {
+  //Dispatch Entity Hook  Rules
+  ensureBusinessRules() {
     const instance = this.constructor as typeof Entity<any>
     instance?.hooks?.rules?.(this.props);
+  }
+
+  revalidateAndEnsureBusinessRules() {
+    this.revalidate()
+    this.ensureBusinessRules()
   }
 
 

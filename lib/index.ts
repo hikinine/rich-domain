@@ -3,6 +3,8 @@ import { Aggregate as BaseAggregate } from "./core/aggregate";
 import { DomainEvent as BaseDomainEvent } from "./core/domain-event";
 import { Entity as BaseEntity } from "./core/entity";
 import * as CoreHook from "./core/hooks";
+import * as CorePolicy from "./core/policy";
+
 import { Either } from './core/result';
 import { EntityProps as BaseEntityProps, EventPublisher as BaseEventPublisher } from "./core/types";
 import { ValueObject as BaseValueObject } from "./core/value-object";
@@ -23,6 +25,7 @@ export type Maybe<T> = T | null | undefined
 export type Collection<T> = T[]
 
 export namespace Domain {
+  export const Policy = CorePolicy.Policy
   export const Hooks = CoreHook.Hooks
   export type HooksConfig<Aggregate, Props> = CoreHook.HooksConfig<Aggregate, Props>
   export const Entity = BaseEntity;
