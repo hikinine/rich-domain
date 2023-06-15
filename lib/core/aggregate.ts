@@ -1,18 +1,20 @@
 import { Id } from "./Id";
 import { DomainEvent } from "./domain-event";
 import { Entity } from "./entity";
+import { HooksConfig } from "./hooks";
 import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } from "./types";
 
 
-const DOMAIN_EVENTS = Symbol();
+const DOMAIN_EVENTS = Symbol('AggregateEvents');
 export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
+  protected static hooks: HooksConfig<Entity<any>, EntityProps>;
   private [DOMAIN_EVENTS]: IDomainEvent<any>[] = []
 
   constructor(props: Props,) {
     super(props, { isAggregate: true })
 
     const instance = this.constructor as typeof Entity<any>
-    instance?.onCreate?.(this)
+    instance?.hooks?.onCreate?.(this)
   }
 
   

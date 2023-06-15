@@ -3,6 +3,7 @@ import validator from "../utils/validator";
 import { Id } from "./Id";
 import { AutoMapper } from "./auto-mapper";
 import { EntityMetaHistory } from "./history";
+import { HooksConfig } from "./hooks";
 import { proxyHandler } from "./proxy";
 import { EntityProps } from "./types";
 
@@ -11,6 +12,8 @@ export interface EntityConfig {
   isAggregate?: boolean
 }
 export abstract class Entity<Props extends EntityProps> {
+  protected static hooks: HooksConfig<Entity<any>, EntityProps>
+
   public constructorName = "Entity"
   protected _id: Id;
   protected _createdAt: Date = new Date();
@@ -19,15 +22,14 @@ export abstract class Entity<Props extends EntityProps> {
   protected autoMapper: AutoMapper<Props>
   protected metaHistory: EntityMetaHistory<Props>
 
-
   get history() {
     return this.metaHistory
   }
   constructor(input: Props, options?: EntityConfig) {
     const instance = this.constructor as typeof Entity<any>
-    const props = instance?.transform?.(input);
-    instance?.validation?.(props)
-    instance?.rules?.(props)
+    const props = instance?.hooks?.transformBeforeCreate?.(input) as Props || input
+    instance?.hooks?.validation?.(props)
+    instance?.hooks.rules?.(props)
 
     this.registerTimestampSignature(props)
     const id = this.generateOrAssignId(props)
@@ -41,36 +43,28 @@ export abstract class Entity<Props extends EntityProps> {
     this.props = proxy;
     this.metaHistory = new EntityMetaHistory<Props>(proxy, {
       onAddedSnapshot: (snapshot) => {
-        instance?.onChange(this, snapshot)
+        instance?.hooks?.onChange?.(this as Entity<Props>, snapshot)
       }
     })
     if (!options?.isAggregate) {
-      instance?.onCreate?.(this)
+      instance?.hooks?.onCreate?.(this as Entity<Props>)
     }
   }
 
-  protected static onChange(entity: any, snapshot: any): any { return Boolean(entity & snapshot) }
-  protected static onCreate(entity: any): any { return Boolean(entity) }
-  protected static validation(
-    props?: any
-  ): any {
-    return props
-  }
-  protected static transform(props: any): any {
-    return props
-  }
-  protected static rules(props: any): any {
-    return Boolean(props)
-  }
-
-  protected validate() {
+  /**
+   * Dispatch Entity Hook Validation
+   */
+  protected revalidate() {
     const instance = this.constructor as typeof Entity<any>
-    instance?.validation?.(this.props);
+    instance?.hooks?.validation?.(this.props);
   }
 
+  /**
+   * Dispatch Entity Hook  Rules
+   */
   protected ensureBusinessRules() {
     const instance = this.constructor as typeof Entity<any>
-    instance?.rules?.(this.props);
+    instance?.hooks?.rules?.(this.props);
   }
 
 
@@ -129,9 +123,9 @@ export abstract class Entity<Props extends EntityProps> {
   }
 
   public isEqual(other: Entity<Props>): boolean {
-   
-    const currentProps =  lodash.cloneDeep(this.props)
-    const providedProps =  lodash.cloneDeep(other.props)
+
+    const currentProps = lodash.cloneDeep(this.props)
+    const providedProps = lodash.cloneDeep(other.props)
     const equalId = this.id.equal(other.id);
     return equalId && lodash.isEqual(currentProps, providedProps);
   }
@@ -151,7 +145,7 @@ export abstract class Entity<Props extends EntityProps> {
     this._createdAt = new Date(props.createdAt || now)
     this._updatedAt = new Date(props.updatedAt || now)
 
-    delete props?.createdAt 
+    delete props?.createdAt
     delete props?.updatedAt
   }
 }
