@@ -1,7 +1,7 @@
 import { AssertSchema } from "./entity-validation";
 
 
-export const defaultOnValidationError = (key: string, value: any) => {
+export const EntityDefaultOnValidationError = (key: string, value: any) => {
   return `DR01 | Falha na validação do campo '${key}'. Valor recebido: ${value}.`
 }
 export interface HooksConfig<Aggregate, Props> {
@@ -16,3 +16,20 @@ export interface HooksConfig<Aggregate, Props> {
 export function Hooks<Aggregate, Props>(config: HooksConfig<Aggregate, Props>) {
   return config
 } 
+
+export interface VoHooksConfig<Vo, Props> {  
+  transformBeforeCreate?: (props: Props) => Props
+  onCreate?: (entity: Vo) => void
+  errorMessage?: (key: any) => string
+
+  Type?: 'string' | 'number' | 'boolean' | 'object' | 'array' | 'date';
+  Max?: number 
+  Min?: number
+  RegExp?: RegExp
+  Nullable?: boolean
+  Enum?: any[]
+}
+
+export function VoHooks<Vo, Props>(config: VoHooksConfig<Vo, Props>) {
+  return config
+}

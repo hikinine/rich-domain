@@ -17,5 +17,4 @@ export * from './repository-errors';
 export * from './result';
 export * from './types';
 export * from './value-object';
-export * from './value-object.spec';
 

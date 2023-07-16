@@ -5,7 +5,7 @@ import { AutoMapper } from "./auto-mapper";
 import { EntityValidation } from "./entity-validation";
 import { DomainError } from "./errors";
 import { EntityMetaHistory } from "./history";
-import { HooksConfig, defaultOnValidationError } from "./hooks";
+import { EntityDefaultOnValidationError, HooksConfig } from "./hooks";
 import { proxyHandler } from "./proxy";
 import { EntityProps } from "./types";
 
@@ -14,7 +14,7 @@ export interface EntityConfig {
   isAggregate?: boolean
 }
 export abstract class Entity<Props extends EntityProps> {
-  protected static hooks: HooksConfig<Entity<any>, EntityProps>
+  protected static hooks: HooksConfig<Entity<any>, any> = {}
 
   public constructorName = "Entity"
   protected _id: Id;
@@ -48,7 +48,7 @@ export abstract class Entity<Props extends EntityProps> {
     })
 
     this.internalValidation(instance)
-    instance?.hooks.rules?.(props);
+    instance?.hooks?.rules?.(props);
 
     if (!options?.isAggregate) {
       instance?.hooks?.onCreate?.(this as Entity<Props>)
@@ -59,7 +59,7 @@ export abstract class Entity<Props extends EntityProps> {
     if (instance?.hooks?.schema) {
       const validator = new EntityValidation(this.props)
       const validation = validator.fromSchema(instance?.hooks?.schema, {
-        onError: instance?.hooks?.onValidationError || defaultOnValidationError,
+        onError: instance?.hooks?.onValidationError || EntityDefaultOnValidationError,
       })
 
       if (validation.hasErrors()) {

@@ -7,7 +7,7 @@ import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } 
 
 const DOMAIN_EVENTS = Symbol('AggregateEvents');
 export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
-  protected static hooks: HooksConfig<Entity<any>, EntityProps>;
+  protected static hooks: HooksConfig<Entity<any>, any> = {}
   private [DOMAIN_EVENTS]: IDomainEvent<any>[] = []
 
   constructor(props: Props,) {

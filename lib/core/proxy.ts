@@ -1,10 +1,18 @@
+const prototypeMethodsThatShouldListener = [
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'slice'
+]
+
 export const proxyHandler = function <Props extends object>(self: any, keyProp: string[] = []): ProxyHandler<Props> {
   return {
     get: function (target, prop: string) {
       const val = Reflect.get(target, prop);
       if (typeof val === 'function') {
-        if (['push', 'pop', 'shift', 'unshift', 'slice'].includes(prop)) {
-          return function (...args: any[]) {
+        if (prototypeMethodsThatShouldListener.includes(prop)) {
+          return function (...args: unknown[]) {
             const result = Array.prototype[prop].apply(target, args);
             self.metaHistory.addSnapshot({
               props: self.props,

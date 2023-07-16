@@ -14,20 +14,22 @@ export * from './core/entity-validation';
 export * from './core/errors';
 export * from "./core/hooks";
 export * from "./core/pagination";
+export * from "./core/policy";
 export * as Repository from "./core/repository";
 export * as RepositoryError from "./core/repository-errors";
 export * as Result from './core/result';
 export * from "./core/types";
 export * from "./decorators";
 export { Either };
-
 export type Maybe<T> = T | null | undefined
 export type Collection<T> = T[]
 
 export namespace Domain {
   export const Policy = CorePolicy.Policy
   export const Hooks = CoreHook.Hooks
+  export const VoHooks = CoreHook.VoHooks
   export type HooksConfig<Aggregate, Props> = CoreHook.HooksConfig<Aggregate, Props>
+  export type VoHooksConfig<Vo, Props> = CoreHook.VoHooksConfig<Vo, Props>
   export const Entity = BaseEntity;
   export const Aggregate = BaseAggregate
   export const ValueObject = BaseValueObject
