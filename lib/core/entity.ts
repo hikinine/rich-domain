@@ -9,10 +9,10 @@ import { EntityDefaultOnValidationError, HooksConfig } from "./hooks";
 import { proxyHandler } from "./proxy";
 import { EntityProps } from "./types";
 
-
 export interface EntityConfig {
   isAggregate?: boolean
 }
+
 export abstract class Entity<Props extends EntityProps> {
   protected static hooks: HooksConfig<Entity<any>, any> = {}
 
@@ -160,8 +160,8 @@ export abstract class Entity<Props extends EntityProps> {
 
   private registerTimestampSignature(props: Props) {
     const now = Date.now()
-    this._createdAt = new Date(props.createdAt || now)
-    this._updatedAt = new Date(props.updatedAt || now)
+    this._createdAt = new Date(props?.createdAt || now)
+    this._updatedAt = new Date(props?.updatedAt || now)
 
     delete props?.createdAt
     delete props?.updatedAt
