@@ -140,12 +140,17 @@ export abstract class Entity<Props extends EntityProps> {
     return new Id(`[Entity@${name?.constructor?.name}]:${this.id.value}`)
   }
 
+  protected customizedIsEqual(first: any, second: any) {
+    if (first instanceof Date || second instanceof Date) {
+      return true;
+    }
+  }
   public isEqual(other: Entity<Props>): boolean {
 
     const currentProps = lodash.cloneDeep(this.props)
     const providedProps = lodash.cloneDeep(other.props)
     const equalId = this.id.equal(other.id);
-    return equalId && lodash.isEqual(currentProps, providedProps);
+    return equalId && lodash.isEqualWith(currentProps, providedProps, this.customizedIsEqual);
   }
 
 

@@ -11,10 +11,8 @@ const short = ShortUUID()
 export class Id implements IdImplementation {
   private _value: string;
   private _isNew: boolean;
-  private _createdAt: Date;
 
   constructor(id?: string) {
-    this._createdAt = new Date();
 
     if (typeof id === 'undefined') {
       const uuid = randomUUID()
@@ -45,10 +43,6 @@ export class Id implements IdImplementation {
 
   isNew(): boolean {
     return this._isNew;
-  }
-
-  createdAt(): Date {
-    return this._createdAt;
   }
 
   equal(id: Id): boolean {
