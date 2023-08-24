@@ -26,7 +26,7 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
 
   public hashCode() {
     const name = Reflect.getPrototypeOf(this);
-    return new Id(`[Aggregate@${name?.constructor.name}]:${this.props.id}`)
+    return new Id(`[Aggregate@${name?.constructor?.name}]:${this.props.id}`)
   }
 
   public addEvent(

@@ -48,9 +48,12 @@ export abstract class Entity<Props extends EntityProps> {
 
     this.metaHistory = new EntityMetaHistory<Props>(proxy, {
       onAddedSnapshot: (snapshot) => {
+        this.revalidate();
+        instance?.hooks?.rules?.(props);
+
         if (typeof instance?.hooks?.onChange === 'function') {
           instance.hooks.onChange(this as Entity<Props>, snapshot)
-          instance?.hooks?.rules?.(props);
+
         }
       }
     })

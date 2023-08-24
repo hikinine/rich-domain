@@ -7,7 +7,7 @@ export class DomainEvent<T> implements IDomainEvent<T> {
   constructor(aggregate: T, eventName?: string) {
     this.aggregate = aggregate;
     this.createdAt = new Date();
-    this.eventName = eventName || this.constructor.name
+    this.eventName = eventName || this?.constructor?.name
   }
 }
 
