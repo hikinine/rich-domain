@@ -2,10 +2,9 @@ import lodash from "lodash";
 import validator from "../utils/validator";
 import { Id } from "./Id";
 import { AutoMapper } from "./auto-mapper";
-import { EntityValidation } from "./entity-validation";
 import { DomainError } from "./errors";
 import { EntityMetaHistory } from "./history";
-import { EntityDefaultOnValidationError, HooksConfig } from "./hooks";
+import { HooksConfig } from "./hooks";
 import { proxyHandler } from "./proxy";
 import { EntityProps } from "./types";
 
@@ -24,9 +23,6 @@ export abstract class Entity<Props extends EntityProps> {
   protected autoMapper: AutoMapper<Props>
   protected metaHistory: EntityMetaHistory<Props>
 
-  get history() {
-    return this.metaHistory
-  }
   constructor(input: Props, options?: EntityConfig) {
     const instance = this.constructor as typeof Entity<any>
     const props = instance?.hooks?.transformBeforeCreate?.(input) as Props || input
@@ -36,18 +32,20 @@ export abstract class Entity<Props extends EntityProps> {
     this._id = id;
     props.id = id;
 
-
     this.autoMapper = new AutoMapper<Props>()
     this.props = props
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
     this.metaHistory = new EntityMetaHistory<Props>(proxy, {
       onAddedSnapshot: (snapshot) => {
-        instance?.hooks?.onChange?.(this as Entity<Props>, snapshot)
+        if (typeof instance?.hooks?.onChange === 'function') {
+          instance.hooks.onChange(this as Entity<Props>, snapshot)
+          instance?.hooks?.rules?.(props);
+        }
       }
     })
 
-    this.internalValidation(instance)
+    this.revalidate()
     instance?.hooks?.rules?.(props);
 
     if (!options?.isAggregate) {
@@ -55,46 +53,41 @@ export abstract class Entity<Props extends EntityProps> {
     }
   }
 
-  private internalValidation(instance: typeof Entity<Props>) {
-    if (instance?.hooks?.schema) {
-      const validator = new EntityValidation(this.props)
-      const validation = validator.fromSchema(instance?.hooks?.schema, {
-        onError: instance?.hooks?.onValidationError || EntityDefaultOnValidationError,
-      })
-
-      if (validation.hasErrors()) {
-        const [{ message, metadata }] = validation.errors;
-        throw new DomainError(message, metadata);
-      }
-    } 
-  }
   // Dispatch Entity Hook Validation
-  revalidate() {
-    const instance = this.constructor as typeof Entity<any>
-    this.internalValidation(instance)
+  public revalidate() {
+    const instance = this.constructor as typeof Entity<any>;
+    
+    if (instance?.hooks?.schema) {
+      const result = instance.hooks.schema.safeParse()
+
+      if (!result.success) {
+        throw new DomainError('')
+      }
+    }
   }
 
   //Dispatch Entity Hook  Rules
-  ensureBusinessRules() {
+  public ensureBusinessRules() {
     const instance = this.constructor as typeof Entity<any>
     instance?.hooks?.rules?.(this.props);
   }
 
-  revalidateAndEnsureBusinessRules() {
-    this.revalidate()
-    this.ensureBusinessRules()
+  get history() {
+    return this.metaHistory
   }
-
 
   get createdAt() {
     return this._createdAt;
   }
+
   get updatedAt() {
     return this._updatedAt;
   }
+
   get createdBy() {
     return this.props?.createdBy || null;
   }
+
   get updatedBy() {
     return this.props?.updatedBy || null;
   }
@@ -111,14 +104,6 @@ export abstract class Entity<Props extends EntityProps> {
   public setAuthorChange(updatedBy: string) {
     this.props.updatedBy = updatedBy;
   }
-
-
-  public static fromPlainObject<T = any>(plain: any): T {
-    const props = plain.props;
-    const entity = Reflect.construct(this, [props]);
-    return entity
-  }
-
 
   public clone(): Entity<Props> {
     const instance = Reflect.getPrototypeOf(this);
@@ -145,15 +130,13 @@ export abstract class Entity<Props extends EntityProps> {
       return true;
     }
   }
-  public isEqual(other: Entity<Props>): boolean {
 
+  public isEqual(other: Entity<Props>): boolean {
     const currentProps = lodash.cloneDeep(this.props)
     const providedProps = lodash.cloneDeep(other.props)
     const equalId = this.id.equal(other.id);
-    return equalId && lodash.isEqualWith(currentProps, providedProps, this.customizedIsEqual);
+    return equalId && lodash.isEqual(currentProps, providedProps);
   }
-
-
 
   private generateOrAssignId(props: Props) {
     const { id } = props
@@ -170,5 +153,11 @@ export abstract class Entity<Props extends EntityProps> {
 
     delete props?.createdAt
     delete props?.updatedAt
+  }
+
+  public static fromPlainObject<T = any>(plain: any): T {
+    const props = plain.props;
+    const entity = Reflect.construct(this, [props]);
+    return entity
   }
 }
