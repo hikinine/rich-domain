@@ -4,8 +4,8 @@ export const EntityDefaultOnValidationError = (key: string, value: any) => {
   return `DR01 | Falha na validação do campo '${key}'. Valor recebido: ${value}.`
 }
 interface Schema {
-  parse: () => any
-  safeParse: () => {
+  parse: (data: unknown) => any
+  safeParse: (data: unknown) => {
     success: boolean
     data?: any
     error?: any

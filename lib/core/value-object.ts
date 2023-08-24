@@ -27,7 +27,7 @@ export abstract class ValueObject<Value> {
     const instance = this.constructor as typeof ValueObject<any>
     
     if (instance?.hooks?.schema) {
-      const result = instance.hooks.schema.safeParse()
+      const result = instance.hooks.schema.safeParse(this._value)
 
       if (!result.success) {
         throw new DomainError('')

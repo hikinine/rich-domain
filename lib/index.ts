@@ -29,7 +29,7 @@ export namespace Domain {
   export const Hooks = CoreHook.Hooks
   export const VoHooks = CoreHook.VoHooks
   export type HooksConfig<Aggregate, Props> = CoreHook.HooksConfig<Aggregate, Props>
-  export type VoHooksConfig<Vo, Props> = CoreHook.VoHooksConfig<Vo, Props>
+  export type VoHooksConfig<Props> = CoreHook.VoHooksConfig<Props>
   export const Entity = BaseEntity;
   export const Aggregate = BaseAggregate
   export const ValueObject = BaseValueObject

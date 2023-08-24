@@ -58,7 +58,7 @@ export abstract class Entity<Props extends EntityProps> {
     const instance = this.constructor as typeof Entity<any>;
     
     if (instance?.hooks?.schema) {
-      const result = instance.hooks.schema.safeParse()
+      const result = instance.hooks.schema.safeParse(this.props)
 
       if (!result.success) {
         throw new DomainError('')
