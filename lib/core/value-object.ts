@@ -12,27 +12,33 @@ export abstract class ValueObject<Value> {
   protected autoMapper: AutoMapper<Value>
 
   constructor(input: Value) {
+    this.autoMapper = new AutoMapper<Value>();
+
     const instance = this.constructor as typeof ValueObject<any>
     const value = instance?.hooks?.transformBeforeCreate?.(input) as Value || input
+    this._value = this.validation(value);
 
-    this._value = value
-    this.autoMapper = new AutoMapper<Value>()
-
-
-    this.revalidate();
     instance?.hooks?.rules?.(this as ValueObject<Value>)
   }
 
-  public revalidate() {
+  private validation(value: Value): Value {
     const instance = this.constructor as typeof ValueObject<any>
-    
-    if (instance?.hooks?.schema) {
-      const result = instance.hooks.schema.safeParse(this._value)
 
-      if (!result.success) {
-        throw new DomainError('')
-      }
+    if (!instance?.hooks?.schema) {
+      return value
     }
+    
+    const result = instance.hooks.schema.safeParse(value)
+
+    if (!result.success) {
+      throw new DomainError('Falha de validação.', result.error)
+    }
+
+    return result.data
+  }
+
+  public revalidate() {
+    this.validation(this._value)
   }
 
   get value(): { [Parameters in keyof Value]: any } | Value {

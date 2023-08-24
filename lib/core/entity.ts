@@ -24,6 +24,9 @@ export abstract class Entity<Props extends EntityProps> {
   protected metaHistory: EntityMetaHistory<Props>
 
   constructor(input: Props, options?: EntityConfig) {
+    this.autoMapper = new AutoMapper<Props>();
+
+    
     const instance = this.constructor as typeof Entity<any>
     const props = instance?.hooks?.transformBeforeCreate?.(input) as Props || input
 
@@ -32,10 +35,17 @@ export abstract class Entity<Props extends EntityProps> {
     this._id = id;
     props.id = id;
 
-    this.autoMapper = new AutoMapper<Props>()
     this.props = props
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
+  
+    this.revalidate();
+    instance?.hooks?.rules?.(props);
+
+    if (!options?.isAggregate) {
+      instance?.hooks?.onCreate?.(this as Entity<Props>)
+    }
+
     this.metaHistory = new EntityMetaHistory<Props>(proxy, {
       onAddedSnapshot: (snapshot) => {
         if (typeof instance?.hooks?.onChange === 'function') {
@@ -45,12 +55,6 @@ export abstract class Entity<Props extends EntityProps> {
       }
     })
 
-    this.revalidate()
-    instance?.hooks?.rules?.(props);
-
-    if (!options?.isAggregate) {
-      instance?.hooks?.onCreate?.(this as Entity<Props>)
-    }
   }
 
   // Dispatch Entity Hook Validation
@@ -61,7 +65,8 @@ export abstract class Entity<Props extends EntityProps> {
       const result = instance.hooks.schema.safeParse(this.props)
 
       if (!result.success) {
-        throw new DomainError('')
+        throw new DomainError('Falha de validação.', result.error)
+
       }
     }
   }
