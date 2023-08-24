@@ -26,7 +26,7 @@ export abstract class Entity<Props extends EntityProps> {
   constructor(input: Props, options?: EntityConfig) {
     this.autoMapper = new AutoMapper<Props>();
 
-    
+
     const instance = this.constructor as typeof Entity<any>
     const props = instance?.hooks?.transformBeforeCreate?.(input) as Props || input
 
@@ -38,7 +38,7 @@ export abstract class Entity<Props extends EntityProps> {
     this.props = props
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
-  
+
     this.revalidate();
     instance?.hooks?.rules?.(props);
 
@@ -63,7 +63,7 @@ export abstract class Entity<Props extends EntityProps> {
   // Dispatch Entity Hook Validation
   public revalidate() {
     const instance = this.constructor as typeof Entity<any>;
-    
+
     if (instance?.hooks?.schema) {
       const result = instance.hooks.schema.safeParse(this.props)
 
@@ -133,17 +133,18 @@ export abstract class Entity<Props extends EntityProps> {
     return new Id(`[Entity@${name?.constructor?.name}]:${this.id.value}`)
   }
 
+
   protected customizedIsEqual(first: any, second: any) {
     if (first instanceof Date || second instanceof Date) {
       return true;
     }
   }
-
   public isEqual(other: Entity<Props>): boolean {
+
     const currentProps = lodash.cloneDeep(this.props)
     const providedProps = lodash.cloneDeep(other.props)
     const equalId = this.id.equal(other.id);
-    return equalId && lodash.isEqual(currentProps, providedProps);
+    return equalId && lodash.isEqualWith(currentProps, providedProps, this.customizedIsEqual);
   }
 
   private generateOrAssignId(props: Props) {
