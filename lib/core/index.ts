@@ -1,4 +1,3 @@
-export * from './Id';
 export * from './adapter';
 export * from './aggregate';
 export * from './auto-mapper';
@@ -8,6 +7,7 @@ export * from './entity-validation';
 export * from './errors';
 export * from './history';
 export * from './hooks';
+export * from './id';
 export * from './id-short-id';
 export * from './pagination';
 export * from './policy';
