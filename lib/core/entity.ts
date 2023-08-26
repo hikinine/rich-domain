@@ -40,7 +40,7 @@ export abstract class Entity<Props extends EntityProps> {
     this.props = proxy;
 
     this.revalidate();
-    instance?.hooks?.rules?.(props);
+    instance?.hooks?.rules?.(this);
 
     if (!options?.isAggregate) {
       instance?.hooks?.onCreate?.(this as Entity<Props>)
@@ -49,7 +49,7 @@ export abstract class Entity<Props extends EntityProps> {
     this.metaHistory = new EntityMetaHistory<Props>(proxy, {
       onAddedSnapshot: (snapshot) => {
         this.revalidate();
-        instance?.hooks?.rules?.(props);
+        instance?.hooks?.rules?.(this);
 
         if (typeof instance?.hooks?.onChange === 'function') {
           instance.hooks.onChange(this as Entity<Props>, snapshot)
@@ -77,7 +77,7 @@ export abstract class Entity<Props extends EntityProps> {
   //Dispatch Entity Hook  Rules
   public ensureBusinessRules() {
     const instance = this.constructor as typeof Entity<any>
-    instance?.hooks?.rules?.(this.props);
+    instance?.hooks?.rules?.(this);
   }
 
   get history() {

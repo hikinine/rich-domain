@@ -16,7 +16,7 @@ export interface HooksConfig<Aggregate, Props> {
   transformBeforeCreate?: (props: Props) => Props
   onChange?: (entity: Aggregate, snapshot: any) => void
   onCreate?: (entity: Aggregate) => void
-  rules?: (props: Props) => void
+  rules?: (data: Aggregate) => void
 }
 
 export function Hooks<Aggregate, Props>(config: HooksConfig<Aggregate, Props>) {
@@ -26,7 +26,7 @@ export function Hooks<Aggregate, Props>(config: HooksConfig<Aggregate, Props>) {
 export interface VoHooksConfig<Props> {
   schema?: Schema
   transformBeforeCreate?: (props: Props) => Props
-  rules?: (props: Props) => void
+  rules?: (data: Props) => void
 }
 
 export function VoHooks<Props>(config: VoHooksConfig<Props>) {
