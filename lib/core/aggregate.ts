@@ -1,7 +1,7 @@
-import { Id } from "./Id";
 import { DomainEvent } from "./domain-event";
 import { Entity } from "./entity";
 import { HooksConfig } from "./hooks";
+import { Id } from "./ids";
 import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } from "./types";
 
 

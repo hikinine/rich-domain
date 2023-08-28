@@ -1,10 +1,10 @@
 import lodash from "lodash";
 import validator from "../utils/validator";
-import { Id } from "./Id";
 import { AutoMapper } from "./auto-mapper";
 import { DomainError } from "./errors";
 import { EntityMetaHistory } from "./history";
 import { HooksConfig } from "./hooks";
+import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
 import { EntityProps } from "./types";
 
@@ -144,7 +144,7 @@ export abstract class Entity<Props extends EntityProps> {
     const currentProps = lodash.cloneDeep(this.props)
     const providedProps = lodash.cloneDeep(other.props)
     const equalId = this.id.equal(other.id);
-    return equalId && lodash.isEqualWith(currentProps, providedProps, this.customizedIsEqual);
+    return equalId && lodash.isEqual(currentProps, providedProps);
   }
 
   private generateOrAssignId(props: Props) {

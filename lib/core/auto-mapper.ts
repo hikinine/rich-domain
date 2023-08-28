@@ -1,5 +1,5 @@
 
-import { Id } from "./Id";
+import { Id } from "./ids";
 import { EntityMapperPayload } from "./types";
 
 export class AutoMapper<Props> {

@@ -2,7 +2,7 @@ import { Aggregate as BaseAggregate } from "./core/aggregate";
 import { DomainEvent as BaseDomainEvent } from "./core/domain-event";
 import { Entity as BaseEntity } from "./core/entity";
 import * as CoreHook from "./core/hooks";
-import { Id as BaseId } from "./core/id";
+import { Id as BaseId } from "./core/ids";
 import * as CorePolicy from "./core/policy";
 
 import { Either } from './core/result';

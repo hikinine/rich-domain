@@ -12,7 +12,6 @@ export type IEntity = {
 export interface IdImplementation {
   value: string;
   isNew(): boolean;
-  createdAt(): Date;
   equal(id: IdImplementation): boolean;
   deepEqual(id: IdImplementation): boolean;
   cloneAsNew(): IdImplementation;

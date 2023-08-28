@@ -1,8 +1,8 @@
 
+import lodash from "lodash";
 import { AutoMapper } from "./auto-mapper";
 import { DomainError } from "./errors";
 import { VoHooksConfig } from "./hooks";
-
 export abstract class ValueObject<Value> {
   protected static hooks: VoHooksConfig<any> = {}
 
@@ -27,7 +27,7 @@ export abstract class ValueObject<Value> {
     if (!instance?.hooks?.schema) {
       return value
     }
-    
+
     const result = instance.hooks.schema.safeParse(value)
 
     if (!result.success) {
@@ -44,18 +44,15 @@ export abstract class ValueObject<Value> {
   get value(): { [Parameters in keyof Value]: any } | Value {
     return this.autoMapper.valueObjectToObj(this)
   }
-
+  protected customizedIsEqual(first: any, second: any) {
+    if (first instanceof Date || second instanceof Date) {
+      return true;
+    }
+  }
   public isEqual(other: ValueObject<Value>): boolean {
-    const value = other.value;
-
-    if (typeof value === "object" && (typeof this.value === "object")) {
-      const serializedA = JSON.stringify(this.value);
-      const serializedB = JSON.stringify(value);
-      return serializedA === serializedB;
-    }
-    else {
-      return this.value === value
-    }
+    const currentProps = lodash.cloneDeep(this.value)
+    const providedProps = lodash.cloneDeep(other.value)
+    return lodash.isEqual(currentProps, providedProps);
   }
 
   public clone(): ValueObject<Value> {
