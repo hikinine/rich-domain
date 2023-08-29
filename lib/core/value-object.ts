@@ -5,15 +5,11 @@ import { DomainError } from "./errors";
 import { VoHooksConfig } from "./hooks";
 export abstract class ValueObject<Value> {
   protected static hooks: VoHooksConfig<any> = {}
+  protected static autoMapper: AutoMapper<any> = new AutoMapper<any>();
 
-
-  public constructorName = "ValueObject"
   protected _value: Value
-  protected autoMapper: AutoMapper<Value>
 
   constructor(input: Value) {
-    this.autoMapper = new AutoMapper<Value>();
-
     const instance = this.constructor as typeof ValueObject<any>
     const value = instance?.hooks?.transformBeforeCreate?.(input) as Value || input
     this._value = this.validation(value);
@@ -42,7 +38,7 @@ export abstract class ValueObject<Value> {
   }
 
   get value(): { [Parameters in keyof Value]: any } | Value {
-    return this.autoMapper.valueObjectToObj(this)
+    return ValueObject.autoMapper.valueObjectToObj(this)
   }
   protected customizedIsEqual(first: any, second: any) {
     if (first instanceof Date || second instanceof Date) {

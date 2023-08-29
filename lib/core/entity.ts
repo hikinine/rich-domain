@@ -13,20 +13,16 @@ export interface EntityConfig {
 }
 
 export abstract class Entity<Props extends EntityProps> {
+  protected static autoMapper: AutoMapper<EntityProps> = new AutoMapper<any>();
   protected static hooks: HooksConfig<Entity<any>, any> = {}
 
-  public constructorName = "Entity"
   protected _id: Id;
   protected _createdAt: Date = new Date();
   protected _updatedAt: Date = new Date();
   protected props: Props
-  protected autoMapper: AutoMapper<Props>
   protected metaHistory: EntityMetaHistory<Props>
 
   constructor(input: Props, options?: EntityConfig) {
-    this.autoMapper = new AutoMapper<Props>();
-
-
     const instance = this.constructor as typeof Entity<any>
     const props = instance?.hooks?.transformBeforeCreate?.(input) as Props || input
 
@@ -125,7 +121,7 @@ export abstract class Entity<Props extends EntityProps> {
   }
 
   public toPrimitives() {
-    return this.autoMapper.entityToObj(this)
+    return Entity.autoMapper.entityToObj(this)
   }
 
   public hashCode(): Id {

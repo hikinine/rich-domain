@@ -30,7 +30,7 @@ export class Snapshot {
       return relationships.includes(singleKey)
     }
     else {
-      return updateKeys.every((multKey) => relationships.includes(multKey));
+      return relationships.every((key) => updateKeys.includes(key));
     }
   }
 }
@@ -39,12 +39,10 @@ export type SnapshotCallbacks = {
 }
 export class EntityMetaHistory<T>{
   public initialProps: T
-  public _currentProps: T
   public snapshots: SnapshotsData<T>[]
   private callbacks?: SnapshotCallbacks
 
   constructor(props: T, callbacks?: SnapshotCallbacks) {
-    this._currentProps = props;
     this.initialProps = lodash.cloneDeep(props)
     this.snapshots = []
     this.callbacks = callbacks
@@ -77,10 +75,6 @@ export class EntityMetaHistory<T>{
     }
   }
 
-  get currentProps() {
-    return this._currentProps
-  }
-
   public hasChange(key: string) {
     const relationships = key.split('.');
     return this.snapshots.some(
@@ -92,7 +86,7 @@ export class EntityMetaHistory<T>{
           return relationships.includes(singleKey)
         }
         else {
-          return updateKeys.every((multKey) => relationships.includes(multKey));
+          return relationships.every((key) => updateKeys.includes(key));
         }
       }
     )
