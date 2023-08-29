@@ -6,32 +6,52 @@ export type SnapshotTrace = {
   action?: string
   from?: any,
   to?: any,
-
 }
-export type Snapshots<T> = {
+
+export type SnapshotsData<T> = {
   props: T,
   timestamp?: Date,
   trace: SnapshotTrace,
 }
 
-export type SnapshotCallbacks<T> = {
-  onAddedSnapshot?: (snapshot: Snapshots<T>) => void
+export class Snapshot {
+  public timestamp?: Date
+  public trace: SnapshotTrace
+  constructor(snapshot: SnapshotsData<any>) {
+    this.timestamp = snapshot.timestamp
+    this.trace = snapshot.trace
+  }
+
+  public hasChange(key: string) {
+    const relationships = key.split('.');
+    const updateKeys = this.trace.update.split('.');
+    if (updateKeys.length === 1) {
+      const [singleKey] = updateKeys
+      return relationships.includes(singleKey)
+    }
+    else {
+      return updateKeys.every((multKey) => relationships.includes(multKey));
+    }
+  }
+}
+export type SnapshotCallbacks = {
+  onAddedSnapshot?: (snapshot: Snapshot) => void
 }
 export class EntityMetaHistory<T>{
   public initialProps: T
   public _currentProps: T
-  public snapshots: Snapshots<T>[]
-  private callbacks?: SnapshotCallbacks<T>
+  public snapshots: SnapshotsData<T>[]
+  private callbacks?: SnapshotCallbacks
 
-  constructor(props: T, callbacks?: SnapshotCallbacks<T>) {
+  constructor(props: T, callbacks?: SnapshotCallbacks) {
     this._currentProps = props;
     this.initialProps = lodash.cloneDeep(props)
     this.snapshots = []
     this.callbacks = callbacks
   }
 
-  public addSnapshot(data: Snapshots<T>) {
-    const snapshot: Snapshots<T> = {
+  public addSnapshot(data: SnapshotsData<T>) {
+    const snapshot: SnapshotsData<T> = {
       timestamp: new Date(),
       props: lodash.cloneDeep(data.props),
       trace: {
@@ -53,7 +73,7 @@ export class EntityMetaHistory<T>{
     this.snapshots.push(snapshot)
 
     if (this.callbacks?.onAddedSnapshot) {
-      this.callbacks.onAddedSnapshot(snapshot)
+      this.callbacks.onAddedSnapshot(new Snapshot(snapshot))
     }
   }
 
@@ -62,22 +82,17 @@ export class EntityMetaHistory<T>{
   }
 
   public hasChange(key: string) {
-    const relationships = key.split('.')
-
+    const relationships = key.split('.');
     return this.snapshots.some(
       (snapshot) => {
-        const updateKeys = snapshot.trace.update.split('.')
+        const updateKeys = snapshot.trace.update.split('.');
+
         if (updateKeys.length === 1) {
           const [singleKey] = updateKeys
           return relationships.includes(singleKey)
         }
         else {
-          for (const multKey of updateKeys) {
-            if (relationships.includes(multKey)) {
-              return true
-            }
-          }
-          return false;
+          return updateKeys.every((multKey) => relationships.includes(multKey));
         }
       }
     )
@@ -113,7 +128,7 @@ export class EntityMetaHistory<T>{
 
           const sameID = a.id.value === (currentValue as any).id?.value;
           const sameProps = a.isEqual(currentValue as any)
-  
+
           if (sameID && !sameProps) shouldUpdate = true;
 
           return sameID

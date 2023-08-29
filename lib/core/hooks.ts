@@ -1,3 +1,4 @@
+import { Snapshot } from "./history"
 
 
 export const EntityDefaultOnValidationError = (key: string, value: any) => {
@@ -14,7 +15,7 @@ interface Schema {
 export interface HooksConfig<Aggregate, Props> {
   schema?: Schema
   transformBeforeCreate?: (props: Props) => Props
-  onChange?: (entity: Aggregate, snapshot: any) => void
+  onChange?: (entity: Aggregate, snapshot: Snapshot) => void
   onCreate?: (entity: Aggregate) => void
   rules?: (data: Aggregate) => void
 }
