@@ -37,7 +37,7 @@ export abstract class ValueObject<Value> {
     this.validation(this._value)
   }
 
-  get value(): { [Parameters in keyof Value]: any } | Value {
+  get value():  Value {
     return ValueObject.autoMapper.valueObjectToObj(this)
   }
   protected customizedIsEqual(first: any, second: any) {
