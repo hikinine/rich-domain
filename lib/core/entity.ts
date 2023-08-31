@@ -31,11 +31,11 @@ export abstract class Entity<Props extends EntityProps> {
     this._id = id;
     props.id = id;
 
-    this.props = props
+
+    this.props = this.validation(props);
     const proxy = new Proxy<Props>(this.props, proxyHandler(this));
     this.props = proxy;
 
-    this.revalidate();
     instance?.hooks?.rules?.(this);
 
     if (!options?.isAggregate) {
@@ -56,18 +56,22 @@ export abstract class Entity<Props extends EntityProps> {
 
   }
 
+  protected validation(props: Props) {
+    const instance = this.constructor as typeof Entity<any>;
+    if (!instance?.hooks?.schema) {
+      return props;
+    }
+    const result = instance.hooks.schema.safeParse(props)
+    if (!result.success) {
+      throw new DomainError('Falha de validação.', result.error)
+    }
+
+    return result.data
+  }
+
   // Dispatch Entity Hook Validation
   public revalidate() {
-    const instance = this.constructor as typeof Entity<any>;
-
-    if (instance?.hooks?.schema) {
-      const result = instance.hooks.schema.safeParse(this.props)
-
-      if (!result.success) {
-        throw new DomainError('Falha de validação.', result.error)
-
-      }
-    }
+    this.validation(this.props)
   }
 
   //Dispatch Entity Hook  Rules
