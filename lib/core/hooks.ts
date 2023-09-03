@@ -4,8 +4,10 @@ import { Snapshot } from "./history"
 export const EntityDefaultOnValidationError = (key: string, value: any) => {
   return `DR01 | Falha na validação do campo '${key}'. Valor recebido: ${value}.`
 }
+
+type Optional<T> = void | T
 export interface HooksConfig<Aggregate, Props> {
-  validation?: (props: Props) =>  { message?: string, success?: boolean }
+  validation?: (props: Props) =>  Optional<{ message: string }> 
   transformBeforeCreate?: (props: Props) => Props
   onChange?: (entity: Aggregate, snapshot: Snapshot) => void
   onCreate?: (entity: Aggregate) => void
@@ -17,7 +19,7 @@ export function Hooks<Aggregate, Props>(config: HooksConfig<Aggregate, Props>) {
 }
 
 export interface VoHooksConfig<Props> {
-  validation?: (props: Props) =>  { message?: string, success?: boolean }
+  validation?: (props: Props) =>  Optional<{ message: string}>
   transformBeforeCreate?: (props: Props) => Props
   rules?: (data: Props) => void
 }

@@ -21,10 +21,10 @@ export abstract class ValueObject<Value> {
     const instance = this.constructor as typeof ValueObject<any>
 
     if (instance?.hooks?.validation) {
-      const result = instance.hooks.validation(value)
-   
-      if (!result?.success) {
-        throw new DomainError(result?.message || 'Falha de validação.')
+      const hasError = instance.hooks.validation(value)
+
+      if (hasError) {
+        throw new DomainError(hasError?.message || 'Falha de validação.')
       }
     }
   }
