@@ -61,10 +61,10 @@ export abstract class Entity<Props extends EntityProps> {
     const instance = this.constructor as typeof Entity<any>;
 
     if (instance?.hooks?.validation) {
-      const success = instance.hooks.validation(this.props)
+      const result = instance.hooks.validation(this.props)
 
-      if (!success) {
-        throw new DomainError('Falha de validação.')
+      if (!result?.success) {
+        throw new DomainError(result?.message || 'Falha de validação.')
       }
     }
   }
