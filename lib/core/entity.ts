@@ -60,12 +60,11 @@ export abstract class Entity<Props extends EntityProps> {
   public revalidate() {
     const instance = this.constructor as typeof Entity<any>;
 
-    if (instance?.hooks?.schema) {
-      const result = instance.hooks.schema.safeParse(this.props)
+    if (instance?.hooks?.validation) {
+      const success = instance.hooks.validation(this.props)
 
-      if (!result.success) {
-        throw new DomainError('Falha de validação.', result.error)
-
+      if (!success) {
+        throw new DomainError('Falha de validação.')
       }
     }
   }

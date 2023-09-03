@@ -11,26 +11,24 @@ export abstract class ValueObject<Value> {
 
   constructor(input: Value) {
     const instance = this.constructor as typeof ValueObject<any>
-    const value = instance?.hooks?.transformBeforeCreate?.(input) as Value || input
-    this._value = this.validation(value);
-
+    this._value = instance?.hooks?.transformBeforeCreate?.(input) as Value || input
+    
+    this.revalidate();
     instance?.hooks?.rules?.(this as ValueObject<Value>)
   }
 
-  private validation(value: Value): Value {
+  private validation(value: Value) {
     const instance = this.constructor as typeof ValueObject<any>
 
-    if (!instance?.hooks?.schema) {
-      return value
+    if (!instance?.hooks?.validation) {
+      return;
     }
 
-    const result = instance.hooks.schema.safeParse(value)
+    const success = instance.hooks.validation(value)
 
-    if (!result.success) {
-      throw new DomainError('Falha de validação.', result.error)
+    if (!success) {
+      throw new DomainError('Falha de validação.')
     }
-
-    return result.data
   }
 
   public revalidate() {
