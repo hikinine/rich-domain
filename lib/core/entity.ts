@@ -12,10 +12,13 @@ export interface EntityConfig {
   isAggregate?: boolean
 }
 
+
+
 export abstract class Entity<Props extends EntityProps> {
   protected static autoMapper: AutoMapper<EntityProps> = new AutoMapper<any>();
   protected static hooks: HooksConfig<Entity<any>, any> = {}
 
+  protected rulesIsLocked: boolean = false;
   protected _id: Id;
   protected _createdAt: Date = new Date();
   protected _updatedAt: Date = new Date();
@@ -45,7 +48,11 @@ export abstract class Entity<Props extends EntityProps> {
     this.metaHistory = new EntityMetaHistory<Props>(proxy, {
       onAddedSnapshot: (snapshot) => {
         this.revalidate();
-        instance?.hooks?.rules?.(this);
+
+        if (!this.rulesIsLocked) {
+          instance?.hooks?.rules?.(this);
+        }
+
 
         if (typeof instance?.hooks?.onChange === 'function') {
           instance.hooks.onChange(this as Entity<Props>, snapshot)
