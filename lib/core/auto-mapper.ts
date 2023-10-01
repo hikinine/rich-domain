@@ -1,7 +1,6 @@
 
 import Validator from "../utils/validator";
 import { Id } from "./ids";
-import { EntityMapperPayload } from "./types";
 
 export class AutoMapper<Props> {
 
@@ -48,7 +47,7 @@ export class AutoMapper<Props> {
 	 * @param entity instance.
 	 * @returns a simple object.
 	 */
-	entityToObj(entity: any): { [key in keyof Props]: any } & EntityMapperPayload {
+	entityToObj(entity: any)  {
 
 		const initialValues: any = { id: entity?.id?._value };
 

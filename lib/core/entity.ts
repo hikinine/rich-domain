@@ -126,7 +126,7 @@ export abstract class Entity<Props extends EntityProps> {
     return this.id.isNew();
   }
 
-  public toPrimitives() {
+  public toPrimitives(): { [key in keyof Props]: any } {
     return Entity.autoMapper.entityToObj(this)
   }
 
