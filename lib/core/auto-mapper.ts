@@ -1,4 +1,5 @@
 
+import Validator from "../utils/validator";
 import { Id } from "./ids";
 import { EntityMapperPayload } from "./types";
 
@@ -18,14 +19,14 @@ export class AutoMapper<Props> {
 			.reduce((accumulator, [key, instance]) => {
 				if (instance instanceof Array) {
 					accumulator[key] = instance.map((item) => {
-						if (item?.constructorName === "ValueObject")
+						if (Validator.isValueObject(item))
 							return item?.value
 						else
 							return item
 					})
 				}
 				else {
-					if ((instance as any)?.constructorName === "ValueObject")
+					if ( Validator.isValueObject(instance))
 						accumulator[key] = (instance as any)?.value
 					else if ((instance as any) instanceof Id) {
 						accumulator[key] = (instance as any)?._value
@@ -57,19 +58,19 @@ export class AutoMapper<Props> {
 
 				if (instance instanceof Array) {
 					accumulator[key] = instance.map((item) => {
-						if (item.constructorName === "ValueObject")
+						if (Validator.isValueObject(item))
 							return item?.value
-						else if (item.constructorName === "Entity")
+						else if (Validator.isEntity(item))
 							return item?.toPrimitives?.()
 						else
 							return item
 					})
 				}
 				else {
-					if ((instance as any)?.constructorName === "ValueObject") {
+					if (Validator.isValueObject(instance)) {
 						accumulator[key] = (instance as any)?.value
 					}
-					else if ((instance as any).constructorName === "Entity") {
+					else if (Validator.isEntity(instance)) {
 						accumulator[key] = (instance as any)?.toPrimitives?.()
 					}
 					else if ((instance as any) instanceof Id) {
