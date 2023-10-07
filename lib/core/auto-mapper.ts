@@ -49,7 +49,26 @@ export class AutoMapper<Props> {
 	 */
 	entityToObj(entity: any)  {
 
-		const initialValues: any = { id: entity?.id?._value };
+		const initialValues: any = { 
+			id: entity?.id?._value ,
+		};
+
+		if (entity?.createdAt instanceof Date) {
+			initialValues.createdAt = entity?.createdAt
+		}
+
+		if (entity?.updatedAt instanceof Date) {
+			initialValues.updatedAt = entity?.updatedAt
+		}
+
+		if (entity?.createdBy) {
+			initialValues.createdBy = entity?.createdBy
+		}
+
+		if (entity?.updatedBy) {
+			initialValues.updatedBy = entity?.updatedBy
+		}
+
 
 		const obj = Object.entries(entity.props)
 			.reduce((accumulator, [key, instance]) => {
