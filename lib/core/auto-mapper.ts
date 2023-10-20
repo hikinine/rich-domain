@@ -78,7 +78,7 @@ export class AutoMapper<Props> {
 					accumulator[key] = instance.map((item) => {
 						if (Validator.isValueObject(item))
 							return item?.value
-						else if (Validator.isEntity(item))
+						else if (Validator.isEntity(item) || Validator.isAggregate(item))
 							return item?.toPrimitives?.()
 						else
 							return item
@@ -88,7 +88,7 @@ export class AutoMapper<Props> {
 					if (Validator.isValueObject(instance)) {
 						accumulator[key] = (instance as any)?.value
 					}
-					else if (Validator.isEntity(instance)) {
+					else if (Validator.isEntity(instance) || Validator.isAggregate(instance)) {
 						accumulator[key] = (instance as any)?.toPrimitives?.()
 					}
 					else if ((instance as any) instanceof Id) {
