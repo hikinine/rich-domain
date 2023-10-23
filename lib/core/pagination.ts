@@ -1,12 +1,21 @@
 export class PaginationCriteria {
   offset: number;
   limit: number;
+  search?: string
   orderBy?: [string, "asc" | "desc"];
 
   constructor(props: any) {
-    this.offset = Number(props.offset) || 0;
-    this.limit = Number(props.limit) || 10;
     this.orderBy = props?.orderBy;
+
+    if (props?.search) {
+      this.search = String(props.search);
+      this.offset = 0;
+      this.limit = 20;
+    }
+    else {
+      this.offset = Number(props.offset) || 0;
+      this.limit = Number(props.limit) || 10;
+    }
   }
 
   public maxLimit(number: number) {
@@ -26,6 +35,7 @@ export class Pagination<Aggregate> {
     totalResults: number
     timestamp: number
     config: {
+      search?: string
       offset: number
       limit: number
       orderBy?: string
@@ -41,6 +51,7 @@ export class Pagination<Aggregate> {
       totalPages: Math.ceil(paginationResult.total / criteria.limit),
       totalResults: paginationResult.total,
       config: {
+        search: criteria.search,
         offset: criteria.offset,
         limit: criteria.limit,
         orderBy: criteria?.orderBy?.join?.(" "),
@@ -49,7 +60,7 @@ export class Pagination<Aggregate> {
     }
   }
 
-  public toPublicView<T>(clazz: ConstructorTypeof<T>): Pagination<T> {
+  public convertTo<T>(clazz: ConstructorTypeof<T>): Pagination<T> {
     return {
       query: this.query,
       result: this.result.map((item) => new clazz(item))
