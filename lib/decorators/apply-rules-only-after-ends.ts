@@ -7,7 +7,7 @@ import { Entity } from "../core";
  */
 export function ApplyRulesOnlyAfterCommitsSync() {
   return function (
-    _: typeof Entity<any>,
+    _:  Entity<any>,
     __: string,
     descriptor: PropertyDescriptor
   ) {
