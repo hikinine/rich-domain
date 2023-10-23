@@ -6,14 +6,18 @@ import { Entity } from "../core";
  * that means, if you update your entity X times in a method, the rules will be applied only after the method ends.
  */
 export function ApplyRulesOnlyAfterCommitsSync() {
-  return function (target: Entity<any>, __: string, descriptor: PropertyDescriptor) {
+  return function (
+    _: typeof Entity<any>,
+    __: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
 
     descriptor.value = function (...args: any[]) {
-      target['rulesIsLocked'] = true;
+      this['rulesIsLocked'] = true;
       const result = originalMethod.apply(this, args);
-      target['rulesIsLocked'] = false
-      target.ensureBusinessRules()
+      this['rulesIsLocked'] = false;
+      this['ensureBusinessRules']();
       return result;
     };
   };
