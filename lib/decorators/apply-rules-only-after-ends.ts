@@ -10,22 +10,11 @@ export function ApplyRulesOnlyAfterCommits() {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      let result: unknown;
       target['rulesIsLocked'] = true;
-
-      try {
-        result = await originalMethod.apply(this, args);
-      } catch (error) {
-        throw error
-      }
-      finally {
-        target['rulesIsLocked'] = false
-        target.ensureBusinessRules()
-      }
-   
-      return result; 
+      const result = await originalMethod.apply(this, args);
+      target['rulesIsLocked'] = false
+      target.ensureBusinessRules()
+      return result;
     };
-
-    return descriptor;
   };
 }
