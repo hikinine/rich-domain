@@ -48,13 +48,15 @@ export class PaginationCriteria {
     this.limit = Number(props?.limit) || 10;
 
     if (props?.orderBy) {
-      const orderBy = JSON.parse(props?.orderBy) as OrderBy || []
+      const orderBy = JSON.parse(props?.orderBy || '[]') as OrderBy || []
       validationOrderBy(orderBy)
+      this.orderBy = orderBy
     }
 
     if (props?.filter) {
       const filter = JSON.parse(props.filter) as Filter || []
       validationFilter(filter)
+      this.filter = filter
     }
 
     if (props?.search) {
