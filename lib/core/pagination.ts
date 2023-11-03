@@ -117,8 +117,9 @@ export class Pagination<Aggregate> {
     config: {
       search?: string
       offset: number
+      filter?: Filter
       limit: number
-      orderBy?: string
+      orderBy?: OrderBy
     }
   }
   public readonly result: Aggregate[]
@@ -134,7 +135,8 @@ export class Pagination<Aggregate> {
         search: criteria.search,
         offset: criteria.offset,
         limit: criteria.limit,
-        orderBy: criteria?.orderBy?.join?.(" "),
+        filter: criteria?.filter,
+        orderBy: criteria?.orderBy,
       },
       timestamp: Date.now(),
     }
