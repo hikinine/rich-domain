@@ -47,7 +47,8 @@ export class PaginationCriteria {
     this.offset = Number(props?.offset) || 0;
     this.limit = Number(props?.limit) || 10;
 
-    if (props?.orderBy) {
+    if (props?.orderBy && props.orderBy !== 'undefined' && props.orderBy !== 'null') {
+      
       const orderBy = JSON.parse(props?.orderBy || '[]') as OrderBy || []
       validationOrderBy(orderBy)
       this.orderBy = orderBy
