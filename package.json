@@ -1,6 +1,6 @@
 {
 	"name": "@hiki9/rich-domain",
-	"version": "1.2.39",
+	"version": "1.3.3",
 	"description": "Fork from rich-domain by Alessandro Dev",
 	"main": "dist/index.js",
 	"types": "dist/index.d.js",
@@ -50,11 +50,11 @@
 		"check:circular-deps": "madge --circular --extensions ts ./lib",
 		"preexample": "tsc -p tsconfig.example.json",
 		"example": "node ./example/index.js",
-		"prebuild": "rimraf ./dist && npm run check:circular-deps && bash ./clear.sh",
+		"prebuild": "rimraf ./dist && npm run check:circular-deps",
 		"postbuild": "copyfiles -r ./dist/* ./",
 		"build": "tsc -p tsconfig.lib.json",
 		"prepublish": "npm run build",
-		"postpublish": "bash ./clear.sh"
+		"postpublish": ""
 	},
 	"files": [
 		"dist/core/*",

@@ -1,3 +1,5 @@
+import { parseQueryWithDots } from "../utils/parsing-filter";
+
 type OrderByEnum = 'asc' | 'desc';
 type Condition =
   | 'equals'
@@ -41,32 +43,96 @@ export class PaginationCriteria {
   public limit: number;
   public search?: string
   public filter?: Filter
+  public businessFilter?: Filter
   public orderBy?: OrderBy
 
-  constructor(props: Record<string, any>) {
-    this.offset = Number(props?.offset) || 0;
-    this.limit = Number(props?.limit) || 10;
+  constructor(props: Record<string, number | string>) {
+    this.offset = Number(props?.offset ?? 0) 
+    this.limit = Number(props?.limit ?? 10)
 
     if (props?.orderBy && props.orderBy !== 'undefined' && props.orderBy !== 'null') {
-      
-      const orderBy = JSON.parse(props?.orderBy || '[]') as OrderBy || []
+
+      const orderBy = JSON.parse(props?.orderBy as string || '[]') as OrderBy || []
       validationOrderBy(orderBy)
       this.orderBy = orderBy
     }
 
     if (props?.filter) {
-      const filter = JSON.parse(props.filter) as Filter || []
+      const filter = JSON.parse(props.filter as string) as Filter || []
       validationFilter(filter)
       this.filter = filter
     }
 
     if (props?.search) {
       this.filter = undefined;
-      this.orderBy = undefined;
+      //this.orderBy = undefined;
       this.offset = 0;
       this.limit = 20;
       this.search = String(props.search);
     }
+  }
+
+  public setFilter(filter: Filter) {
+    validationFilter(filter)
+    this.filter = filter;
+  }
+
+  public setBusinessFilter(filter: Filter) {
+    validationFilter(filter)
+    this.businessFilter = filter;
+  }
+
+  public adaptFiltersToPrisma() {
+    if (!this.filter && !this.businessFilter) return null;
+
+    return {
+      AND: [
+        ...(this?.businessFilter?.map((filter) => {
+          const [field, verb, value] = filter;
+          return parseQueryWithDots(field, verb, value);
+        }) || []),
+        {
+          OR: this.filter?.map((filter) => {
+            const [field, verb, value] = filter;
+            return parseQueryWithDots(field, verb, value);
+          }) || []
+        }
+      ],
+
+    }
+
+  }
+  
+  public adaptOnlyBusinessFiltersToPrisma() {
+    if (!this.businessFilter) return null;
+
+    return {
+      AND: this.businessFilter.map((filter) => {
+        const [field, verb, value] = filter;
+        return parseQueryWithDots(field, verb, value);
+      })
+    }
+  }
+
+  public adaptOrderByToPrisma() {
+    if (!this.orderBy) return null;
+
+    return this.orderBy.map((orderBy) => {
+      const [field, order] = orderBy;
+      const fieldMap = field.split('.');
+      const m = {}
+
+      fieldMap.reduce((acc, curr, index) => {
+        if (index === fieldMap.length - 1) {
+          acc[curr] = order;
+        } else {
+          acc[curr] = {};
+        }
+        return acc[curr];
+      }, m)
+
+      return m
+    })
   }
 
 }
@@ -121,6 +187,7 @@ export class Pagination<Aggregate> {
       search?: string
       offset: number
       filter?: Filter
+      businessFilter?: Filter
       limit: number
       orderBy?: OrderBy
     }
@@ -139,6 +206,7 @@ export class Pagination<Aggregate> {
         offset: criteria.offset,
         limit: criteria.limit,
         filter: criteria?.filter,
+        businessFilter: criteria?.businessFilter,
         orderBy: criteria?.orderBy,
       },
       timestamp: Date.now(),
