@@ -1,88 +1,116 @@
 import lodash from "lodash";
 import validator from "../utils/validator";
-import { AutoMapper } from "./auto-mapper";
+import { AutoMapperEntity } from "./auto-mapper-entity";
 import { DomainError } from "./errors";
 import { EntityMetaHistory } from "./history";
 import { HooksConfig } from "./hooks";
 import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
-import { EntityProps } from "./types";
+import { AutoMapperSerializer, EntityProps, IEntity } from "./types";
+import { ValueObject } from "./value-object";
 
 export interface EntityConfig {
   isAggregate?: boolean
+  preventRulesAndMetaHistory?: boolean
 }
 
+type WithDate<T> = T & {
+  createdAt: Date,
+  updatedAt?: Date
+}
 
-
-export abstract class Entity<Props extends EntityProps> {
-  protected static autoMapper: AutoMapper<EntityProps> = new AutoMapper<any>();
-  protected static hooks: HooksConfig<Entity<any>, any> = {}
+export abstract class Entity<Props extends EntityProps> implements IEntity<Props> {
+  public isEntity = true;
+  protected static autoMapper = new AutoMapperEntity();
+  protected static hooks: HooksConfig<any> = {} as any
 
   protected rulesIsLocked: boolean = false;
   protected _id: Id;
-  protected _createdAt: Date = new Date();
-  protected _updatedAt: Date = new Date();
+  protected _createdAt: Date;
+  protected _updatedAt: Date | null = null;
   protected props: Props
-  protected metaHistory: EntityMetaHistory<Props>
+  protected metaHistory: EntityMetaHistory<Props> | null
 
-  constructor(input: Props, options?: EntityConfig) {
-    const instance = this.constructor as typeof Entity<any>
-    const props = instance?.hooks?.transformBeforeCreate?.(input) as Props || input
+  constructor(input: Props, options?: EntityConfig);
+  constructor(input: WithDate<Props>, options?: EntityConfig)
+  constructor(props: Props | WithDate<Props>, options: EntityConfig = {}) {
+    const instance = this.constructor as typeof Entity<Props>;
 
-    this.registerTimestampSignature(props)
+    this._createdAt = props.createdAt ?? new Date()
+    this._updatedAt = props.updatedAt ?? null
+    this.removeTimestampSignatureFromProps(props)
+
     const id = this.generateOrAssignId(props)
     this._id = id;
     props.id = id;
 
     this.props = props
-    const proxy = new Proxy<Props>(this.props, proxyHandler(this));
-    this.props = proxy;
+    this.metaHistory = null;
+    if (!options?.preventRulesAndMetaHistory) {
+      const proxy = new Proxy<Props>(this.props, proxyHandler(this));
+      this.props = proxy;
+      this.metaHistory = new EntityMetaHistory<Props>(proxy, {
+        onAddedSnapshot: (snapshot) => {
+          this.revalidate();
+          if (!this.rulesIsLocked) {
+            instance?.hooks?.rules?.(this);
+          }
 
-    this.revalidate();
-    instance?.hooks?.rules?.(this);
+          if (typeof instance?.hooks?.onChange === 'function') {
+            instance.hooks.onChange(this as Entity<Props>, snapshot)
+          }
+        }
+      })
+    }
 
     if (!options?.isAggregate) {
       instance?.hooks?.onCreate?.(this as Entity<Props>)
     }
 
-    this.metaHistory = new EntityMetaHistory<Props>(proxy, {
-      onAddedSnapshot: (snapshot) => {
-        this.revalidate();
-
-        if (!this.rulesIsLocked) {
-          instance?.hooks?.rules?.(this);
-        }
-
-
-        if (typeof instance?.hooks?.onChange === 'function') {
-          instance.hooks.onChange(this as Entity<Props>, snapshot)
-
-        }
-      }
-    })
-
+    this.revalidate();
+    instance?.hooks?.rules?.(this);
   }
 
   // Dispatch Entity Hook Validation
   public revalidate() {
-    const instance = this.constructor as typeof Entity<any>;
-
-    if (instance?.hooks?.validation) {
-      const hasError = instance.hooks.validation(this.props)
-
-      if (hasError) {
-        throw new DomainError(hasError?.message || 'Falha de validação.')
-      }
+    const instance = this.constructor as typeof Entity<Props>;
+    if (instance?.hooks?.typeValidation) {
+      Object.entries(instance.hooks.typeValidation)
+        .forEach(([key, validation]) => {
+          const value = this.props[key as keyof Props]
+          const hasError = validation(value)
+          if (hasError) {  
+            throw new DomainError(`Erro 422. ${hasError}`, { 
+              property: `${this.constructor.name}.${key}`,
+              value,
+              received: typeof value === 'object' 
+                ? value instanceof Entity 
+                  ? value.constructor.name
+                : value instanceof ValueObject
+                  ? value.constructor.name
+                : 'Object'
+                : typeof value
+              ,
+              expected: validation.name, 
+            })
+          }
+        }) 
     }
   }
 
-  //Dispatch Entity Hook  Rules
+  public getRawProps(): Props {
+    return this.props
+  }
+
   public ensureBusinessRules() {
-    const instance = this.constructor as typeof Entity<any>
+    const instance = this.constructor as typeof Entity<Props>
     instance?.hooks?.rules?.(this);
   }
 
   get history() {
+    if (!this.metaHistory) {
+      throw new DomainError('History is not enabled for this entity')
+    }
     return this.metaHistory
   }
 
@@ -94,28 +122,11 @@ export abstract class Entity<Props extends EntityProps> {
     return this._updatedAt;
   }
 
-  get createdBy() {
-    return this.props?.createdBy || null;
-  }
-
-  get updatedBy() {
-    return this.props?.updatedBy || null;
-  }
-
   get id(): Id {
     return this._id;
   }
 
-  public setAuthor(createdBy: string) {
-    this.props.createdBy = createdBy;
-    this.props.updatedBy = createdBy;
-  }
-
-  public setAuthorChange(updatedBy: string) {
-    this.props.updatedBy = updatedBy;
-  }
-
-  public clone(): Entity<Props> {
+  public clone(): IEntity<Props> {
     const instance = Reflect.getPrototypeOf(this);
     const args = [this.props];
     const entity = Reflect.construct(instance!.constructor, args);
@@ -126,13 +137,13 @@ export abstract class Entity<Props extends EntityProps> {
     return this.id.isNew();
   }
 
-  public toPrimitives(): { [key in keyof Props]: any } {
-    return Entity.autoMapper.entityToObj(this)
+  public toPrimitives(): AutoMapperSerializer<Props> {
+    return Entity.autoMapper.entityToObj<Props>(this as any)
   }
 
   public hashCode(): Id {
     const name = Reflect.getPrototypeOf(this);
-    return new Id(`[Entity@${name?.constructor?.name}]:${this.id.value}`)
+    return new Id(`entity@${name?.constructor?.name}]:${this.id.value}`)
   }
 
 
@@ -141,11 +152,12 @@ export abstract class Entity<Props extends EntityProps> {
       return true;
     }
   }
-  public isEqual(other: Entity<Props>): boolean {
-
-    const currentProps = lodash.cloneDeep(this.props)
-    const providedProps = lodash.cloneDeep(other.props)
-    const equalId = this.id.equal(other.id);
+  public isEqual(other: IEntity<Props>): boolean {
+    const thisProps = this.getRawProps()
+    const otherProps = other.getRawProps()
+    const currentProps = lodash.cloneDeep(thisProps)
+    const providedProps = lodash.cloneDeep(otherProps)
+    const equalId = this.id.isEqual(other.id as Id);
     return equalId && lodash.isEqual(currentProps, providedProps);
   }
 
@@ -157,18 +169,8 @@ export abstract class Entity<Props extends EntityProps> {
     return newId! as Id
   }
 
-  private registerTimestampSignature(props: Props) {
-    const now = Date.now()
-    this._createdAt = new Date(props?.createdAt || now)
-    this._updatedAt = new Date(props?.updatedAt || now)
-
+  private removeTimestampSignatureFromProps(props: Props) {
     delete props?.createdAt
     delete props?.updatedAt
-  }
-
-  public static fromPlainObject<T = any>(plain: any): T {
-    const props = plain.props;
-    const entity = Reflect.construct(this, [props]);
-    return entity
   }
 }

@@ -10,7 +10,6 @@ import { EntityProps as BaseEntityProps, EventPublisher as BaseEventPublisher } 
 import { ValueObject as BaseValueObject } from "./core/value-object";
 
 export { BaseAdapter as Adapter } from './core/adapter';
-export * from './core/entity-validation';
 export * from './core/errors';
 export * from "./core/hooks";
 export * from "./core/pagination";
@@ -26,9 +25,8 @@ export type Collection<T> = T[]
 
 export namespace Domain {
   export const Policy = CorePolicy.Policy
-  export const Hooks = CoreHook.Hooks
-  export const VoHooks = CoreHook.VoHooks
-  export type HooksConfig<Aggregate, Props> = CoreHook.HooksConfig<Aggregate, Props>
+  export const Hooks = CoreHook.Hooks 
+  export type HooksConfig<Props extends EntityProps> = CoreHook.HooksConfig<Props>
   export type VoHooksConfig<Props> = CoreHook.VoHooksConfig<Props>
   export const Entity = BaseEntity;
   export const Aggregate = BaseAggregate

@@ -1,4 +1,5 @@
-import { Snapshot } from "./history"
+ 
+import { EntityProps, ISnapshot } from "./types"
 
 
 export const EntityDefaultOnValidationError = (key: string, value: any) => {
@@ -6,24 +7,28 @@ export const EntityDefaultOnValidationError = (key: string, value: any) => {
 }
 
 type Optional<T> = void | T
-export interface HooksConfig<Aggregate, Props> {
-  validation?: (props: Props) =>  Optional<{ message: string }> 
-  transformBeforeCreate?: (props: Props) => Props
-  onChange?: (entity: Aggregate, snapshot: Snapshot) => void
-  onCreate?: (entity: Aggregate) => void
-  rules?: (data: Aggregate) => void
+type WithoutEntityProps<T> = Omit<T, keyof EntityProps>
+export interface HooksConfig<Props extends EntityProps> {
+  typeValidation?: {
+    [key in keyof WithoutEntityProps<Props>]: (value: any) => Optional<string>
+  }
+  onChange?: (entity: any, snapshot: ISnapshot) => void
+  onCreate?: (entity: any) => void
+  rules?: (data: any) => void
 }
 
-export function Hooks<Aggregate, Props>(config: HooksConfig<Aggregate, Props>) {
+export function Hooks<Props extends EntityProps>(config: HooksConfig<Props>) {
   return config
 }
 
+type Primitives = string | number | boolean | null | undefined
 export interface VoHooksConfig<Props> {
-  validation?: (props: Props) =>  Optional<{ message: string}>
-  transformBeforeCreate?: (props: Props) => Props
+  typeValidation?:
+  Props extends Primitives
+    ? (value: any) => Optional<string>
+    : {
+      [key in keyof Props]: (value: any) => Optional<string>
+    }
   rules?: (data: Props) => void
 }
 
-export function VoHooks<Props>(config: VoHooksConfig<Props>) {
-  return config
-}

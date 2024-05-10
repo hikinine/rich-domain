@@ -6,13 +6,12 @@ import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } 
 
 
 const DOMAIN_EVENTS = Symbol('AggregateEvents');
-export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
-  protected static hooks: HooksConfig<Entity<any>, any> = {}
-  private [DOMAIN_EVENTS]: IDomainEvent<any>[] = []
-
-  constructor(props: Props,) {
+export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> { 
+  private [DOMAIN_EVENTS]: IDomainEvent<Props>[] = []
+  protected static hooks: HooksConfig<any> = {}
+ 
+  constructor(props: Props) {
     super(props, { isAggregate: true })
-
     const instance = this.constructor as typeof Entity<any>
     instance?.hooks?.onCreate?.(this)
   }
@@ -51,7 +50,6 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
     );
   }
 
-
   public getEvents<T = IDomainEvent<any>>(eventName?: string): T[] {
     if (eventName) {
       return this[DOMAIN_EVENTS].filter(
@@ -70,7 +68,7 @@ export abstract class Aggregate<Props extends EntityProps> extends Entity<Props>
   public async dispatch(eventName: string, eventPublisher: EventPublisher<any>) {
     const promisesQueue = [] as any[];
     for (const event of this[DOMAIN_EVENTS]) {
-      if (event.aggregate.id.equal(this.id) && event.eventName === eventName) {
+      if (event.aggregate.id.isEqual(this.id) && event.eventName === eventName) {
         promisesQueue.push(eventPublisher.publish(event))
         this.removeEvent(eventName);
       }

@@ -1,42 +1,8 @@
 import lodash from "lodash"
 import Validator from "../utils/validator"
-export type SnapshotTrace = {
-  update: string,
-  position?: number,
-  action?: string
-  from?: any,
-  to?: any,
-}
+import { Snapshot } from "./history-snapshot"
+import { SnapshotCallbacks, SnapshotsData } from "./types"
 
-export type SnapshotsData<T> = {
-  props: T,
-  timestamp?: Date,
-  trace: SnapshotTrace,
-}
-
-export class Snapshot {
-  public timestamp?: Date
-  public trace: SnapshotTrace
-  constructor(snapshot: SnapshotsData<any>) {
-    this.timestamp = snapshot.timestamp
-    this.trace = snapshot.trace
-  }
-
-  public hasChange(key: string) {
-    const relationships = key.split('.');
-    const updateKeys = this.trace.update.split('.');
-    if (updateKeys.length === 1) {
-      const [singleKey] = updateKeys
-      return relationships.includes(singleKey)
-    }
-    else {
-      return relationships.every((key) => updateKeys.includes(key));
-    }
-  }
-}
-export type SnapshotCallbacks = {
-  onAddedSnapshot?: (snapshot: Snapshot) => void
-}
 export class EntityMetaHistory<T>{
   public initialProps: T
   public snapshots: SnapshotsData<T>[]
@@ -112,15 +78,14 @@ export class EntityMetaHistory<T>{
     initialValues: T[],
     currentValues: T[]
   ) {
-    return currentValues.reduce((acc, currentValue) => {
+    return currentValues.reduce((acc, currentValue) => { 
       let shouldUpdate = false;
       const found = initialValues.find((a) => {
         if (Validator.isValueObject(a)) {
           return a.isEqual(currentValue as any);
         }
         else if (Validator.isEntity(a) || Validator.isAggregate(a)) {
-
-          const sameID = a.id.value === (currentValue as any).id?.value;
+          const sameID = a.id.value === (currentValue as any).id.value;
           const sameProps = a.isEqual(currentValue as any)
 
           if (sameID && !sameProps) shouldUpdate = true;
@@ -159,7 +124,7 @@ export class EntityMetaHistory<T>{
         }
         else if (Validator.isEntity(a) || Validator.isAggregate(a)) {
           return a.isEqual(initialValue as any)
-            || a.id.equal((initialValue as any)?.id)
+            || a.id.isEqual((initialValue as any)?.id)
         }
         else {
           return a === initialValue

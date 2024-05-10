@@ -1,55 +1,85 @@
 
 import lodash from "lodash";
-import { AutoMapper } from "./auto-mapper";
+import { AutoMapperValueObject } from "./auto-mapper-value-object";
 import { DomainError } from "./errors";
 import { VoHooksConfig } from "./hooks";
-export abstract class ValueObject<Value> {
-  protected static hooks: VoHooksConfig<any> = {}
-  protected static autoMapper: AutoMapper<any> = new AutoMapper<any>();
+import { AutoMapperSerializer, IValueObject } from "./types";
 
-  protected _value: Value
+export abstract class ValueObject<Props> implements IValueObject<Props> {
+  public isValueObject = true;
+  protected static hooks: VoHooksConfig<any>;
+  protected static autoMapper = new AutoMapperValueObject();
 
-  constructor(input: Value) {
-    const instance = this.constructor as typeof ValueObject<any>
-    this._value = instance?.hooks?.transformBeforeCreate?.(input) as Value || input
-    
+  public props: Props
+
+  constructor(props: Props) {
+    const instance = this.constructor as typeof ValueObject<Props>
+    this.props = props
     this.revalidate();
-    instance?.hooks?.rules?.(this as ValueObject<Value>)
+    instance?.hooks?.rules?.(this as ValueObject<Props>)
   }
 
-  private validation(value: Value) {
-    const instance = this.constructor as typeof ValueObject<any>
-
-    if (instance?.hooks?.validation) {
-      const hasError = instance.hooks.validation(value)
-
-      if (hasError) {
-        throw new DomainError(hasError?.message || 'Falha de validação.')
-      }
-    }
+  public getRawProps(): Props {
+    return this.props
   }
 
   public revalidate() {
-    this.validation(this._value)
-  }
+    const instance = this.constructor as typeof ValueObject<Props>
+    if (instance?.hooks?.typeValidation) {
+      if (typeof instance.hooks.typeValidation !== 'object') {
+        const value = this.props
+        const hasError = instance.hooks.typeValidation(value)
+        if (hasError) {
+          throw new DomainError(`Erro 422. ${hasError}`, {
+            property: `ValueObject.${this.constructor.name}`,
+            value,
+            received: typeof value === 'object'
+              ? value instanceof ValueObject
+                ? value.constructor.name
+                : typeof value
+              : typeof value
 
-  get value():  Value {
-    return ValueObject.autoMapper.valueObjectToObj(this)
-  }
-  protected customizedIsEqual(first: any, second: any) {
-    if (first instanceof Date || second instanceof Date) {
-      return true;
+            ,
+            expected: instance.hooks.typeValidation.name,
+          })
+        }
+        return
+      }
+      Object.entries(instance.hooks.typeValidation)
+        .forEach(([key, validation]) => {
+          const value = this.props[key as keyof Props]
+          const hasError = validation(value)
+          if (hasError) {
+            throw new DomainError(`Erro 422. ${hasError}`, {
+              property: `${this.constructor.name}.${key}`,
+              value,
+              received: typeof value === 'object'
+                ? value instanceof ValueObject
+                  ? value.constructor.name
+                  : typeof value
+                : typeof value
+
+              ,
+              expected: validation.name,
+            })
+          }
+        })
     }
   }
-  public isEqual(other: ValueObject<Value>): boolean {
-    const currentProps = lodash.cloneDeep(this.value)
-    const providedProps = lodash.cloneDeep(other.value)
+
+  public toPrimitives(): AutoMapperSerializer<Props> {
+    return ValueObject.autoMapper.valueObjectToObj(this)
+  }
+
+  public isEqual(other: ValueObject<Props>): boolean {
+    const currentProps = lodash.cloneDeep(this.props)
+    const providedProps = lodash.cloneDeep(other.props)
     return lodash.isEqual(currentProps, providedProps);
   }
 
-  public clone(): ValueObject<Value> {
+  public clone(): ValueObject<Props> {
     const instance = Reflect.getPrototypeOf(this);
-    const args = [this._value];
+    const args = [this.props];
     const obj = Reflect.construct(instance!.constructor, args);
     return obj;
   }
