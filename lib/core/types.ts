@@ -1,5 +1,8 @@
  
 
+export type Primitives = string | number | boolean | null | undefined
+export type Optional<T> = void | T
+
 export interface EntityProps {
 	id: IdImplementation,
 	createdAt?: Date,
@@ -8,6 +11,7 @@ export interface EntityProps {
 
 export interface IdImplementation {
 	value: string;
+	longValue: string;
 	isNew(): boolean;
 	isEqual(id: IdImplementation): boolean;
 	cloneAsNew(): IdImplementation;
@@ -37,8 +41,10 @@ export interface IEntity<Props> {
 	id: IdImplementation
 	createdAt: Date
 	updatedAt: Date | null
-	history: IEntityMetaHistory<Props>
-
+	history: IEntityMetaHistory<Props> 
+	/**
+	@deprecated
+	*/
 	getRawProps(): Props
 	revalidate(): void
 	ensureBusinessRules(): void
@@ -109,8 +115,15 @@ export type ISnapshot = {
 	timestamp?: Date
 	trace: SnapshotTrace
 	hasChange(key: string): boolean
+	getUpdatedField<T>(): keyof T | undefined
+	getTimestamp(): Date | undefined
 }
 
 export type SnapshotCallbacks = {
   onAddedSnapshot?: (snapshot: ISnapshot) => void
+}
+
+export type WithDate<T> = T & {
+  createdAt: Date,
+  updatedAt?: Date
 }

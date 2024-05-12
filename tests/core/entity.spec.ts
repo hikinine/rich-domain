@@ -1,259 +1,192 @@
-import {  Entity, Id, Ok, Result } from "../../lib/core";
-import { IResult, UID } from "../../lib/types";
+import { DomainError, Entity, EntityMetaHistory, HooksConfig, Id } from "../../lib/core";
+import { EntityProps } from "../../lib/core/types";
+import { is } from "../../lib/core/validation-is";
+import { Age } from "./mocks/entity";
 
-describe("entity", () => {
+describe('entity test', () => {
+  let userProps: UserProps
 
-	describe("simple entity", () => {
+  interface UserProps extends EntityProps {
+    name: string
+    email: string
+    age: Age
+  }
+  class User extends Entity<UserProps> {
+    protected hooks = new HooksConfig<User, UserProps>({
+      typeValidation: {
+        email: is.Email(),
+        age: is.InstanceOf(Age),
+        name: is.AnyType()
+      }
+    })
+    get email() {
+      return this.props.email
+    }
 
-		interface Props { id?: string, foo: string };
-		
-		class EntitySample extends Entity<Props> {
-			private constructor(props: Props) {
-				super(props);
-			}
+    public changeEmail(email: string) {
+      this.props.email = email
+    }
+  }
 
-			public isValidProps(value: any): boolean {
-				return value !== undefined;
-			}
 
-			public static create(props: Props): IResult<EntitySample> {
-				return Result.Ok(new EntitySample(props))
-			}
-		}
+  beforeEach(() => {
+    userProps = {
+      id: new Id(),
+      age: new Age(25),
+      email: 'teste@gmail.com',
+      name: 'Paulo'
+    }
+  })
 
-		it('should get prototype', () => {
-			const ent = EntitySample.create({ foo: 'bar' });
+  describe('default behavior and methods ', () => {
 
-			ent.value().change('foo', 'changed');
-			expect(ent.isOk()).toBeTruthy();	
-		});
-	});
+    it('should create a new entity', () => {
+      const user = new User(userProps)
+      expect(user).toBeInstanceOf(User)
+      expect(user).toBeInstanceOf(Entity)
+    })
 
-	describe('toObject', () => {
+    it('should throw an domain error', () => {
+      const user = new User(userProps)
+      expect(() => user.getRawProps()).toThrow(DomainError)
+    })
 
-		class En extends Entity<{ key: string }>{
-			private constructor(props: { key: string }) {
-				super(props)
-			}
-		}
 
-		const id = '973e6c78-6771-4a86-ba55-f759a1e68f8c';
+    it('should return an hashCode', () => {
+      const user = new User(userProps)
+      expect(user.hashCode()).toBeInstanceOf(Id)
+      expect(user.hashCode().value).toEqual(
+        `entity@User:${user.id.value}`
+      )
+    })
 
-		const entity = En.create(
-			{
-				id,
-				key: 'value',
-				createdAt: new Date('2022-07-20T15:46:54.373Z'),
-				updatedAt: new Date('2022-07-20T15:46:54.373Z')
-			}
-		);
+    it('with new Id, entity should be new', () => {
+      const user = new User(userProps)
+      expect(user.isNew()).toBeTruthy()
+    })
 
-		it('should get object with success', () => {
-			expect(entity.value().toObject()).toEqual({
-				id,
-				key: 'value',
-				createdAt: new Date('2022-07-20T15:46:54.373Z'),
-				updatedAt: new Date('2022-07-20T15:46:54.373Z')
-			});
-		});
 
-		it('should get hash code with success', () => {
-			expect(entity.value().hashCode().value()).toBe('[Entity@En]:973e6c78-6771-4a86-ba55-f759a1e68f8c');
-		});
+    it('with new default Id, entity should be new', () => {
+      const user = new User({ ...userProps, id: new Id() })
+      expect(user.isNew()).toBeTruthy()
+    })
 
-		it('should clone entity with success and keep the same id', () => {
-			const clone = entity.value().clone();
-			expect(clone.id.value()).toBe(id);
-			expect(clone.get('key')).toBe('value');
-		});
+    it('with provided id, entity should be not new', () => {
+      const user = new User({ ...userProps, id: new Id('already-exists') })
+      expect(user.isNew()).toBeFalsy()
+    })
+  })
 
-		it('should snapshot entity', () => {
-			expect(entity.value().history().count()).toBe(1);
-			entity.value().history().snapshot();
-			expect(entity.value().history().count()).toBe(2);
-		});
+  describe('default props', () => {
+    it('should have default props', () => {
+      const user = new User(userProps)
+      expect(user.createdAt).toBeInstanceOf(Date)
+      expect(user.id).toBeInstanceOf(Id)
+    })
 
-		it('should return last history if try to go next and it does not exists', () => {
-			const step1 = entity.value().history().forward();
-			const step2 = entity.value().history().forward();
-			const step3 = entity.value().history().forward();
-			const step4 = entity.value().history().forward();
+    it('should have default props with custom values', () => {
+      const user = new User(userProps)
+      expect(user.createdAt).toBeInstanceOf(Date)
+      expect(user.id).toBeInstanceOf(Id)
+    })
 
-			expect(step1).not.toBeNull();
-			expect(step2).not.toBeNull();
-			expect(step3).not.toBeNull();
-			expect(step4).not.toBeNull();
-		});
+    it('should have the same id as the props', () => {
+      const user = new User(userProps)
+      expect(user.id).toEqual(userProps.id)
+      expect(user.id.value).toEqual(userProps.id.value)
+      expect(user.id.isEqual(userProps.id as Id)).toBeTruthy()
+    })
+  })
 
-		it('should list history', () => {
-			const history = entity.value().history().list();
-			expect(Array.isArray(history)).toBeTruthy();
-			expect(history).toHaveLength(2);
-		});
+  describe('compare entities', () => {
+    it('should be ok with 2 users with same props', () => {
+      const user1 = new User(userProps)
+      const user2 = new User(userProps)
+      expect(user1.isEqual(user2)).toBeTruthy()
+    })
 
-		it('should return fail if provide null props', () => {
-			const result = En.create(null);
-			expect(result.isFail()).toBeTruthy();
-		});
-	});
+    it('should be flasy with 2 users with different props', () => {
+      const user1 = new User(userProps)
+      const user2 = new User({ ...userProps, name: 'John' })
+      expect(user1.isEqual(user2)).toBeFalsy()
+    })
 
-	describe("should accept validation without error", () => {
-		interface Props { id?: string, foo: string };
-		
-		class EntitySample extends Entity<Props> {
-			private constructor(props: Props) {
-				super(props);
-			}
+    it('should be flasy with 2 users with same props and different IDS', () => {
+      const user1 = new User(userProps)
+      const user2 = new User({ ...userProps, id: new Id() })
+      expect(user1.isEqual(user2)).toBeFalsy()
+    })
 
-			validation<Key extends keyof Props>(_value: Props[Key], _key: Key): boolean {
-				return _key === 'foo';
-			}
+    it('should be true with same props and different createdAt | updatedAt', () => {
+      const user1 = new User({
+        ...userProps,
+        createdAt: new Date(Date.now() - 50000),
+      })
+      const user2 = new User({
+        ...userProps,
+        createdAt: new Date(Date.now() - 90000),
+      })
 
-			public isValidProps(value: any): boolean {
-				return value !== undefined;
-			}
+      const user3 = new User({
+        ...userProps,
+        updatedAt: new Date(Date.now() - 50000),
+      })
 
-			public static create(props: Props): IResult<EntitySample> {
-				return Result.Ok(new EntitySample(props))
-			}
-		}
+      const user4 = new User({
+        ...userProps,
+        updatedAt: new Date(Date.now() - 90000),
+      })
 
-		it('should get prototype', () => {
-			const ent = EntitySample.create({ foo: 'bar' });
+      expect(user1.isEqual(user2)).toBeTruthy()
+      expect(user3.isEqual(user4)).toBeTruthy()
+      expect(user1.isEqual(user3)).toBeTruthy()
+      expect(user2.isEqual(user4)).toBeTruthy()
+    })
 
-			ent.value().change('foo', 'changed');
-			expect(ent.isOk()).toBeTruthy();
+    it('should clone a user and then compare', () => {
+      const user = new User(userProps)
+      const clonedUser = user.clone()
+      expect(user.isEqual(clonedUser)).toBeTruthy()
+    })
+  })
 
-			ent.value().change('id', 'changed');
-			expect(ent.value().id.value()).not.toBe('changed');
-		});
+  describe('toPrimitives', () => {
+    it('should return a primitive object', () => {
+      const user = new User(userProps)
+      const userPrimitives = user.toPrimitives()
+      expect(userPrimitives).not.toEqual(userProps)
 
-		it('should set prototype', () => {
-			const ent = EntitySample.create({ foo: 'bar' });
-			expect(ent.isOk()).toBeTruthy();
-			expect(ent.value().get('foo')).toBe('bar');
-			ent.value().set('foo').to('changed');
-			expect(ent.value().get('foo')).toBe('changed');
-		});
+      expect(userProps.age).toBeInstanceOf(Age)
+      expect(typeof userPrimitives.age).toBe('number')
+    })
 
-		it('should create many entities', () => {
-			const payload = EntitySample.createMany([]);
-			expect(payload.result.isFail()).toBeTruthy();
-		});
-	});
+    it('should return a primitive object with default values', () => {
+      const user = new User(userProps)
+      const userPrimitives = user.toPrimitives()
+      expect(userPrimitives.createdAt).toBeInstanceOf(Date)
+      expect(userPrimitives.updatedAt).toBeNull()
+    })
+  })
 
-	describe('compare', () => {
 
-		interface Val {
-			name: string;
-		}
+  describe('history', () => {
+    it('should have a history', () => {
+      const user = new User(userProps)
+      expect(user.history).toBeInstanceOf(EntityMetaHistory)
+      expect(user.history.initialProps).toEqual(userProps)
+    })
 
-		interface Props {
-			id?: UID;
-			key: number;
-			values: Array<Val>;
-		}
+    it('should register an snapshot when some mutate was made', () => {
+      const user = new User(userProps)
+      user.changeEmail('paulo@gmail.com')
+      expect(user.history.snapshots.length).toBe(1)
+      expect(user.history.initialProps.email).not.toEqual(user.email)
+      expect(user.history.hasChange('email')).toBeTruthy()
 
-		class EntityExample extends Entity<Props>{
-			private constructor(props: Props) {
-				super(props)
-			}
+      expect(user.history.hasChange('name')).toBeFalsy()
+    })
 
-			public static create(props: Props): Result<EntityExample> {
-				return Ok(new EntityExample(props));
-			}
-		}
 
-		it("should to be equal", () => {
+  })
 
-			const props = { key: 200, values:[ {name: 'abc'},{name: 'def'}] } satisfies Props;
-			const id = Id();
-
-			const a = EntityExample.create({...props, id }).value();
-			const b = EntityExample.create({...props, id}).value();
-			
-			expect(a.isEqual(b)).toBeTruthy();
-		});
-
-		it("should to be equal", () => {
-
-			const id = Id();
-			const props = { key: 200, values:[ {name: 'abc'},{name: 'def'}] } satisfies Props;
-
-			const a = EntityExample.create({...props, id}).value();
-			const b = a.clone();
-			
-			expect(a.isEqual(b)).toBeTruthy();
-		});
-
-		it("should not to be equal if change state", () => {
-
-			const id = Id();
-			const props = { key: 200, values:[ {name: 'abc'},{name: 'def'}] } satisfies Props;
-
-			const a = EntityExample.create({...props, id}).value();
-			const b = a.clone();
-			b.set('key').to(201);
-			
-			expect(a.isEqual(b)).toBeFalsy();
-		});
-
-		it("should not to be equal if state is different", () => {
-
-			const id = Id();
-			const propsA = { id, key: 200, values:[ {name: 'abc'},{name: 'def'}] } satisfies Props;
-			const propsB = { id, key: 200, values:[ {name: 'abc'},{name: 'dif'}] } satisfies Props;
-
-			const a = EntityExample.create(propsA).value();
-			const b = EntityExample.create(propsB).value();
-
-			expect(a.isEqual(b)).toBeFalsy();
-		});
-
-		it("should not to be equal if id is different", () => {
-
-			const propsA = { key: 200, values:[ {name: 'abc'},{name: 'def'}] } satisfies Props;
-			const propsB = { key: 200, values:[ {name: 'abc'},{name: 'dif'}] } satisfies Props;
-
-			const a = EntityExample.create(propsA).value();
-			const b = EntityExample.create(propsB).value();
-
-			expect(a.isEqual(b)).toBeFalsy();
-		});
-	});
-	describe("util", () => {
-
-		interface Props { id?: string, foo: string };
-		
-		class ValSamp extends Entity<Props> {
-			private constructor(props: Props) {
-				super(props);
-			}
-
-			public static isValidProps(value: string): boolean {		
-				return this.validator.string(value).hasLengthBetween(3, 50);
-			}
-
-			RemoveSpace(): string {
-				return this.util.string(this.props.foo).removeSpaces();
-			}
-
-			public static create(props: Props): IResult<ValSamp> {
-				const isValid = this.isValidProps(props.foo);
-				if(!isValid) return Result.fail('Erro');
-				return Result.Ok(new ValSamp(props))
-			}
-		}
-
-		it('should fiail if provide an invalid value', () => {
-			const ent = ValSamp.create({ foo: '' });
-			expect(ent.isFail()).toBeTruthy();
-		});
-
-		it('should remove space from value', () => {
-			const ent = ValSamp.create({ foo: ' Some Value With Spaces ' });
-			expect(ent.isOk()).toBeTruthy();
-			expect(ent.value().RemoveSpace()).toBe('SomeValueWithSpaces');
-		});
-	});
-});
+})

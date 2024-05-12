@@ -19,4 +19,13 @@ export class Snapshot {
       return relationships.every((key) => updateKeys.includes(key));
     }
   }
+
+  public getTimestamp(): Date | undefined {
+    return this.timestamp
+  }
+
+  public getUpdatedField<T>(): T {
+    const field = this.trace?.update?.split?.('.')?.[0]
+    return field as T
+  }
 }

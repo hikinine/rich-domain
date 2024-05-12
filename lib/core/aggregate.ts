@@ -6,21 +6,14 @@ import { DomainEventReplaceOptions, EntityProps, EventPublisher, IDomainEvent } 
 
 
 const DOMAIN_EVENTS = Symbol('AggregateEvents');
-export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> { 
-  private [DOMAIN_EVENTS]: IDomainEvent<Props>[] = []
-  protected static hooks: HooksConfig<any> = {}
- 
+export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
+  private [DOMAIN_EVENTS]: IDomainEvent<Props>[] = [];
+  protected abstract hooks: HooksConfig<this, Props>;
+
   constructor(props: Props) {
     super(props, { isAggregate: true })
-    const instance = this.constructor as typeof Entity<any>
-    instance?.hooks?.onCreate?.(this)
-  }
-
-  
-  public static fromPlainObject<T = any>(plain: any): T {
-    const props = plain.props;
-    const aggregate = Reflect.construct(this, [props]);
-    return aggregate
+    // const instance = this.constructor as typeof Entity<any>
+    // instance?.hooks?.onCreate?.(this)
   }
 
   public hashCode() {

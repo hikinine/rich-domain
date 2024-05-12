@@ -5,7 +5,7 @@ import { AutoMapperSerializer, EntityProps, IEntity } from "./types";
 
 export class AutoMapperEntity {
 	entityToObj<Props extends EntityProps>(entity: IEntity<Props>): AutoMapperSerializer<Props> {
-		const props = entity.getRawProps()
+		const props = entity['props']
 		const initialValues = {
 			id: entity.id.value,
 			createdAt: entity.createdAt ?? null,

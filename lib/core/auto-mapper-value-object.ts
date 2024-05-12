@@ -6,7 +6,7 @@ import { AutoMapperSerializer, IValueObject } from "./types";
 
 export class AutoMapperValueObject {
 	public valueObjectToObj<Props>(valueObject: IValueObject<Props>): AutoMapperSerializer<Props> {
-		const value = valueObject.getRawProps()
+		const value = valueObject['props']
 
 		if (!value || typeof value !== "object" || value === null || value instanceof Date) {
 			return value as AutoMapperSerializer<Props>

@@ -3,108 +3,116 @@ import validator from "../utils/validator";
 import { AutoMapperEntity } from "./auto-mapper-entity";
 import { DomainError } from "./errors";
 import { EntityMetaHistory } from "./history";
-import { HooksConfig } from "./hooks";
+import { HooksConfig, WithoutEntityProps } from "./hooks";
 import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
-import { AutoMapperSerializer, EntityProps, IEntity } from "./types";
-import { ValueObject } from "./value-object";
+import { RevalidateError } from "./revalidate-error";
+import { AutoMapperSerializer, EntityProps, IEntity, WithDate } from "./types";
 
 export interface EntityConfig {
   isAggregate?: boolean
-  preventRulesAndMetaHistory?: boolean
+  preventSubscribeOfChanges?: boolean
 }
 
-type WithDate<T> = T & {
-  createdAt: Date,
-  updatedAt?: Date
-}
 
 export abstract class Entity<Props extends EntityProps> implements IEntity<Props> {
-  public isEntity = true;
   protected static autoMapper = new AutoMapperEntity();
-  protected static hooks: HooksConfig<any> = {} as any
+  protected abstract hooks: HooksConfig<this, Props>;
+  public isEntity = true;
 
   protected rulesIsLocked: boolean = false;
-  protected _id: Id;
-  protected _createdAt: Date;
-  protected _updatedAt: Date | null = null;
+  private _id: Id;
+  private _createdAt: Date;
+  private _updatedAt: Date | null = null;
   protected props: Props
   protected metaHistory: EntityMetaHistory<Props> | null
 
   constructor(input: Props, options?: EntityConfig);
   constructor(input: WithDate<Props>, options?: EntityConfig)
   constructor(props: Props | WithDate<Props>, options: EntityConfig = {}) {
-    const instance = this.constructor as typeof Entity<Props>;
+    if (props instanceof Entity) {
+      throw new DomainError('Entity instance cannot be passed as argument')
+    }
 
     this._createdAt = props.createdAt ?? new Date()
     this._updatedAt = props.updatedAt ?? null
     this.removeTimestampSignatureFromProps(props)
 
-    const id = this.generateOrAssignId(props)
-    this._id = id;
-    props.id = id;
+    const assignedId = this.generateOrAssignId(props)
+    this._id = assignedId
+    props.id = assignedId
 
     this.props = props
     this.metaHistory = null;
-    if (!options?.preventRulesAndMetaHistory) {
+    if (!options?.preventSubscribeOfChanges) {
       const proxy = new Proxy<Props>(this.props, proxyHandler(this));
       this.props = proxy;
       this.metaHistory = new EntityMetaHistory<Props>(proxy, {
         onAddedSnapshot: (snapshot) => {
-          this.revalidate();
+          const field = snapshot.getUpdatedField<Props>()
+          this.revalidate(field as keyof WithoutEntityProps<Props>)
           if (!this.rulesIsLocked) {
-            instance?.hooks?.rules?.(this);
+            this.ensureBusinessRules()
           }
 
-          if (typeof instance?.hooks?.onChange === 'function') {
-            instance.hooks.onChange(this as Entity<Props>, snapshot)
+          if (typeof this.hooks?.onChange === 'function') {
+            this.hooks.onChange(this as any, snapshot)
           }
         }
       })
     }
 
     if (!options?.isAggregate) {
-      instance?.hooks?.onCreate?.(this as Entity<Props>)
+      this.onEntityCreate()
     }
 
     this.revalidate();
-    instance?.hooks?.rules?.(this);
+    this.ensureBusinessRules()
   }
 
   // Dispatch Entity Hook Validation
-  public revalidate() {
-    const instance = this.constructor as typeof Entity<Props>;
-    if (instance?.hooks?.typeValidation) {
-      Object.entries(instance.hooks.typeValidation)
-        .forEach(([key, validation]) => {
-          const value = this.props[key as keyof Props]
-          const hasError = validation(value)
-          if (hasError) {  
-            throw new DomainError(`Erro 422. ${hasError}`, { 
-              property: `${this.constructor.name}.${key}`,
-              value,
-              received: typeof value === 'object' 
-                ? value instanceof Entity 
-                  ? value.constructor.name
-                : value instanceof ValueObject
-                  ? value.constructor.name
-                : 'Object'
-                : typeof value
-              ,
-              expected: validation.name, 
-            })
+  public revalidate(fieldToRevalidate?: keyof WithoutEntityProps<Props>) {
+    const typeValidation = this.hooks?.typeValidation as any
+    if (!typeValidation) return;
+
+    if (!(this?.hooks?.typeValidation)) {
+      return;
+    }
+    if (fieldToRevalidate) {
+      const value = this.props[fieldToRevalidate]
+      const validation = typeValidation[fieldToRevalidate]
+      const errorMessage = validation?.(value)
+      if (errorMessage) {
+        const expected = typeValidation[fieldToRevalidate]?.name
+        const field = fieldToRevalidate.toString()
+        throw RevalidateError(errorMessage, value, expected, field)
+      }
+    }
+    else {
+      Object.entries(typeValidation)
+        .forEach(([field, validation]: any) => {
+          const value = this.props[field as keyof Props]
+          const errorMessage = validation(value)
+          if (errorMessage) {
+            throw RevalidateError(errorMessage, value, validation.name, field)
           }
-        }) 
+        })
     }
   }
 
+  /**
+    @deprecated
+    This method will throw an error if called.
+   */
   public getRawProps(): Props {
-    return this.props
+    throw new DomainError('Method .getRawProps() is not allowed.')
   }
 
+  private onEntityCreate() {
+    this?.hooks?.onCreate?.(this as any)
+  }
   public ensureBusinessRules() {
-    const instance = this.constructor as typeof Entity<Props>
-    instance?.hooks?.rules?.(this);
+    this?.hooks?.rules?.(this as any)
   }
 
   get history() {
@@ -143,7 +151,7 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
 
   public hashCode(): Id {
     const name = Reflect.getPrototypeOf(this);
-    return new Id(`entity@${name?.constructor?.name}]:${this.id.value}`)
+    return new Id(`entity@${name?.constructor?.name}:${this.id.value}`)
   }
 
 
@@ -153,20 +161,22 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
     }
   }
   public isEqual(other: IEntity<Props>): boolean {
-    const thisProps = this.getRawProps()
-    const otherProps = other.getRawProps()
+    const thisProps = this['props']
+    const otherProps = other['props']
     const currentProps = lodash.cloneDeep(thisProps)
     const providedProps = lodash.cloneDeep(otherProps)
     const equalId = this.id.isEqual(other.id as Id);
     return equalId && lodash.isEqual(currentProps, providedProps);
   }
 
-  private generateOrAssignId(props: Props) {
+  private generateOrAssignId(props: Props): Id {
     const { id } = props
-    const isID = validator.isID(id);
-    const isString = validator.isString(id)
-    const newId = isString ? new Id(id as any) : isID ? id : new Id()
-    return newId! as Id
+    const isAlreadyAnIdInstance = validator.isID(id);
+    if (isAlreadyAnIdInstance) return id as Id;
+    if (validator.isString(id)) {
+      return new Id(id as any)
+    }
+    return new Id()
   }
 
   private removeTimestampSignatureFromProps(props: Props) {

@@ -1,34 +1,48 @@
- 
-import { EntityProps, ISnapshot } from "./types"
 
+import { EntityProps, ISnapshot, Optional, Primitives } from "./types"
 
-export const EntityDefaultOnValidationError = (key: string, value: any) => {
-  return `DR01 | Falha na validação do campo '${key}'. Valor recebido: ${value}.`
+type HookTypeValidationCallback = (value: any) => Optional<string>
+type HookTypeValidation<Props> = {
+  [K in keyof Props]?: HookTypeValidationCallback
 }
+export type WithoutEntityProps<T> = Omit<T, keyof EntityProps>
+export type HookConfigInput<Entity, Props> = {
+  typeValidation?: HookTypeValidation<Props>
+  onChange?: (entity: Entity, snapshot: ISnapshot) => void
+  onCreate?: (entity: Entity) => void
+  rules?: (data: Entity) => void
+}
+export class HooksConfig<Entity, Props> {
+  public isHooksConfig = true
+  public typeValidation?: HookTypeValidation<Props>
+  public onChange?: (entity: Entity, snapshot: ISnapshot) => void
+  public onCreate?: (entity: Entity) => void
+  public rules?: (data: Entity) => void
 
-type Optional<T> = void | T
-type WithoutEntityProps<T> = Omit<T, keyof EntityProps>
-export interface HooksConfig<Props extends EntityProps> {
-  typeValidation?: {
-    [key in keyof WithoutEntityProps<Props>]: (value: any) => Optional<string>
+  constructor(config: HookConfigInput<Entity, Props>) {
+    this.typeValidation = config.typeValidation
+    this.onChange = config.onChange
+    this.onCreate = config.onCreate
+    this.rules = config.rules
   }
-  onChange?: (entity: any, snapshot: ISnapshot) => void
-  onCreate?: (entity: any) => void
-  rules?: (data: any) => void
 }
 
-export function Hooks<Props extends EntityProps>(config: HooksConfig<Props>) {
-  return config
-}
-
-type Primitives = string | number | boolean | null | undefined
-export interface VoHooksConfig<Props> {
-  typeValidation?:
-  Props extends Primitives
-    ? (value: any) => Optional<string>
-    : {
-      [key in keyof Props]: (value: any) => Optional<string>
-    }
+type VoHookConfigInput<Props> = {
+  typeValidation?: VoHookTypeValidation<Props>
   rules?: (data: Props) => void
-}
 
+}
+type VoHookTypeValidation<Props> = Props extends Primitives
+  ? HookTypeValidationCallback
+  : { [key in keyof WithoutEntityProps<Props>]: HookTypeValidationCallback }
+export class VoHookConfig<Props> {
+  public isVoHookConfig = true;
+  public isHooksConfig = true
+  public typeValidation?: VoHookTypeValidation<Props>
+  public rules?: (data: Props) => void
+
+  constructor(config: VoHookConfigInput<Props>) {
+    this.typeValidation = config.typeValidation
+    this.rules = config.rules
+  }
+}

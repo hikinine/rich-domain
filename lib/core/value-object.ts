@@ -1,67 +1,46 @@
 
 import lodash from "lodash";
 import { AutoMapperValueObject } from "./auto-mapper-value-object";
-import { DomainError } from "./errors";
-import { VoHooksConfig } from "./hooks";
+import { VoHookConfig } from "./hooks";
+import { RevalidateError } from "./revalidate-error";
 import { AutoMapperSerializer, IValueObject } from "./types";
 
 export abstract class ValueObject<Props> implements IValueObject<Props> {
   public isValueObject = true;
-  protected static hooks: VoHooksConfig<any>;
-  protected static autoMapper = new AutoMapperValueObject();
-
+  protected abstract hooks: VoHookConfig<Props>;
+  protected static autoMapper = new AutoMapperValueObject();s
   public props: Props
 
-  constructor(props: Props) {
-    const instance = this.constructor as typeof ValueObject<Props>
+  constructor(props: Props) { 
     this.props = props
-    this.revalidate();
-    instance?.hooks?.rules?.(this as ValueObject<Props>)
+    this.revalidate(); 
+    this.ensureBusinessRules();
   }
 
   public getRawProps(): Props {
     return this.props
   }
 
-  public revalidate() {
-    const instance = this.constructor as typeof ValueObject<Props>
-    if (instance?.hooks?.typeValidation) {
-      if (typeof instance.hooks.typeValidation !== 'object') {
-        const value = this.props
-        const hasError = instance.hooks.typeValidation(value)
-        if (hasError) {
-          throw new DomainError(`Erro 422. ${hasError}`, {
-            property: `ValueObject.${this.constructor.name}`,
-            value,
-            received: typeof value === 'object'
-              ? value instanceof ValueObject
-                ? value.constructor.name
-                : typeof value
-              : typeof value
+  public ensureBusinessRules() {
+    this?.hooks?.rules?.(this.props)
+  }
 
-            ,
-            expected: instance.hooks.typeValidation.name,
-          })
+  public revalidate() { 
+    if (this?.hooks?.typeValidation) {
+      if (typeof this.hooks.typeValidation !== 'object') {
+        const value = this.props
+        const errorMessage = this.hooks.typeValidation(value)
+        if (errorMessage) {
+          const expected = this.hooks.typeValidation.name
+          throw RevalidateError(errorMessage, value, expected)
         }
-        return
       }
-      Object.entries(instance.hooks.typeValidation)
+      Object.entries(this.hooks.typeValidation)
         .forEach(([key, validation]) => {
           const value = this.props[key as keyof Props]
-          const hasError = validation(value)
-          if (hasError) {
-            throw new DomainError(`Erro 422. ${hasError}`, {
-              property: `${this.constructor.name}.${key}`,
-              value,
-              received: typeof value === 'object'
-                ? value instanceof ValueObject
-                  ? value.constructor.name
-                  : typeof value
-                : typeof value
-
-              ,
-              expected: validation.name,
-            })
+          const errorMessage = validation(value)
+          if (errorMessage) {
+            throw RevalidateError(errorMessage, value, validation.name)
           }
         })
     }
