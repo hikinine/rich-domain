@@ -3,18 +3,18 @@ import { EntityProps, ISnapshot, Optional, Primitives } from "./types"
 
 type HookTypeValidationCallback = (value: any) => Optional<string>
 type HookTypeValidation<Props> = {
-  [K in keyof Props]?: HookTypeValidationCallback
-}
+  [K in keyof Props]: HookTypeValidationCallback; 
+} 
 export type WithoutEntityProps<T> = Omit<T, keyof EntityProps>
 export type HookConfigInput<Entity, Props> = {
-  typeValidation?: HookTypeValidation<Props>
+  typeValidation?: HookTypeValidation<WithoutEntityProps<Props>>
   onChange?: (entity: Entity, snapshot: ISnapshot) => void
   onCreate?: (entity: Entity) => void
   rules?: (data: Entity) => void
 }
-export class HooksConfig<Entity, Props> {
+export class EntityHook<Entity, Props> {
   public isHooksConfig = true
-  public typeValidation?: HookTypeValidation<Props>
+  public typeValidation?: HookTypeValidation<WithoutEntityProps<Props>>
   public onChange?: (entity: Entity, snapshot: ISnapshot) => void
   public onCreate?: (entity: Entity) => void
   public rules?: (data: Entity) => void
@@ -35,7 +35,7 @@ type VoHookConfigInput<Props> = {
 type VoHookTypeValidation<Props> = Props extends Primitives
   ? HookTypeValidationCallback
   : { [key in keyof WithoutEntityProps<Props>]: HookTypeValidationCallback }
-export class VoHookConfig<Props> {
+export class VoHooks<Props> {
   public isVoHookConfig = true;
   public isHooksConfig = true
   public typeValidation?: VoHookTypeValidation<Props>

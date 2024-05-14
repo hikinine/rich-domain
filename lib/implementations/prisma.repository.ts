@@ -1,4 +1,3 @@
-import { Adapter } from '..';
 import {
   Aggregate,
   Impl,
@@ -6,10 +5,11 @@ import {
   PaginationCriteria,
   WriteOptions
 } from '../core';
+import { BaseAdapter } from '../core/adapter';
 import { UnitOfWorkService } from './unit-of-work.service';
 
 type IPrismaService = {
-  $disconnect: () => Promise<void>
+  $disconnect: () => Promise<any>
 }
 
 export abstract class PrismaRepository<
@@ -19,8 +19,8 @@ export abstract class PrismaRepository<
 > extends Impl<any> {
   constructor(
     protected readonly prisma: PrismaService,
-    protected readonly adapterToDomain: Adapter<Persistence, Domain>,
-    protected readonly adapterToPersistence: Adapter<Domain, any>,
+    protected readonly adapterToDomain: BaseAdapter<Persistence, Domain>,
+    protected readonly adapterToPersistence: BaseAdapter<Domain, any>,
     protected readonly unitOfWorkService: UnitOfWorkService,
   ) {
     super();

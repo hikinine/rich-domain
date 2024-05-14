@@ -1,4 +1,4 @@
-import { isDate, isEmail, isFloat, isLength } from 'validator'
+import { isDate, isEmail, isFloat, isLength, isUUID } from 'validator'
 
 const LengthLog = (min?: number, max?: number) => {
   if (typeof min !== 'number' && typeof max !== 'number') {
@@ -93,6 +93,19 @@ const ArrayOf  = {
       }
     }
   },
+
+  UUID() {
+    return function ArrayOfUUID(value: string[]) {
+      const validator = is.UUID()
+      if (!Array.isArray(value)) {
+        return 'Tipo de valor inválido.'
+      }
+      const result = value.findIndex(v => validator(v))
+      if (result > -1) {
+        return validator(value[result])
+      }
+    }
+  },
   InstanceOf(type: any) {
     return function ArrayOfInstanceOf(value: any[]) {
       const validator = is.InstanceOf(type)
@@ -150,6 +163,13 @@ const NullOr = {
     }
   },
 
+  UUID() {
+    return function UUID(value: string) {
+      if (value === null || value === undefined) return
+      return is.UUID()(value)
+    }
+  },
+
   InstanceOf(type: any) {
     return function InstanceOf(value: any) {
       if (value === null || value === undefined) return
@@ -174,6 +194,17 @@ export const is = {
     return function AnyType(value?: any) {
       value;
       return
+    }
+  },
+
+  UUID() {
+    return function UUID(value: string) {
+      if (typeof value !== 'string') {
+        return 'Tipo de valor inválido.'
+      }
+      if (!isUUID(value)) {
+        return 'UUID inválido.'
+      } 
     }
   },
   String(min?: number, max?: number) {

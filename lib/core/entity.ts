@@ -1,13 +1,14 @@
 import lodash from "lodash";
+import { deepFreeze } from "../utils/deep-freeze";
 import validator from "../utils/validator";
 import { AutoMapperEntity } from "./auto-mapper-entity";
 import { DomainError } from "./errors";
 import { EntityMetaHistory } from "./history";
-import { HooksConfig, WithoutEntityProps } from "./hooks";
+import { EntityHook, WithoutEntityProps } from "./hooks";
 import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
 import { RevalidateError } from "./revalidate-error";
-import { AutoMapperSerializer, EntityProps, IEntity, WithDate } from "./types";
+import { AutoMapperSerializer, EntityProps, HistorySubscribe, IEntity, WithDate } from "./types";
 
 export interface EntityConfig {
   isAggregate?: boolean
@@ -17,9 +18,9 @@ export interface EntityConfig {
 
 export abstract class Entity<Props extends EntityProps> implements IEntity<Props> {
   protected static autoMapper = new AutoMapperEntity();
-  protected abstract hooks: HooksConfig<this, Props>;
+  protected static hooks: EntityHook<any, any>;
+  public hooks: never;
   public isEntity = true;
-
   protected rulesIsLocked: boolean = false;
   private _id: Id;
   private _createdAt: Date;
@@ -30,6 +31,10 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
   constructor(input: Props, options?: EntityConfig);
   constructor(input: WithDate<Props>, options?: EntityConfig)
   constructor(props: Props | WithDate<Props>, options: EntityConfig = {}) {
+    this.hooks = undefined as never;
+    delete this.hooks
+
+    const instance = this.constructor as typeof Entity<Props>
     if (props instanceof Entity) {
       throw new DomainError('Entity instance cannot be passed as argument')
     }
@@ -55,29 +60,29 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
             this.ensureBusinessRules()
           }
 
-          if (typeof this.hooks?.onChange === 'function') {
-            this.hooks.onChange(this as any, snapshot)
+          if (typeof instance?.hooks?.onChange === 'function') {
+            instance?.hooks?.onChange(this, snapshot)
           }
         }
       })
     }
+    this.revalidate();
+    this.ensureBusinessRules()
 
     if (!options?.isAggregate) {
       this.onEntityCreate()
     }
-
-    this.revalidate();
-    this.ensureBusinessRules()
   }
 
+  public subscribe(props: HistorySubscribe<Props>) {
+    return this.history.subscribe(this, props)
+  }
   // Dispatch Entity Hook Validation
   public revalidate(fieldToRevalidate?: keyof WithoutEntityProps<Props>) {
-    const typeValidation = this.hooks?.typeValidation as any
+    const instance = this.constructor as typeof Entity<Props>
+    const typeValidation = instance.hooks?.typeValidation
     if (!typeValidation) return;
 
-    if (!(this?.hooks?.typeValidation)) {
-      return;
-    }
     if (fieldToRevalidate) {
       const value = this.props[fieldToRevalidate]
       const validation = typeValidation[fieldToRevalidate]
@@ -85,7 +90,7 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
       if (errorMessage) {
         const expected = typeValidation[fieldToRevalidate]?.name
         const field = fieldToRevalidate.toString()
-        throw RevalidateError(errorMessage, value, expected, field)
+        throw RevalidateError(errorMessage, value, expected!, field)
       }
     }
     else {
@@ -109,10 +114,12 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
   }
 
   private onEntityCreate() {
-    this?.hooks?.onCreate?.(this as any)
+    const instance = this.constructor as typeof Entity<Props>
+    instance?.hooks?.onCreate?.(this)
   }
   public ensureBusinessRules() {
-    this?.hooks?.rules?.(this as any)
+    const instance = this.constructor as typeof Entity<Props>
+    instance?.hooks?.rules?.(this)
   }
 
   get history() {
@@ -145,8 +152,10 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
     return this.id.isNew();
   }
 
-  public toPrimitives(): AutoMapperSerializer<Props> {
-    return Entity.autoMapper.entityToObj<Props>(this as any)
+  public toPrimitives(): Readonly<AutoMapperSerializer<Props>> {
+    const result = Entity.autoMapper.entityToObj<Props>(this)
+    const frozen = deepFreeze(result)
+    return frozen
   }
 
   public hashCode(): Id {
@@ -154,12 +163,6 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
     return new Id(`entity@${name?.constructor?.name}:${this.id.value}`)
   }
 
-
-  protected customizedIsEqual(first: any, second: any) {
-    if (first instanceof Date || second instanceof Date) {
-      return true;
-    }
-  }
   public isEqual(other: IEntity<Props>): boolean {
     const thisProps = this['props']
     const otherProps = other['props']

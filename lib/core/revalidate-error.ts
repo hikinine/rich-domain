@@ -12,7 +12,7 @@ export const RevalidateError = (
     received: typeof value === 'object'
       ? value?.isEntity
         ? value?.constructor?.name
-        : value.isValueObject
+        : value?.isValueObject
           ? value?.constructor?.name
           : 'Object'
       : typeof value

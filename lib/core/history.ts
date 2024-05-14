@@ -1,14 +1,18 @@
 import lodash from "lodash"
+import { ApplicationLevelError, Entity } from "."
 import Validator from "../utils/validator"
 import { Snapshot } from "./history-snapshot"
-import { SnapshotCallbacks, SnapshotsData } from "./types"
+import { EntityProps, HistorySubscribe, SnapshotCallbacks, SnapshotsData } from "./types"
 
-export class EntityMetaHistory<T>{
+export class EntityMetaHistory<T extends EntityProps> {
   public initialProps: T
   public snapshots: SnapshotsData<T>[]
   private callbacks?: SnapshotCallbacks
 
-  constructor(props: T, callbacks?: SnapshotCallbacks) {
+  constructor(
+    props: T,
+    callbacks?: SnapshotCallbacks
+  ) {
     this.initialProps = lodash.cloneDeep(props)
     this.snapshots = []
     this.callbacks = callbacks
@@ -58,6 +62,57 @@ export class EntityMetaHistory<T>{
     )
   }
 
+  public getSnapshotFromChange(key: string) {
+    const relationships = key.split('.');
+    return this.snapshots.find(
+      (snapshot) => {
+        const updateKeys = snapshot.trace.update.split('.');
+
+        if (updateKeys.length === 1) {
+          const [singleKey] = updateKeys
+          return relationships.includes(singleKey)
+        }
+        else {
+          return relationships.every((key) => updateKeys.includes(key));
+        }
+      }
+    )
+  }
+
+  public subscribe<E extends Entity<T>>(entity: E, props: HistorySubscribe<T>) {
+    Object.entries(props).forEach(([key, value]) => {
+      const snapshot = this.getSnapshotFromChange(key)
+      if (snapshot) {
+        const { resolve } = value!
+        const initialProps = lodash.get(entity.history.initialProps, key)
+        const currentProps = lodash.get(entity, key)
+        if (!initialProps || !currentProps) {
+          throw new ApplicationLevelError(
+            'Initial or current props not found. Check if the path is correct. Ensure that you have getters implemented.', {
+            entity: entity?.constructor?.name,
+            path: key,
+            key,
+            hasInitialProps: !!initialProps,
+            hasCurrentProps: !!currentProps
+          })
+        }
+
+        if (!(Array.isArray(initialProps) && Array.isArray(currentProps))) {
+          resolve(currentProps, snapshot.trace, snapshot)
+          return
+        }
+        const resolvedValues = entity.history.resolve(
+          initialProps,
+          currentProps
+        )
+
+        resolve({
+          ...resolvedValues,
+          currentProps
+        }, snapshot.trace, snapshot)
+      }
+    })
+  }
   public resolve<T>(
     initialValues: T[],
     currentValues: T[]
@@ -78,7 +133,7 @@ export class EntityMetaHistory<T>{
     initialValues: T[],
     currentValues: T[]
   ) {
-    return currentValues.reduce((acc, currentValue) => { 
+    return currentValues.reduce((acc, currentValue) => {
       let shouldUpdate = false;
       const found = initialValues.find((a) => {
         if (Validator.isValueObject(a)) {

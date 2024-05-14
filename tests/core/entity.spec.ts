@@ -1,6 +1,5 @@
-import { DomainError, Entity, EntityMetaHistory, HooksConfig, Id } from "../../lib/core";
+import { DomainError, Entity, EntityMetaHistory, Id } from "../../lib/core";
 import { EntityProps } from "../../lib/core/types";
-import { is } from "../../lib/core/validation-is";
 import { Age } from "./mocks/entity";
 
 describe('entity test', () => {
@@ -12,13 +11,6 @@ describe('entity test', () => {
     age: Age
   }
   class User extends Entity<UserProps> {
-    protected hooks = new HooksConfig<User, UserProps>({
-      typeValidation: {
-        email: is.Email(),
-        age: is.InstanceOf(Age),
-        name: is.AnyType()
-      }
-    })
     get email() {
       return this.props.email
     }

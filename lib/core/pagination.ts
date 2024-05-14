@@ -1,8 +1,7 @@
 import { parseQueryWithDots } from "../utils/parsing-filter";
 
 type OrderByEnum = 'asc' | 'desc';
-type Condition =
-  | 'equals'
+type Condition = | 'equals'
   | 'in'
   | 'notIn'
   | 'lt'
@@ -11,7 +10,8 @@ type Condition =
   | 'gte'
   | 'contains'
   | 'startsWith'
-  | 'endsWith';
+  | 'endsWith'
+  | 'not'
 const conditions = [
   'equals',
   'in',
@@ -23,6 +23,7 @@ const conditions = [
   'contains',
   'startsWith',
   'endsWith',
+  'not',
 ] as const;
 type Value =
   | string
@@ -47,7 +48,7 @@ export class PaginationCriteria {
   public orderBy?: OrderBy
 
   constructor(props: Record<string, number | string>) {
-    this.offset = Number(props?.offset ?? 0) 
+    this.offset = Number(props?.offset ?? 0)
     this.limit = Number(props?.limit ?? 10)
 
     if (props?.orderBy && props.orderBy !== 'undefined' && props.orderBy !== 'null') {
@@ -102,7 +103,7 @@ export class PaginationCriteria {
     }
 
   }
-  
+
   public adaptOnlyBusinessFiltersToPrisma() {
     if (!this.businessFilter) return null;
 
@@ -220,3 +221,50 @@ export class Pagination<Aggregate> {
     } as Pagination<T>
   }
 }
+
+
+export const dataTableConfig = {
+  comparisonOperators: [
+    { label: "Contém", value: "ilike" as const },
+    { label: "Does not contain", value: "notIlike" as const },
+    { label: "Is", value: "eq" as const },
+    { label: "Is not", value: "notEq" as const },
+    { label: "Starts with", value: "startsWith" as const },
+    { label: "Ends with", value: "endsWith" as const },
+    { label: "Is empty", value: "isNull" as const },
+    { label: "Is not empty", value: "isNotNull" as const },
+  ],
+  selectableOperators: [
+    { label: "Is", value: "eq" as const },
+    { label: "Is not", value: "notEq" as const },
+    { label: "Is empty", value: "isNull" as const },
+    { label: "Is not empty", value: "isNotNull" as const },
+  ],
+  logicalOperators: [
+    {
+      label: "And",
+      value: "and" as const,
+      description: "All conditions must be met",
+    },
+    {
+      label: "Or",
+      value: "or" as const,
+      description: "At least one condition must be met",
+    },
+  ],
+}
+
+ 
+
+export type Filtering<T> = {
+  [key in keyof T]?: {
+    [condition in Condition]?: Value;
+  };
+} & {
+  OR?: Filtering<T> | Filtering<T>[]
+  AND?: Filtering<T> | Filtering<T>[]
+  NOT?: Filtering<T> | Filtering<T>[]
+}
+ 
+
+// (nome = paulo & idade = 25 & email = ppp) OU (nome = thiago & idade = 22 & email = ggg)

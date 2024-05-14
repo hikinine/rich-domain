@@ -1,10 +1,11 @@
-import { ValueObject, VoHookConfig } from "../../../lib/core";
+import { ValueObject, VoHooks } from "../../../lib/core";
 import { is } from "../../../lib/core/validation-is";
 
 
 
 export class Age extends ValueObject<number> {
-  protected hooks = new VoHookConfig<number>({
+  protected static hooks = new VoHooks<number>({
     typeValidation: is.Number(0, 120)
   })
+ 
 }
