@@ -80,10 +80,20 @@ export class EntityMetaHistory<T extends EntityProps> {
   }
 
   public subscribe<E extends Entity<T>>(entity: E, props: HistorySubscribe<T>) {
-    Object.entries(props).forEach(([key, value]) => {
+    Object.entries(props).forEach((props) => {
+      const [key, callback] = props 
+      if (typeof callback !== 'function') {
+        throw new ApplicationLevelError(
+          'Callback must be a function', {
+          entity: entity?.constructor?.name,
+          path: key,
+          key,
+          callback
+        })
+      }
+      
       const snapshot = this.getSnapshotFromChange(key)
-      if (snapshot) {
-        const { resolve } = value!
+      if (snapshot) { 
         const initialProps = lodash.get(entity.history.initialProps, key)
         const currentProps = lodash.get(entity, key)
         if (!initialProps || !currentProps) {
@@ -98,7 +108,7 @@ export class EntityMetaHistory<T extends EntityProps> {
         }
 
         if (!(Array.isArray(initialProps) && Array.isArray(currentProps))) {
-          resolve(currentProps, snapshot.trace, snapshot)
+          callback (currentProps, snapshot.trace, snapshot)
           return
         }
         const resolvedValues = entity.history.resolve(
@@ -106,7 +116,7 @@ export class EntityMetaHistory<T extends EntityProps> {
           currentProps
         )
 
-        resolve({
+        callback({
           ...resolvedValues,
           currentProps
         }, snapshot.trace, snapshot)
