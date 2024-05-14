@@ -138,9 +138,7 @@ describe('entity hooks', () => {
 
       try {
         user.subscribe({
-           age: (age) => {
-            age.value.toFixed()
-           }
+           
         })
 
 

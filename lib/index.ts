@@ -1,4 +1,6 @@
-import * as Domain from './module-exports'
-export * from './module-exports'
-export { Domain }
+export * from './module-exports';
+import * as Domain from './module-exports';
+
+
+export { Domain };
 

@@ -160,6 +160,8 @@ export type ExtractEntityAndValueObjectKeys<T> = ExtractKeysOfValueType<
 	T,
 	| IEntity<any>
 	| Array<IEntity<any>>
-	| Omit<IValueObject<any>, 'props' | 'getRawProps' | 'toPrimitives'>
-	| Array<Omit<IValueObject<any>, 'props' | 'getRawProps' | 'toPrimitives'>>
+	| Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>
+	| Array<Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>>
 >
+
+type NotPrimitive = object | Array<any> 
