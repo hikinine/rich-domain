@@ -95,7 +95,7 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
           const value = this.props[field as keyof Props]
           const errorMessage = validation(value)
           if (errorMessage) {
-            throw RevalidateError(errorMessage, value, validation.name, field)
+            throw RevalidateError(errorMessage, value, validation?.name, field)
           }
         })
     }

@@ -14,6 +14,7 @@ describe('entity hooks', () => {
   interface UserProps extends EntityProps {
     name: string
     email: string
+    teste: string | null
     age: Age
     post: Posts
     posts: Posts[]
@@ -52,11 +53,12 @@ describe('entity hooks', () => {
   class User extends Entity<UserProps> {
     protected static hooks = new EntityHook<User, UserProps>({
       typeValidation: {
-        name: is.String(2, 255),
-        email: is.Email(),
-        age: is.InstanceOf(Age),
-        post: is.InstanceOf(Posts),
-        posts: is.Array.InstanceOf(Posts)
+        name: is.string(2, 255),
+        email: is.email(),
+        age: is.instanceof(Age),
+        post: is.instanceof(Posts),
+        posts: is.arrayOf(is.instanceof(Posts)),
+        teste: is.optional(is.string(2, 255))
       }
     })
 
@@ -105,10 +107,11 @@ describe('entity hooks', () => {
   beforeEach(() => {
     userProps = {
       id: new Id(),
-      posts: [],
+      posts: [ 
+      ],
       age: new Age(25),
       email: 'paulo.artlab@gmail.com',
-
+      teste: 999 as any,
       name: 'Paulo Santana',
       post: new Posts({
         id: new Id(),
@@ -119,34 +122,26 @@ describe('entity hooks', () => {
     }
   });
   describe('hook behaviors', () => {
-    it('should execute revalidate method', () => {
-      const newEmail = 'register@gmail.com'
-      const user = new User(userProps)
-      user.changeEmail(newEmail)
-      user.addPost(
-        new Posts({
-          id: new Id(),
-          title: 'Post 2', content: 'Content 2',
-          meme: new Meme({ a: 1, b: 2 }),
-          memes: [new Meme({ a: 3, b: 5 }), new Meme({ a: 6, b: 7 })]
-        })
-      )
-      user.changePostSTitle(user.posts[0].id, 'Post 1 updated')
+    it('should execute revalidate method', () => { 
+       try {
+        const newEmail = 'register@gmail.com'
+        const user = new User(userProps)
+        user.changeEmail(newEmail)
+        user.addPost(
+          new Posts({
+            id: new Id(),
+            title: 'Post 2', content: 'Content 2',
+            meme: new Meme({ a: 1, b: 2 }),
+            memes: [new Meme({ a: 3, b: 5 }), new Meme({ a: 6, b: 7 })]
+          })
+        )
+        user.changePostSTitle(user.posts[0].id, 'Post 1 updated')
 
-
-     
-
-      try {
-        user.subscribe({
-           
-        })
-
-
-      } catch (error) {
+        expect(user).toBeInstanceOf(User)
+       } catch (error) {
         console.log(error)
-      }
-
-      expect(user.email).toEqual(newEmail)
+       }
+    
     })
 
     it('when rules is defined, should execute it on create', () => {

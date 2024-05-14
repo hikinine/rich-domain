@@ -4,5 +4,7 @@ export { Entity } from './core/entity'
 export { Snapshot } from './core/history-snapshot'
 export { EntityHook, VoHooks } from './core/hooks'
 export { Id } from './core/ids'
+export { EntityConfig, EntityProps, SnapshotTrace, SnapshotsData } from './core/types'
 export { is } from './core/validation-is'
 export { ValueObject } from './core/value-object'
+

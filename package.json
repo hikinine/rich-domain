@@ -1,6 +1,6 @@
 {
 	"name": "@hiki9/rich-domain",
-	"version": "2.0.4",
+	"version": "2.0.6",
 	"description": "Fork from rich-domain by Alessandro Dev",
 	"main": "dist/index.js",
 	"types": "dist/index.d.js",
