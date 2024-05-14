@@ -25,6 +25,10 @@ export class Id implements IdImplementation {
     }
   }
 
+  public static generate(): Id {
+    return new Id()
+  }
+  
   private setAsNew(): void {
     this._isNew = true;
   }

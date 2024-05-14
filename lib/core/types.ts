@@ -165,3 +165,13 @@ export type ExtractEntityAndValueObjectKeys<T> = ExtractKeysOfValueType<
 >
 
 type NotPrimitive = object | Array<any> 
+
+
+
+
+export interface EntityConfig extends BaseAggregateConfig {
+	isAggregate?: boolean
+}
+export interface BaseAggregateConfig { 
+  preventHistoryTracker?: boolean
+}

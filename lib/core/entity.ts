@@ -8,12 +8,8 @@ import { EntityHook, WithoutEntityProps } from "./hooks";
 import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
 import { RevalidateError } from "./revalidate-error";
-import { AutoMapperSerializer, EntityProps, HistorySubscribe, IEntity, WithDate } from "./types";
+import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, WithDate } from "./types";
 
-export interface EntityConfig {
-  isAggregate?: boolean
-  preventSubscribeOfChanges?: boolean
-}
 
 
 export abstract class Entity<Props extends EntityProps> implements IEntity<Props> {
@@ -49,7 +45,7 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
 
     this.props = props
     this.metaHistory = null;
-    if (!options?.preventSubscribeOfChanges) {
+    if (!options?.preventHistoryTracker) {
       const proxy = new Proxy<Props>(this.props, proxyHandler(this));
       this.props = proxy;
       this.metaHistory = new EntityMetaHistory<Props>(proxy, {

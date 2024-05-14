@@ -1,6 +1,6 @@
 {
 	"name": "@hiki9/rich-domain",
-	"version": "2.0.2",
+	"version": "2.0.4",
 	"description": "Fork from rich-domain by Alessandro Dev",
 	"main": "dist/index.js",
 	"types": "dist/index.d.js",
@@ -65,14 +65,21 @@
 		"dist/index.d.ts",
 		"dist/types.d.ts",
 		"dist/types.js",
-		"dist/module-exports.js",
-		"dist/module-exports.ts",
-		"dist/module-exports.d.ts",
+		"dist/domain.js",
+		"dist/domain.ts",
+		"dist/domain.d.ts",
+		"dist/repository.js",
+		"dist/repository.ts",
+		"dist/repository.d.ts",
+		"dist/errors.js",
+		"dist/errors.ts",
+		"dist/errors.d.ts",
 		"dist/package.json",
 		"dist/index.d.ts.map",
 		"dist/index.js.map",
 		"dist/types.d.ts.map",
 		"dist/types.js.map"
+		
 	],
 	"dependencies": {
 		"lodash": "^4.17.21",
