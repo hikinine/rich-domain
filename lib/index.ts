@@ -1,3 +1,4 @@
+export { Filtering, Pagination, PaginationCriteria, PaginationResult } from './core/pagination'
 export * from './domain'
 export * as Domain from './domain'
 export * from './errors'

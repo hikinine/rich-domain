@@ -7,7 +7,6 @@ export * from './domain-event';
 export * from './entity';
 export * from './errors';
 export * from './history';
-export * from './history-snapshot';
 export * from './hooks';
 export * from './ids';
 export * from './pagination';

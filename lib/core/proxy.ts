@@ -1,41 +1,38 @@
-const prototypeMethodsThatShouldListener = [
+import { EntityProps, IEntity } from "./types";
+
+export const mutationArrayMethods = [
   'push',
   'pop',
   'shift',
   'unshift',
-  'slice'
+  'slice',
+  'fill',
+  'copyWithin',
+  'splice',
+  'reverse'
 ]
 
-export const proxyHandler = function <Props extends object>(self: any, keyProp: string[] = []): ProxyHandler<Props> {
-  return {
-    get: function (target, prop: string) {
-      const val = Reflect.get(target, prop);
-      if (typeof val === 'function') {
-        if (prototypeMethodsThatShouldListener.includes(prop)) {
-          return function (...args: unknown[]) {
-            const result = Array.prototype[prop].apply(target, args);
-            self.metaHistory.addSnapshot({
-              props: self.props,
-              trace: {
-                update: keyProp?.join(".")!,
-                action: prop
-              }
-            });
-
-            return result
-          };
-        }
-      }
-      if (
-        //should refactor. typeof object && !== null doesnt work somehow
-        ['[object Object]', '[object Array]'].indexOf(
-          Object.prototype.toString.call(target[prop]),
-        ) > -1
-      ) {
+export const proxyHandler = function <Props extends object>(self: IEntity<EntityProps>, keyProp: string[] = []): ProxyHandler<Props> {
+  return { 
+    get: function (target, prop: string, receiver) {
+      if (Array.isArray(target[prop])) { 
         return new Proxy(target[prop], proxyHandler(self, [...(keyProp || []), prop]));
       }
 
-      return Reflect.get(target, prop);
+      const accessor = Reflect.get(target, prop, receiver);
+ 
+      if (typeof accessor === 'function' && mutationArrayMethods.includes(prop)) {
+        self.history?.addSnapshot({
+          props: self['props'],
+          trace: {
+            updatedAt: new Date(),
+            update: keyProp?.join(".")!,
+            action: prop
+          }
+        });
+      } 
+
+      return accessor
     },
 
     set: function (target, prop, value, receiver) {
@@ -44,17 +41,35 @@ export const proxyHandler = function <Props extends object>(self: any, keyProp: 
       if (!Array.isArray(receiver)) {
         let prefix = keyProp?.join?.(".");
         if (prefix) prefix += ".";
-
-        self.metaHistory.addSnapshot({
-          props: self.props,
+        self?.history?.addSnapshot({
+          props: self['props'],
           trace: {
-            update: prefix + (prop as string),
+            updatedAt: new Date(),
+            update: prefix + prop?.toString(),
             from: oldValue,
             to: value,
           }
         });
-      }
+      } 
+      /**
+       *      else  { 
+        let prefix = keyProp?.join?.(".");
+        if (prefix) prefix += ".";
+        console.log('position', prop)
+        self?.history?.addSnapshot({
+          props: self['props'],
+          trace: {
+            updatedAt: new Date(),
+            update: prefix + prop?.toString(),
+            from: oldValue,
+            to: value,
+            position: Number(prop)
+          }
+        });
 
+      }
+       */
+      
       return true;
     },
   };

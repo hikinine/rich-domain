@@ -1,10 +1,11 @@
+
 {
 	"name": "@hiki9/rich-domain",
-	"version": "2.0.6",
-	"description": "Fork from rich-domain by Alessandro Dev",
+	"version": "2.0.8",
+	"description": "Rich Domain is a library that provides a set of tools to help you build complex business logic in NodeJS using Domain Driven Design principles.",
 	"main": "dist/index.js",
 	"types": "dist/index.d.js",
-	"author": "Alessandro Dev",
+	"author": "Paulo Santana",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/4lessandrodev/rich-domain.git"

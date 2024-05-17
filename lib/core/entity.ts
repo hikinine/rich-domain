@@ -10,8 +10,6 @@ import { proxyHandler } from "./proxy";
 import { RevalidateError } from "./revalidate-error";
 import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, WithDate } from "./types";
 
-
-
 export abstract class Entity<Props extends EntityProps> implements IEntity<Props> {
   protected static autoMapper = new AutoMapperEntity();
   protected static hooks: EntityHook<any, any>;
@@ -50,7 +48,7 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
       this.props = proxy;
       this.metaHistory = new EntityMetaHistory<Props>(proxy, {
         onAddedSnapshot: (snapshot) => {
-          const field = snapshot.getUpdatedField<Props>()
+          const field = snapshot.trace.update
           this.revalidate(field as keyof WithoutEntityProps<Props>)
           if (!this.rulesIsLocked) {
             this.ensureBusinessRules()
@@ -71,8 +69,12 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
   }
 
   public subscribe(props: HistorySubscribe<Props>) {
+    if (!this.history) {
+      throw new DomainError('History is not enabled for this entity')
+    }
     return this.history.subscribe(this, props)
   }
+  
   // Dispatch Entity Hook Validation
   public revalidate(fieldToRevalidate?: keyof WithoutEntityProps<Props>) {
     const instance = this.constructor as typeof Entity<Props>
@@ -149,6 +151,12 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
   }
 
   public toPrimitives(): Readonly<AutoMapperSerializer<Props>> {
+    const result = Entity.autoMapper.entityToObj<Props>(this)
+    const frozen = deepFreeze(result)
+    return frozen
+  }
+
+  public toJSON(): Readonly<AutoMapperSerializer<Props>> {
     const result = Entity.autoMapper.entityToObj<Props>(this)
     const frozen = deepFreeze(result)
     return frozen

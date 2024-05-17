@@ -41,7 +41,7 @@ export interface IEntity<Props extends EntityProps> {
 	id: IdImplementation
 	createdAt: Date
 	updatedAt: Date | null
-	history: IEntityMetaHistory<Props>
+	history: IEntityMetaHistory<Props> | null
 	hooks: never
 	/**
 	@deprecated
@@ -52,6 +52,10 @@ export interface IEntity<Props extends EntityProps> {
 	clone(): IEntity<Props>
 	isEqual(entity: IEntity<Props>): boolean
 	toPrimitives(): Readonly<AutoMapperSerializer<Props>>
+	/** 
+	 * return primitives of the entity
+	 */
+	toJSON(): Readonly<AutoMapperSerializer<Props>>
 	hashCode(): IdImplementation
 	isNew(): boolean
 }
@@ -104,6 +108,7 @@ export type AutoMapperSerializer<Props> = {
 
 
 export type SnapshotTrace = {
+	updatedAt: Date,
 	update: string,
 	position?: number,
 	action?: string
@@ -112,21 +117,12 @@ export type SnapshotTrace = {
 }
 
 export type SnapshotsData<T> = {
-	props: T,
-	timestamp?: Date,
+	props: T, 
 	trace: SnapshotTrace,
 }
 
-export type ISnapshot = {
-	timestamp?: Date
-	trace: SnapshotTrace
-	hasChange(key: string): boolean
-	getUpdatedField<T>(): keyof T | undefined
-	getTimestamp(): Date | undefined
-}
-
-export type SnapshotCallbacks = {
-	onAddedSnapshot?: (snapshot: ISnapshot) => void
+export type SnapshotCallbacks<T> = {
+	onAddedSnapshot?: (snapshot: SnapshotsData<T>) => void
 }
 
 export type WithDate<T> = T & {
@@ -134,15 +130,24 @@ export type WithDate<T> = T & {
 	updatedAt?: Date
 }
 
+export type SelfHistoryProp<Props, OmitProps> = {
+	/**
+	 * Self reference to the entity changes
+	 * @throws NOT IMPLEMENTED
+	 */
+	self: Omit<Props, keyof OmitProps>
+}
+
 export type HistorySubscribe<
 	Props extends EntityProps,
 	KeysToExtract extends keyof Props = ExtractEntityAndValueObjectKeys<Props>,
-	OmitProps = Pick<Props, KeysToExtract>
+	OmitProps = Pick<Props, KeysToExtract>,
+	ResolvedProps = OmitProps | SelfHistoryProp<Props, OmitProps>
 > = {
-		[key in keyof OmitProps]?: HistorySubscribeCallback<OmitProps[key], Props>;
+		[key in keyof ResolvedProps]?: HistorySubscribeCallback<ResolvedProps[key]>;
 	}
 
-export type HistorySubscribeCallback<TKey, TProps> = (
+export type HistorySubscribeCallback<TKey> = (
 	resolvedValues: TKey extends Array<any>
 		? {
 			toCreate: TKey,
@@ -151,27 +156,24 @@ export type HistorySubscribeCallback<TKey, TProps> = (
 			currentProps: TKey
 		}
 		: TKey,
-	trace: SnapshotTrace,
-	snapshot: SnapshotsData<TProps>
+	trace: SnapshotTrace[]
 ) => void
 
 type ExtractKeysOfValueType<T, K> = { [I in keyof T]: T[I] extends K ? I : T[I] extends Readonly<K> ? I : never }[keyof T];
 export type ExtractEntityAndValueObjectKeys<T> = ExtractKeysOfValueType<
 	T,
 	| IEntity<any>
+	| Array<any>
 	| Array<IEntity<any>>
 	| Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>
 	| Array<Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>>
 >
 
-type NotPrimitive = object | Array<any> 
-
-
-
+type NotPrimitive = object | Array<any>
 
 export interface EntityConfig extends BaseAggregateConfig {
 	isAggregate?: boolean
 }
-export interface BaseAggregateConfig { 
-  preventHistoryTracker?: boolean
+export interface BaseAggregateConfig {
+	preventHistoryTracker?: boolean
 }

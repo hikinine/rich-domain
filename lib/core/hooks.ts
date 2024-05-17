@@ -1,5 +1,5 @@
 
-import { EntityProps, ISnapshot, Optional, Primitives } from "./types"
+import { EntityProps, Optional, Primitives, SnapshotsData } from "./types"
 
 type HookTypeValidationCallback = (value: any) => Optional<string>
 type HookTypeValidation<Props> = {
@@ -8,14 +8,14 @@ type HookTypeValidation<Props> = {
 export type WithoutEntityProps<T> = Omit<T, keyof EntityProps>
 export type HookConfigInput<Entity, Props> = {
   typeValidation?: HookTypeValidation<WithoutEntityProps<Props>>
-  onChange?: (entity: Entity, snapshot: ISnapshot) => void
+  onChange?: (entity: Entity, snapshot: SnapshotsData<Props>) => void
   onCreate?: (entity: Entity) => void
   rules?: (data: Entity) => void
 }
 export class EntityHook<Entity, Props> {
   public isHooksConfig = true
   public typeValidation?: HookTypeValidation<WithoutEntityProps<Props>>
-  public onChange?: (entity: Entity, snapshot: ISnapshot) => void
+  public onChange?: (entity: Entity, snapshot: SnapshotsData<Props>) => void
   public onCreate?: (entity: Entity) => void
   public rules?: (data: Entity) => void
 
