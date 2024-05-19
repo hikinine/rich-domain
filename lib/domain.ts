@@ -1,7 +1,6 @@
 export { Aggregate } from './core/aggregate'
 export { DomainEvent } from './core/domain-event'
 export { Entity } from './core/entity'
-export { Snapshot } from './core/history-snapshot'
 export { EntityHook, VoHooks } from './core/hooks'
 export { Id } from './core/ids'
 export { EntityConfig, EntityProps, SnapshotTrace, SnapshotsData } from './core/types'

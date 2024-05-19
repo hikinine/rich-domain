@@ -1,3 +1,4 @@
+export { BaseAdapter as Adapter, BaseAdapter } from './core/adapter'
 export { Filtering, Pagination, PaginationCriteria, PaginationResult } from './core/pagination'
 export * from './domain'
 export * as Domain from './domain'
@@ -6,3 +7,4 @@ export * as Errors from './errors'
 export * from './repository'
 export * as Repository from './repository'
 
+export { ApplyRulesOnlyAfterCommitsSync } from './decorators/apply-rules-only-after-ends'

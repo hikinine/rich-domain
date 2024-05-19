@@ -130,6 +130,9 @@ export const is = {
 
 
   instanceof(type: any) {
+    if (!type) {
+      throw new TypeError('O tipo de instância não foi definido. (is.instanceof)')
+    }
     return function InstanceOf(value: any) {
       if (!(value instanceof type)) {
         return 'Tipo de valor inválido.'
