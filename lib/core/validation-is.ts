@@ -1,4 +1,4 @@
-import { isDate, isEmail, isFloat, isLength, isUUID } from 'validator'
+import { isDate, isEmail, isFloat, isInt, isLength, isUUID } from 'validator'
 
 const LengthLog = (min?: number, max?: number) => {
   if (typeof min !== 'number' && typeof max !== 'number') {
@@ -16,8 +16,8 @@ const LengthLog = (min?: number, max?: number) => {
     return `Valor máximo permitido: ${max}.`
   }
 }
- 
-export const is = { 
+
+export const is = {
 
   optional(callback: (args: any) => string | undefined) {
     return function Optional(value: any) {
@@ -26,7 +26,7 @@ export const is = {
       }
       return callback(value)
     }
-  },  
+  },
   arrayOf(callback: (args: any) => string | undefined) {
     return function ArrayOf(value: any[]) {
       if (!Array.isArray(value)) {
@@ -42,7 +42,7 @@ export const is = {
   enumOf(enumInstance: any) {
     return function EnumOf(value: any) {
       const enumValues = Object.values(enumInstance)
-      if (!enumValues.includes(value) ) {
+      if (!enumValues.includes(value)) {
         return 'Valor enum inválido. Disponível: ' + enumValues.join(', ')
       }
     }
@@ -78,7 +78,7 @@ export const is = {
       }
       if (!isUUID(value)) {
         return 'UUID inválido.'
-      } 
+      }
     }
   },
   string(min?: number, max?: number) {
@@ -114,7 +114,7 @@ export const is = {
 
   integer(min?: number, max?: number) {
     return function Integer(value: string) {
-      if (typeof value !== 'number' || !isFloat(String(value), { max, min })) {
+      if (typeof value !== 'number' || !isInt(String(value), { max, min })) {
         return `Esperava receber um número válido. ` + LengthLog(min, max)
       }
     }
@@ -129,15 +129,27 @@ export const is = {
   },
 
 
-  instanceof(type: any) {
-    if (!type) {
-      throw new TypeError('O tipo de instância não foi definido. (is.instanceof)')
-    }
+  instanceof(clazz: any) {
     return function InstanceOf(value: any) {
-      if (!(value instanceof type)) {
+      let thisInstance: any
+
+      if (typeof clazz === 'function') {
+        thisInstance = isClass(clazz) ? clazz : clazz()
+      } 
+  
+      if (!thisInstance) {
+        throw new TypeError('O tipo de instância não foi definido. (is.instanceof)')
+      }
+
+      if (!(value instanceof thisInstance)) {
         return 'Tipo de valor inválido.'
       }
     }
   }
 
-}  
+}
+
+
+function isClass(v: any) {
+  return typeof v === 'function' && /^\s*class\s+/.test(v.toString());
+}
