@@ -122,6 +122,15 @@ export class EntityMetaHistory<T extends EntityProps> {
   protected deepSearchSnapshots(entity: IEntity<T>, key: string) {
     const propertyOfKey = entity?.['props']?.[key];
 
+    if (Array.isArray(propertyOfKey)) { 
+      const everyPropIsEntity = propertyOfKey.every((prop) => prop?.isEntity)
+      if (!everyPropIsEntity) { 
+        return this.getSnapshotFromUpdatedKey(key)
+      }
+       
+      return propertyOfKey.map((prop) => prop.history.snapshots).flat()
+    }
+
     if (typeof propertyOfKey === 'undefined') {
       return []
     } 
