@@ -61,7 +61,7 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
         const value = this.props
         const errorMessage = instance.hooks.typeValidation(value)
         if (errorMessage) {
-          const expected = instance.hooks.typeValidation?.arguments
+          const expected = instance.hooks.typeValidation?.name
           throw RevalidateError(errorMessage, value, expected)
         }
       }
