@@ -19,8 +19,8 @@ const LengthLog = (min?: number, max?: number) => {
 
 export const is = {
 
-  optional(callback: (args: any) => string | undefined) {
-    return function Optional(value: any) {
+  nullable(callback: (args: any) => string | undefined) {
+    return function Nullable(value: any) {
       if (value === null || value === undefined) {
         return
       }
