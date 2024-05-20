@@ -54,7 +54,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     entity: E,
     callback: (entity: E, snapshot: Snapshot<T>) => void
   ) {
-    Object.values(entity).forEach((value: any) => {
+    Object.values(entity?.['props']).forEach((value: any) => {
       if (!value?.history) return
       
       if (value?.isEntity) {
