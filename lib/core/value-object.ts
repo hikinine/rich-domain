@@ -32,7 +32,7 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
 
   public ensureBusinessRules() {
     const instance = this.constructor as typeof ValueObject<Props>
-    instance?.hooks?.rules?.(this.props) 
+    instance?.hooks?.rules?.(this.props)
   }
 
   public toPrimitives(): Readonly<AutoMapperSerializer<Props>> {
@@ -41,7 +41,10 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
     return frozen
   }
 
-  public isEqual(other: IValueObject<Props>): boolean {
+  public isEqual(other?: IValueObject<Props>): boolean {
+    if (!other) return false
+    if (!(other instanceof ValueObject)) return false
+    if (this === other) return true
     const currentProps = lodash.cloneDeep(this.props)
     const providedProps = lodash.cloneDeep(other.props)
     return lodash.isEqual(currentProps, providedProps);

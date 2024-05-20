@@ -167,7 +167,11 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
     return new Id(`entity@${name?.constructor?.name}:${this.id.value}`)
   }
 
-  public isEqual(other: IEntity<Props>): boolean {
+  public isEqual(other?: IEntity<Props>): boolean {
+    if (!other) return false
+    if (!(other instanceof Entity)) return false
+    if (this === other) return true
+
     const thisProps = this['props']
     const otherProps = other['props']
     const currentProps = lodash.cloneDeep(thisProps)

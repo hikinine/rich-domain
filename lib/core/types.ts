@@ -50,7 +50,7 @@ export interface IEntity<Props extends EntityProps> {
 	revalidate(): void
 	ensureBusinessRules(): void
 	clone(): IEntity<Props>
-	isEqual(entity: IEntity<Props>): boolean
+	isEqual(entity?: IEntity<Props>): boolean
 	toPrimitives(): Readonly<AutoMapperSerializer<Props>>
 	/** 
 	 * return primitives of the entity
@@ -70,7 +70,7 @@ export type IValueObject<T> = {
 	revalidate(): void
 	ensureBusinessRules(): void
 	toPrimitives(): Readonly<AutoMapperSerializer<T>>
-	isEqual(value: IValueObject<T>): boolean
+	isEqual(value?: IValueObject<T>): boolean
 	clone(): IValueObject<T>
 }
 
