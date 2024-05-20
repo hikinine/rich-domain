@@ -125,10 +125,10 @@ export type SnapshotInput<T> = {
 	trace: SnapshotTrace 
 }
 
-export type ISnapshot<T> = {
+export interface ISnapshot<T>  {
 	props: T,
 	trace: SnapshotTrace
-	timestamp: Date
+	get timestamp(): Date
 	hasChange(key: keyof T): boolean
 } 
 
