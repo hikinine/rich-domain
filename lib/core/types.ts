@@ -74,11 +74,15 @@ export type IValueObject<T> = {
 	clone(): IValueObject<T>
 }
 
-export type IEntityMetaHistory<T> = {
+export type IEntityMetaHistory<T extends EntityProps> = {
 	initialProps: T
-	snapshots: SnapshotsData<T>[]
-	addSnapshot(data: SnapshotsData<T>): void
-	hasChange(key: string): boolean
+	snapshots: ISnapshot<T>[]
+	addSnapshot(data: SnapshotInput<T>): void
+	hasChange(key: keyof T): boolean
+	getSnapshotFromUpdatedKey(key: keyof T): ISnapshot<T>[]
+	subscribe<E extends IEntity<T>>(entity: E, subscribeProps: HistorySubscribe<T>): void
+  onChange?: (snapshot: ISnapshot<T>) => void
+	deepWatch<E extends IEntity<T>>(entity: E, callback: (entity: E, snapshot: ISnapshot<T>) => void): void
 	resolve<T>(initialValues: T[], currentValue: T[]): {
 		toCreate: T[],
 		toUpdate: T[],
@@ -116,13 +120,20 @@ export type SnapshotTrace = {
 	to?: any,
 }
 
-export type SnapshotsData<T> = {
-	props: T, 
-	trace: SnapshotTrace,
+export type SnapshotInput<T> = {
+	props: T,
+	trace: SnapshotTrace 
 }
 
+export type ISnapshot<T> = {
+	props: T,
+	trace: SnapshotTrace
+	timestamp: Date
+	hasChange(key: keyof T): boolean
+} 
+
 export type SnapshotCallbacks<T> = {
-	onAddedSnapshot?: (snapshot: SnapshotsData<T>) => void
+	onAddedSnapshot?: (snapshot: ISnapshot<T>) => void
 }
 
 export type WithDate<T> = T & {

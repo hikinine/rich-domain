@@ -12,7 +12,7 @@ export const mutationArrayMethods = [
   'reverse'
 ]
 
-export const proxyHandler = function <Props extends object>(self: IEntity<EntityProps>, keyProp: string[] = []): ProxyHandler<Props> {
+export const proxyHandler = function <Props extends EntityProps>(self: IEntity<Props>, keyProp: string[] = []): ProxyHandler<Props> {
   return { 
     get: function (target, prop: string, receiver) {
       if (Array.isArray(target[prop])) { 

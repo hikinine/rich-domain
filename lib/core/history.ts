@@ -1,12 +1,14 @@
 import lodash from "lodash"
 import { ApplicationLevelError, DomainError } from "."
 import Validator from "../utils/validator"
-import { EntityProps, HistorySubscribe, IEntity, SnapshotCallbacks, SnapshotsData } from "./types"
+import { Snapshot } from "./history-snapshot"
+import { EntityProps, HistorySubscribe, IEntity, IEntityMetaHistory, SnapshotCallbacks, SnapshotInput } from "./types"
 
-export class EntityMetaHistory<T extends EntityProps> {
+export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHistory<T> {
   public initialProps: T
-  public snapshots: SnapshotsData<T>[]
+  public snapshots: Snapshot<T>[]
   private callbacks?: SnapshotCallbacks<T>
+  public onChange?: (snapshot: Snapshot<T>) => void
 
   constructor(
     props: T,
@@ -17,14 +19,14 @@ export class EntityMetaHistory<T extends EntityProps> {
     this.callbacks = callbacks
   }
 
-  public addSnapshot(data: SnapshotsData<T>) {
-    const snapshot: SnapshotsData<T> = { 
+  public addSnapshot(data: SnapshotInput<T>) {
+    const snapshot = new Snapshot<T>({
       props: lodash.cloneDeep(data.props),
       trace: {
         updatedAt: data.trace.updatedAt,
         update: data.trace.update
       },
-    };
+    })
 
     if (!data.trace.action) {
       snapshot.trace.from = data.trace.from
@@ -39,32 +41,55 @@ export class EntityMetaHistory<T extends EntityProps> {
     }
     this.snapshots.push(snapshot)
 
+    if (typeof this.onChange === 'function') {
+      this.onChange(snapshot)
+    }
+
     if (this.callbacks?.onAddedSnapshot) {
       this.callbacks.onAddedSnapshot(snapshot)
     }
   }
 
-  public hasChange(key: string) {
-    const relationships = key.split('.');
-    return this.snapshots.some(
-      (snapshot) => {
-        const updateKeys = snapshot.trace.update.split('.');
-
-        if (updateKeys.length === 1) {
-          const [singleKey] = updateKeys
-          return relationships.includes(singleKey)
-        }
-        else {
-          return relationships.every((key) => updateKeys.includes(key));
+  public deepWatch<E extends IEntity<T>>(
+    entity: E,
+    callback: (entity: E, snapshot: Snapshot<T>) => void
+  ) {
+    Object.values(entity).forEach((value: any) => {
+      if (!value?.history) return
+      
+      if (value?.isEntity) {
+        value.history.onChange = (snapshot: Snapshot<T>) => {
+          callback(entity, snapshot)
         }
       }
+
+      if (Array.isArray(value)) {
+        value.forEach((item) => {
+          if (item?.isEntity) {
+            item.history.onChange = (snapshot: Snapshot<T>) => {
+              callback(entity, snapshot)
+            }
+          }
+        })
+      }
+    })
+  }
+
+  public getSnapshotFromUpdatedKey(key: keyof T) {
+    return this.snapshots.filter(
+      (snapshot) => snapshot.trace.update === key
+    )
+  }
+
+  public hasChange(key: keyof T) {
+    return this.snapshots.some(
+      (snapshot) => snapshot.trace.update === key
     )
   }
 
   public subscribe<E extends IEntity<T>>(entity: E, subscribeProps: HistorySubscribe<T>) {
-
-    Object.entries(subscribeProps).forEach((props) => {
-      const [key, callback] = props 
+    Object.entries(subscribeProps).forEach((props: any) => {
+      const [key, callback] = props
       if (key === 'self') {
         throw new DomainError('"self" is not implemented yet')
       }
@@ -78,8 +103,7 @@ export class EntityMetaHistory<T extends EntityProps> {
         })
       }
 
-
-      let currentKeySnapshots: SnapshotsData<T>[]
+      let currentKeySnapshots: Snapshot<T>[]
       currentKeySnapshots = this.getSnapshotFromUpdatedKey(key);
 
       if (!currentKeySnapshots.length) {
@@ -114,26 +138,24 @@ export class EntityMetaHistory<T extends EntityProps> {
       )
 
       callback({ ...resolvedValues, currentProps }, traces)
-
     })
   }
 
-
-  protected deepSearchSnapshots(entity: IEntity<T>, key: string) {
+  protected deepSearchSnapshots(entity: IEntity<T>, key: keyof T) {
     const propertyOfKey = entity?.['props']?.[key];
 
-    if (Array.isArray(propertyOfKey)) { 
-      const everyPropIsEntity = propertyOfKey.every((prop) => prop?.isEntity)
-      if (!everyPropIsEntity) { 
-        return this.getSnapshotFromUpdatedKey(key)
-      }
-       
-      return propertyOfKey.map((prop) => prop.history.snapshots).flat()
+    if (!propertyOfKey) {
+      return []
     }
 
-    if (typeof propertyOfKey === 'undefined') {
-      return []
-    } 
+    if (Array.isArray(propertyOfKey)) {
+      const everyPropIsEntity = propertyOfKey.every((prop) => prop?.isEntity)
+      if (!everyPropIsEntity) {
+        return this.getSnapshotFromUpdatedKey(key)
+      }
+
+      return propertyOfKey.map((prop) => prop.history.snapshots).flat()
+    }
 
     if (!propertyOfKey?.isEntity) {
       return this.getSnapshotFromUpdatedKey(key)
@@ -142,19 +164,11 @@ export class EntityMetaHistory<T extends EntityProps> {
     const history: EntityMetaHistory<T> = propertyOfKey.history
 
     if (!(history instanceof EntityMetaHistory)) {
-      throw new DomainError('History is not enabled for this entity ->' + key)
+      throw new DomainError('History is not enabled for this entity ->' + key?.toString())
     }
 
     return history.snapshots
   }
-
-  public getSnapshotFromUpdatedKey(key: string) {
-    return this.snapshots.filter(
-      (snapshot) => snapshot.trace.update === key
-    )
-  }
-
-
 
   public resolve<T>(
     initialValues: T[],
@@ -171,7 +185,6 @@ export class EntityMetaHistory<T extends EntityProps> {
       toDelete: this.resolveEachPropsToDelete(initialValues, currentValues),
     }
   }
-
 
   private resolveEachPropsToDelete<T>(
     initialValues: T[],
@@ -222,7 +235,6 @@ export class EntityMetaHistory<T extends EntityProps> {
         }
       })
 
-
       if (found && shouldUpdate) {
         acc.toUpdate.push(currentValue)
       }
@@ -231,7 +243,6 @@ export class EntityMetaHistory<T extends EntityProps> {
       }
 
       return acc;
-
     }, {
       toCreate: [] as T[],
       toUpdate: [] as T[]

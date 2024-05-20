@@ -8,7 +8,7 @@ import { EntityHook, WithoutEntityProps } from "./hooks";
 import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
 import { RevalidateError } from "./revalidate-error";
-import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, WithDate } from "./types";
+import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate } from "./types";
 
 export abstract class Entity<Props extends EntityProps> implements IEntity<Props> {
   protected static autoMapper = new AutoMapperEntity();
@@ -44,10 +44,11 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
     this.props = props
     this.metaHistory = null;
     if (!options?.preventHistoryTracker) {
-      const proxy = new Proxy<Props>(this.props, proxyHandler(this));
+      const proxy = new Proxy<Props>(this.props, proxyHandler(this as IEntity<Props>));
       this.props = proxy;
-      this.metaHistory = new EntityMetaHistory<Props>(proxy, {
-        onAddedSnapshot: (snapshot) => {
+
+      const entityHistoryCallback = {
+        onAddedSnapshot: (snapshot: ISnapshot<Props>) => {
           const field = snapshot.trace.update
           this.revalidate(field as keyof WithoutEntityProps<Props>)
           if (!this.rulesIsLocked) {
@@ -58,7 +59,12 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
             instance?.hooks?.onChange(this, snapshot)
           }
         }
-      })
+      }
+      this.metaHistory = new EntityMetaHistory<Props>(proxy, entityHistoryCallback)
+
+      if (options.isAggregate && typeof instance?.hooks?.onChange === 'function') {
+        this.history.deepWatch(this, instance.hooks.onChange)
+      } 
     }
     this.revalidate();
     this.ensureBusinessRules()
@@ -74,7 +80,7 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
     }
     return this.history.subscribe(this, props)
   }
-  
+
   // Dispatch Entity Hook Validation
   public revalidate(fieldToRevalidate?: keyof WithoutEntityProps<Props>) {
     const instance = this.constructor as typeof Entity<Props>
