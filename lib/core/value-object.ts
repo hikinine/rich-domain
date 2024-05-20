@@ -10,17 +10,20 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
   protected static hooks: VoHooks<any>;
   protected static autoMapper: AutoMapperValueObject = new AutoMapperValueObject();
   public props: Readonly<Props>
-  public isValueObject: boolean;
+  public isValueObject: boolean = true
   public hooks: never
 
-  constructor(props: Props) {
-    this.isValueObject = true;
-    this.hooks = null as never;
-    this.props = deepFreeze<Props>(props);
-    this.revalidate();
-    this.ensureBusinessRules();
+  constructor(input: Props) {
+    const instance = this.constructor as typeof ValueObject<Props> 
+    const props = typeof instance?.hooks?.transformBeforeCreate === 'function'
+      ? instance.hooks.transformBeforeCreate(input)
+      : input
 
-    delete this.hooks
+    this.props = deepFreeze<Props>(props);
+    this.revalidate(); 
+
+    this.hooks = null as never;
+    delete this.hooks 
   }
 
   get value() {
@@ -29,12 +32,7 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
   public getRawProps(): Readonly<Props> {
     return this.props
   }
-
-  public ensureBusinessRules() {
-    const instance = this.constructor as typeof ValueObject<Props>
-    instance?.hooks?.rules?.(this.props)
-  }
-
+ 
   public toPrimitives(): Readonly<AutoMapperSerializer<Props>> {
     const result = ValueObject.autoMapper.valueObjectToObj(this)
     const frozen = deepFreeze(result)
@@ -77,9 +75,11 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
               throw RevalidateError(errorMessage, value, validation.name)
             }
           })
-      }
-
+      } 
     }
+
+    
+    instance?.hooks?.rules?.(this.props)
   }
 
 }

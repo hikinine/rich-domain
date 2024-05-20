@@ -67,8 +67,7 @@ export type IValueObject<T> = {
 	 * @deprecated
 	 */
 	getRawProps(): Readonly<T>
-	revalidate(): void
-	ensureBusinessRules(): void
+	revalidate(): void 
 	toPrimitives(): Readonly<AutoMapperSerializer<T>>
 	isEqual(value?: IValueObject<T>): boolean
 	clone(): IValueObject<T>

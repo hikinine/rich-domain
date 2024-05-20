@@ -30,19 +30,21 @@ export class EntityHook<Entity, Props> {
 type VoHookConfigInput<Props> = {
   typeValidation?: VoHookTypeValidation<Props>
   rules?: (data: Props) => void
+  transformBeforeCreate?: (data: Props) => Props
 
 }
 type VoHookTypeValidation<Props> = Props extends Primitives
   ? HookTypeValidationCallback
   : { [key in keyof WithoutEntityProps<Props>]: HookTypeValidationCallback }
 export class VoHooks<Props> {
-  public isVoHookConfig = true;
-  public isHooksConfig = true
+  public isVoHookConfig = true; 
+  public transformBeforeCreate?: (data: Props) => Props
   public typeValidation?: VoHookTypeValidation<Props>
   public rules?: (data: Props) => void
 
   constructor(config: VoHookConfigInput<Props>) {
     this.typeValidation = config.typeValidation
     this.rules = config.rules
+    this.transformBeforeCreate = config.transformBeforeCreate
   }
 }

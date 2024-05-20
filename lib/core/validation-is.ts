@@ -26,7 +26,7 @@ const StringRangeValidator = (min: number = 0, max: number = Number.MAX_SAFE_INT
     }
   }
 }
-const NumberRangeValidator = (min: number = Number.MIN_SAFE_INTEGER, max: number = Number.MAX_SAFE_INTEGER) => { 
+const NumberRangeValidator = (min: number = Number.MIN_SAFE_INTEGER, max: number = Number.MAX_SAFE_INTEGER) => {
   return function NumberRange(value: number) {
     if (value < min || value > max) {
       return `Valor fora do intervalo permitido. Intervalo permitido: ${min} - ${max}.`
@@ -47,7 +47,7 @@ export const is = {
   arrayOf(callback: (args: any) => string | undefined) {
     return function ArrayOf(value: any[]) {
       if (!Array.isArray(value)) {
-        return 'Tipo de valor inválido.'
+        return 'Tipo de valor inválido. Esperava receber uma lista'
       }
       const result = value.findIndex(v => callback(v))
       if (result > -1) {
@@ -68,7 +68,7 @@ export const is = {
   defined() {
     return function AnyType(value: any) {
       if (value === null || value === undefined) {
-        return 'Tipo de valor inválido.'
+        return 'Tipo de valor inválido. Esperava um valor definido.'
       }
     }
   },
@@ -81,7 +81,7 @@ export const is = {
   },
 
   uuid() {
-    return function UUID(value: string) { 
+    return function UUID(value: string) {
       if (typeof value !== 'string' || !isUUID(value)) {
         return 'UUID inválido.'
       }
@@ -93,7 +93,7 @@ export const is = {
         return 'Esperava receber um valor de texto válido.'
       }
 
-      return StringRangeValidator(min, max)(value) 
+      return StringRangeValidator(min, max)(value)
     }
   },
 
@@ -107,7 +107,7 @@ export const is = {
 
   date() {
     return function Date(value: any) {
-      if (!isValidDate(value)) { 
+      if (!isValidDate(value)) {
         return 'Esperava receber um valor de data válido.'
       }
     }
@@ -115,11 +115,11 @@ export const is = {
 
   number(min?: number, max?: number) {
     return function Number(value: number) {
-       if (!(typeof value === 'number' && !isNaN(value))) {
+      if (!(typeof value === 'number' && !isNaN(value))) {
         return 'Esperava receber um número válido.'
-       }
+      }
 
-        return NumberRangeValidator(min, max)(value)
+      return NumberRangeValidator(min, max)(value)
     }
   },
 
@@ -129,7 +129,7 @@ export const is = {
         return 'Esperava receber um número inteiro.'
       }
 
-      return NumberRangeValidator(min, max)(value) 
+      return NumberRangeValidator(min, max)(value)
     }
   },
 
@@ -156,14 +156,14 @@ export const is = {
 
       if (typeof clazz === 'function') {
         thisInstance = isClass(clazz) ? clazz : clazz()
-      } 
-  
+      }
+
       if (!thisInstance) {
         throw new TypeError('O tipo de instância não foi definido. (is.instanceof)')
       }
 
       if (!(value instanceof thisInstance)) {
-        return 'Tipo de valor inválido.'
+        return 'Tipo de valor inválido. instance-of reference: ' + (thisInstance?.name || thisInstance?.constructor?.name)
       }
     }
   }
