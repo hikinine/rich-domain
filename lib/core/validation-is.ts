@@ -1,5 +1,6 @@
 import { isEmail } from "../utils/is-email"
 import { isUUID } from "../utils/is-uuid"
+import { isValidDate } from "../utils/is-valid-date"
 
 const LengthLog = (min?: number, max?: number) => {
   if (typeof min !== 'number' && typeof max !== 'number') {
@@ -106,7 +107,7 @@ export const is = {
 
   date() {
     return function Date(value: any) {
-      if (!(value instanceof Date)) {
+      if (!isValidDate(value)) { 
         return 'Esperava receber um valor de data válido.'
       }
     }
