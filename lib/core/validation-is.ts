@@ -1,4 +1,5 @@
-import { isDate, isEmail, isFloat, isInt, isLength, isUUID } from 'validator'
+import { isEmail } from "../utils/is-email"
+import { isUUID } from "../utils/is-uuid"
 
 const LengthLog = (min?: number, max?: number) => {
   if (typeof min !== 'number' && typeof max !== 'number') {
@@ -14,6 +15,21 @@ const LengthLog = (min?: number, max?: number) => {
 
   if (typeof max === 'number') {
     return `Valor máximo permitido: ${max}.`
+  }
+}
+
+const StringRangeValidator = (min: number = 0, max: number = Number.MAX_SAFE_INTEGER) => {
+  return function StringRange(value: string) {
+    if (value.length < min || value.length > max) {
+      return `Esperava receber um valor de texto válido. ` + LengthLog(min, max)
+    }
+  }
+}
+const NumberRangeValidator = (min: number = Number.MIN_SAFE_INTEGER, max: number = Number.MAX_SAFE_INTEGER) => { 
+  return function NumberRange(value: number) {
+    if (value < min || value > max) {
+      return `Valor fora do intervalo permitido. Intervalo permitido: ${min} - ${max}.`
+    }
   }
 }
 
@@ -39,14 +55,6 @@ export const is = {
     }
   },
 
-  enumOf(enumInstance: any) {
-    return function EnumOf(value: any) {
-      const enumValues = Object.values(enumInstance)
-      if (!enumValues.includes(value)) {
-        return 'Valor enum inválido. Disponível: ' + enumValues.join(', ')
-      }
-    }
-  },
 
   in(values: any[]) {
     return function In(value: any) {
@@ -72,20 +80,19 @@ export const is = {
   },
 
   uuid() {
-    return function UUID(value: string) {
-      if (typeof value !== 'string') {
-        return 'Tipo de valor inválido.'
-      }
-      if (!isUUID(value)) {
+    return function UUID(value: string) { 
+      if (typeof value !== 'string' || !isUUID(value)) {
         return 'UUID inválido.'
       }
     }
   },
   string(min?: number, max?: number) {
     return function String(value: string) {
-      if (typeof value !== 'string' || !isLength(value, { min: min ?? 0, max })) {
-        return `Esperava receber um valor de texto válido. ` + LengthLog(min, max)
+      if (typeof value !== 'string') {
+        return 'Esperava receber um valor de texto válido.'
       }
+
+      return StringRangeValidator(min, max)(value) 
     }
   },
 
@@ -96,27 +103,32 @@ export const is = {
       }
     }
   },
-  number(min?: number, max?: number) {
-    return function Number(value: string) {
-      if (typeof value !== 'number' || !isFloat(String(value), { max, min })) {
-        return `Esperava receber um número válido. ` + LengthLog(min, max)
+
+  date() {
+    return function Date(value: any) {
+      if (!(value instanceof Date)) {
+        return 'Esperava receber um valor de data válido.'
       }
     }
   },
 
-  date() {
-    return function Date(value: any) {
-      if (!isDate(value)) {
-        return `Esperava receber uma data válida.`
-      }
+  number(min?: number, max?: number) {
+    return function Number(value: number) {
+       if (!(typeof value === 'number' && !isNaN(value))) {
+        return 'Esperava receber um número válido.'
+       }
+
+        return NumberRangeValidator(min, max)(value)
     }
   },
 
   integer(min?: number, max?: number) {
-    return function Integer(value: string) {
-      if (typeof value !== 'number' || !isInt(String(value), { max, min })) {
-        return `Esperava receber um número válido. ` + LengthLog(min, max)
+    return function Integer(value: number) {
+      if (!Number.isInteger(value)) {
+        return 'Esperava receber um número inteiro.'
       }
+
+      return NumberRangeValidator(min, max)(value) 
     }
   },
 
@@ -128,6 +140,14 @@ export const is = {
     }
   },
 
+  enumOf(enumInstance: any) {
+    return function EnumOf(value: any) {
+      const enumValues = Object.values(enumInstance)
+      if (!enumValues.includes(value)) {
+        return 'Valor enum inválido. Disponível: ' + enumValues.join(', ')
+      }
+    }
+  },
 
   instanceof(clazz: any) {
     return function InstanceOf(value: any) {
