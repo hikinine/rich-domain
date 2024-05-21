@@ -6,7 +6,7 @@ import { DomainEventReplaceOptions, EntityConfig, EntityProps, EventPublisher, I
 
 
 const DOMAIN_EVENTS = Symbol('AggregateEvents');
-export abstract class Aggregate<Props extends EntityProps> extends Entity<Props> {
+export abstract class Aggregate<Props extends EntityProps, Input extends Partial<Props> = Props> extends Entity<Props, Input> {
   private [DOMAIN_EVENTS]: IDomainEvent<Props>[] = [];
   protected static hooks: EntityHook<any, any>;
 

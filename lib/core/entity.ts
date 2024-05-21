@@ -10,32 +10,32 @@ import { proxyHandler } from "./proxy";
 import { RevalidateError } from "./revalidate-error";
 import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate } from "./types";
 
-export abstract class Entity<Props extends EntityProps> implements IEntity<Props> {
+export abstract class Entity<Props extends EntityProps, Input extends Partial<Props> = Props>
+  implements IEntity<Props> {
   protected static autoMapper = new AutoMapperEntity();
   protected static hooks: EntityHook<any, any>;
-  public hooks: never;
+
   public isEntity = true;
-  protected rulesIsLocked: boolean = false;
+
   private _id: Id;
-  private _createdAt: Date;
+  private _createdAt: Date = new Date();
   private _updatedAt: Date | null = null;
+
   protected props: Props
   protected metaHistory: EntityMetaHistory<Props> | null
+  protected rulesIsLocked: boolean = false;
 
+  constructor(input: Input, options?: EntityConfig);
   constructor(input: Props, options?: EntityConfig);
   constructor(input: WithDate<Props>, options?: EntityConfig)
-  constructor(props: Props | WithDate<Props>, options: EntityConfig = {}) {
-    this.hooks = undefined as never;
-    delete this.hooks
-
-    const instance = this.constructor as typeof Entity<Props>
-    if (props instanceof Entity) {
+  constructor(input: Props | WithDate<Props> | Input, options: EntityConfig = {}) {
+    if (input instanceof Entity) {
       throw new DomainError('Entity instance cannot be passed as argument')
     }
-
-    this._createdAt = props.createdAt ?? new Date()
-    this._updatedAt = props.updatedAt ?? null
-    this.removeTimestampSignatureFromProps(props)
+ 
+    const instance = this.constructor as typeof Entity<Props>
+    const props = this.transformBeforeCreate(input as Input) 
+    this.assignAndRemoveTimestampSignatureFromProps(props)
 
     const assignedId = this.generateOrAssignId(props)
     this._id = assignedId
@@ -43,6 +43,7 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
 
     this.props = props
     this.metaHistory = null;
+
     if (!options?.preventHistoryTracker) {
       const proxy = new Proxy<Props>(this.props, proxyHandler(this as IEntity<Props>));
       this.props = proxy;
@@ -64,7 +65,7 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
 
       if (options.isAggregate && typeof instance?.hooks?.onChange === 'function') {
         this.history.deepWatch(this, instance.hooks.onChange)
-      } 
+      }
     }
     this.revalidate();
     this.ensureBusinessRules()
@@ -74,6 +75,26 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
     }
   }
 
+  private transformBeforeCreate(props: Input | Props): Props {
+    const instance = this.constructor as typeof Entity<Props>
+
+    if (!instance?.hooks?.defaultValues) {
+      return props as unknown as Props
+    }
+
+    if (instance?.hooks?.defaultValues) {
+      Object.entries(instance.hooks.defaultValues).forEach(([key, defaultValue]) => {
+        if (props[key] === undefined) {
+          if (typeof defaultValue === 'function')
+            props[key] = defaultValue?.(props[key], props)
+          else
+            props[key] = defaultValue
+        }
+      })
+    }
+
+    return props as unknown as Props
+  }
   public subscribe(props: HistorySubscribe<Props>) {
     if (!this.history) {
       throw new DomainError('History is not enabled for this entity')
@@ -196,7 +217,14 @@ export abstract class Entity<Props extends EntityProps> implements IEntity<Props
     return new Id()
   }
 
-  private removeTimestampSignatureFromProps(props: Props) {
+  private assignAndRemoveTimestampSignatureFromProps(props: Props) {
+    if (props?.createdAt) {
+      this._createdAt = props.createdAt
+    }
+    if (props?.updatedAt) {
+      this._updatedAt = props.updatedAt
+    }
+
     delete props?.createdAt
     delete props?.updatedAt
   }

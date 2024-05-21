@@ -7,6 +7,10 @@ export interface EntityProps {
 	createdAt?: Date,
 	updatedAt?: Date
 }
+  
+type Omit_<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+type MakeOptional<T, K extends keyof T> = Omit_<T, K> & Partial<Pick<T, K>>
+export  type EntityInputWithOptionals<Props extends EntityProps, T extends keyof Props> = MakeOptional<Props, T>
 
 
 export interface IdImplementation {
@@ -37,12 +41,12 @@ export interface EventPublisher<AggregateType> {
 }
 
 export interface IEntity<Props extends EntityProps> {
+	
 	isEntity: boolean
 	id: IdImplementation
 	createdAt: Date
 	updatedAt: Date | null
-	history: IEntityMetaHistory<Props> | null
-	hooks: never
+	history: IEntityMetaHistory<Props> | null 
 	/**
 	@deprecated
 	*/
@@ -60,8 +64,7 @@ export interface IEntity<Props extends EntityProps> {
 	isNew(): boolean
 }
 export type IValueObject<T> = {
-	isValueObject: boolean
-	hooks: never
+	isValueObject: boolean 
 	props: Readonly<T>
 	/**
 	 * @deprecated

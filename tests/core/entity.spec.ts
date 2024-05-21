@@ -1,6 +1,7 @@
 import { DomainError, Entity, EntityMetaHistory, Id } from "../../lib/core";
-import { EntityProps } from "../../lib/core/types";
+import { EntityInputWithOptionals, EntityProps } from "../../lib/core/types";
 import { Age } from "./mocks/entity";
+
 
 describe('entity test', () => {
   let userProps: UserProps
@@ -10,7 +11,10 @@ describe('entity test', () => {
     email: string
     age: Age
   }
-  class User extends Entity<UserProps> {
+
+  type UserInput = EntityInputWithOptionals<UserProps, 'email'>
+
+  class User extends Entity<UserProps, UserInput> {
     get email() {
       return this.props.email
     }
@@ -33,6 +37,11 @@ describe('entity test', () => {
   describe('default behavior and methods ', () => {
 
     it('should create a new entity', () => {
+      new User({ 
+        id: new Id(),
+        age: new Age(25), 
+        name: 'Paulo'
+      })
       const user = new User(userProps)
       expect(user).toBeInstanceOf(User)
       expect(user).toBeInstanceOf(Entity)

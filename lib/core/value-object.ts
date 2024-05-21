@@ -10,8 +10,7 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
   protected static hooks: VoHooks<any>;
   protected static autoMapper: AutoMapperValueObject = new AutoMapperValueObject();
   public props: Readonly<Props>
-  public isValueObject: boolean = true
-  public hooks: never
+  public isValueObject: boolean = true 
 
   constructor(input: Props) {
     const instance = this.constructor as typeof ValueObject<Props> 
@@ -20,10 +19,7 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
       : input
 
     this.props = deepFreeze<Props>(props);
-    this.revalidate(); 
-
-    this.hooks = null as never;
-    delete this.hooks 
+    this.revalidate();  
   }
 
   get value() {
