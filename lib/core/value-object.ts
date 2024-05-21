@@ -10,16 +10,16 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
   protected static hooks: VoHooks<any>;
   protected static autoMapper: AutoMapperValueObject = new AutoMapperValueObject();
   public props: Readonly<Props>
-  public isValueObject: boolean = true 
+  public isValueObject: boolean = true
 
   constructor(input: Props) {
-    const instance = this.constructor as typeof ValueObject<Props> 
+    const instance = this.constructor as typeof ValueObject<Props>
     const props = typeof instance?.hooks?.transformBeforeCreate === 'function'
       ? instance.hooks.transformBeforeCreate(input)
       : input
 
     this.props = deepFreeze<Props>(props);
-    this.revalidate();  
+    this.revalidate();
   }
 
   get value() {
@@ -28,7 +28,7 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
   public getRawProps(): Readonly<Props> {
     return this.props
   }
- 
+
   public toPrimitives(): Readonly<AutoMapperSerializer<Props>> {
     const result = ValueObject.autoMapper.valueObjectToObj(this)
     const frozen = deepFreeze(result)
@@ -59,7 +59,8 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
         const errorMessage = instance.hooks.typeValidation(value)
         if (errorMessage) {
           const expected = instance.hooks.typeValidation?.name
-          throw RevalidateError(errorMessage, value, expected)
+          const fieldMessage = `. fied=${expected}(primitive) instance=${instance?.name}`
+          throw RevalidateError(errorMessage +  fieldMessage, value, expected)
         }
       }
       else {
@@ -68,13 +69,15 @@ export abstract class ValueObject<Props> implements IValueObject<Props> {
             const value = this.props[key as keyof Props]
             const errorMessage = validation(value)
             if (errorMessage) {
-              throw RevalidateError(errorMessage, value, validation.name)
+              const fieldMessage = `. fied=${key?.toString()} instance=${instance?.name}`
+
+              throw RevalidateError(errorMessage + fieldMessage, value, validation.name)
             }
           })
-      } 
+      }
     }
 
-    
+
     instance?.hooks?.rules?.(this.props)
   }
 

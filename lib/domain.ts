@@ -5,7 +5,7 @@ export { DomainError as Error } from './core/errors'
 export { Snapshot } from './core/history-snapshot'
 export { EntityHook, VoHooks } from './core/hooks'
 export { Id } from './core/ids'
-export { EntityConfig, EntityInputWithOptionals, EntityProps, SnapshotTrace } from './core/types'
+export { EntityConfig, EntityInput, EntityProps, SnapshotTrace } from './core/types'
 export { is } from './core/validation-is'
 export { ValueObject } from './core/value-object'
 

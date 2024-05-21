@@ -1,5 +1,5 @@
 import { DomainError, Entity, EntityHook, Id, ValueObject } from "../../lib/core"
-import { EntityInputWithOptionals, EntityProps } from "../../lib/core/types"
+import { EntityInput, EntityProps } from "../../lib/core/types"
 import { is } from "../../lib/core/validation-is"
 import { Age } from "./mocks/entity"
 
@@ -51,7 +51,7 @@ describe('entity hooks', () => {
     }
   }
 
-  type UserInput = EntityInputWithOptionals<UserProps, 'name' | 'email'>
+  type UserInput = EntityInput<UserProps, 'name' | 'email'>
   class User extends Entity<UserProps, UserInput> {
     protected static hooks = new EntityHook<User, UserProps, UserInput>({
       typeValidation: {

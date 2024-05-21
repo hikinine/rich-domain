@@ -1,5 +1,5 @@
 import { DomainError, Entity, EntityMetaHistory, Id } from "../../lib/core";
-import { EntityInputWithOptionals, EntityProps } from "../../lib/core/types";
+import { EntityInput, EntityProps } from "../../lib/core/types";
 import { Age } from "./mocks/entity";
 
 
@@ -12,7 +12,7 @@ describe('entity test', () => {
     age: Age
   }
 
-  type UserInput = EntityInputWithOptionals<UserProps, 'email'>
+  type UserInput = EntityInput<UserProps, 'email'>
 
   class User extends Entity<UserProps, UserInput> {
     get email() {

@@ -29,11 +29,16 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
   constructor(input: Props, options?: EntityConfig);
   constructor(input: WithDate<Props>, options?: EntityConfig)
   constructor(input: Props | WithDate<Props> | Input, options: EntityConfig = {}) {
+    const instance = this.constructor as typeof Entity<Props>
+
     if (input instanceof Entity) {
       throw new DomainError('Entity instance cannot be passed as argument')
     }
+
+    if (!input || typeof input !== 'object') {
+      throw new DomainError('Entity input must be an object reference to "' + instance?.name + 'Props"')
+    }
  
-    const instance = this.constructor as typeof Entity<Props>
     const props = this.transformBeforeCreate(input as Input) 
     this.assignAndRemoveTimestampSignatureFromProps(props)
 
@@ -113,9 +118,10 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
       const validation = typeValidation[fieldToRevalidate]
       const errorMessage = validation?.(value)
       if (errorMessage) {
+        const fieldMessage = `. fied=${fieldToRevalidate?.toString()} instance=${instance?.name}`
         const expected = typeValidation[fieldToRevalidate]?.name
         const field = fieldToRevalidate.toString()
-        throw RevalidateError(errorMessage, value, expected!, field)
+        throw RevalidateError(errorMessage + fieldMessage, value, expected!, field)
       }
     }
     else {
@@ -124,7 +130,8 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
           const value = this.props[field as keyof Props]
           const errorMessage = validation(value)
           if (errorMessage) {
-            throw RevalidateError(errorMessage, value, validation?.name, field)
+            const fieldMessage = `. fied=${field?.toString()} instance=${instance?.name}`
+            throw RevalidateError(errorMessage + fieldMessage, value, validation?.name, field)
           }
         })
     }
@@ -208,7 +215,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
   }
 
   private generateOrAssignId(props: Props): Id {
-    const { id } = props
+    const id = props?.id
     const isAlreadyAnIdInstance = validator.isID(id);
     if (isAlreadyAnIdInstance) return id as Id;
     if (validator.isString(id)) {

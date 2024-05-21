@@ -10,7 +10,7 @@ export interface EntityProps {
   
 type Omit_<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 type MakeOptional<T, K extends keyof T> = Omit_<T, K> & Partial<Pick<T, K>>
-export  type EntityInputWithOptionals<Props extends EntityProps, T extends keyof Props> = MakeOptional<Props, T>
+export  type EntityInput<Props extends EntityProps, T extends keyof Props> = MakeOptional<Props, T>
 
 
 export interface IdImplementation {

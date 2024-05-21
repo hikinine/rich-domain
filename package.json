@@ -1,7 +1,7 @@
 
 {
 	"name": "@hiki9/rich-domain",
-	"version": "2.1.4",
+	"version": "2.2.1",
 	"description": "Rich Domain is a library that provides a set of tools to help you build complex business logic in NodeJS using Domain Driven Design principles.",
 	"main": "dist/index.js",
 	"types": "dist/index.d.js",
