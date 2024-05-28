@@ -8,7 +8,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
   public initialProps: T
   public snapshots: Snapshot<T>[]
   private callbacks?: SnapshotCallbacks<T>
-  public onChange?: (snapshot: Snapshot<T>) => void
+  public onChange: Array<(snapshot: Snapshot<T>) => void> = []
 
   constructor(
     props: T,
@@ -41,36 +41,48 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     }
     this.snapshots.push(snapshot)
 
-    if (typeof this.onChange === 'function') {
-      this.onChange(snapshot)
-    }
-
     if (this.callbacks?.onAddedSnapshot) {
       this.callbacks.onAddedSnapshot(snapshot)
     }
+    if (this.onChange.length) {
+      this.onChange.forEach((callback) => {
+        callback(snapshot)
+      })
+    }
   }
 
-  public deepWatch<E extends IEntity<T>>(
-    entity: E,
-    callback: (entity: E, snapshot: Snapshot<T>) => void
+  public deepWatch(
+    rootEntity: IEntity<any>,
+    onChangeCallback: (entity: IEntity<any>, snapshot: Snapshot<any>) => void,
+    childrenEntity?: IEntity<any>,
   ) {
-    Object.values(entity?.['props']).forEach((value: any) => {
-      if (!value?.history) return
-      
-      if (value?.isEntity) {
-        value.history.onChange = (snapshot: Snapshot<T>) => {
-          callback(entity, snapshot)
-        }
-      }
+    const entityTarget = childrenEntity ?? rootEntity;
+
+    Object.entries(entityTarget?.['props']).forEach(([key, _value]: any) => {
+      const value = _value as IEntity<any> | IEntity<any>[]
 
       if (Array.isArray(value)) {
-        value.forEach((item) => {
-          if (item?.isEntity) {
-            item.history.onChange = (snapshot: Snapshot<T>) => {
-              callback(entity, snapshot)
-            }
+        value.forEach((currentValue) => {
+          if (currentValue?.isEntity && currentValue?.history) {
+            currentValue.history.onChange.push((snapshot: Snapshot<T>) => {
+              const snapshotUpdateKeys = [key, ...snapshot.trace.update.split('.')]
+              const uniqueArrayOfKeysx = [...new Set(snapshotUpdateKeys)]
+              snapshot.trace.update = uniqueArrayOfKeysx.join('.')
+              onChangeCallback(rootEntity, snapshot)
+            }) 
+            entityTarget.history?.deepWatch(rootEntity, onChangeCallback, currentValue)
           }
         })
+      }
+
+      else if (value?.isEntity && value?.history) {
+        value.history.onChange.push((snapshot: Snapshot<T>) => {
+          const snapshotUpdateKeys = [key, ...snapshot.trace.update.split('.')]
+          const uniqueArrayOfKeysx = [...new Set(snapshotUpdateKeys)]
+          snapshot.trace.update = uniqueArrayOfKeysx.join('.')
+          onChangeCallback(rootEntity, snapshot)
+        }) 
+        entityTarget.history?.deepWatch(rootEntity, onChangeCallback, value)
       }
     })
   }

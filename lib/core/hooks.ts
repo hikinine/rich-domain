@@ -1,5 +1,5 @@
 
-import { EntityProps, ISnapshot, Optional, Primitives } from "./types"
+import { EntityProps, ISnapshot, Primitives } from "./types"
 
 
 type DefaultValuesValidation<Props, Input, InputRequiredProps = Required<WithoutEntityProps<Input>>> = {
@@ -8,7 +8,7 @@ type DefaultValuesValidation<Props, Input, InputRequiredProps = Required<Without
   | ((currentValue: InputRequiredProps[key] | undefined, props: Props) => InputRequiredProps[key])
 }
 
-type HookTypeValidationCallback = (value: any) => Optional<string>
+type HookTypeValidationCallback = (value: any) => string | void | undefined 
 type HookTypeValidation<Props> = {
   [K in keyof Props]: HookTypeValidationCallback;
 }

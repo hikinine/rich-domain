@@ -13,24 +13,29 @@ export const mutationArrayMethods = [
 ]
 
 export const proxyHandler = function <Props extends EntityProps>(self: IEntity<Props>, keyProp: string[] = []): ProxyHandler<Props> {
-  return { 
+  return {
     get: function (target, prop: string, receiver) {
-      if (Array.isArray(target[prop])) { 
+      if (Array.isArray(target[prop])) {
         return new Proxy(target[prop], proxyHandler(self, [...(keyProp || []), prop]));
       }
 
       const accessor = Reflect.get(target, prop, receiver);
- 
-      if (typeof accessor === 'function' && mutationArrayMethods.includes(prop)) {
-        self.history?.addSnapshot({
-          props: self['props'],
-          trace: {
-            updatedAt: new Date(),
-            update: keyProp?.join(".")!,
-            action: prop
-          }
-        });
-      } 
+
+      if (typeof accessor === 'function' && mutationArrayMethods.includes(prop)) { 
+        return function (...args: unknown[]) {
+          const result = Array.prototype[prop].apply(target, args);
+          self.history?.addSnapshot({
+            props: self['props'],
+            trace: {
+              updatedAt: new Date(),
+              update: keyProp?.join(".")!,
+              action: prop
+            }
+          });
+
+          return result
+        };
+      }
 
       return accessor
     },
@@ -50,7 +55,7 @@ export const proxyHandler = function <Props extends EntityProps>(self: IEntity<P
             to: value,
           }
         });
-      } 
+      }
       /**
        *      else  { 
         let prefix = keyProp?.join?.(".");
@@ -69,7 +74,7 @@ export const proxyHandler = function <Props extends EntityProps>(self: IEntity<P
 
       }
        */
-      
+
       return true;
     },
   };

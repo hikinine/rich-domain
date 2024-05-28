@@ -38,8 +38,8 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     if (!input || typeof input !== 'object') {
       throw new DomainError('Entity input must be an object reference to "' + instance?.name + 'Props"')
     }
- 
-    const props = this.transformBeforeCreate(input as Input) 
+
+    const props = this.transformBeforeCreate(input as Input)
     this.assignAndRemoveTimestampSignatureFromProps(props)
 
     const assignedId = this.generateOrAssignId(props)
@@ -52,6 +52,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     if (!options?.preventHistoryTracker) {
       const proxy = new Proxy<Props>(this.props, proxyHandler(this as IEntity<Props>));
       this.props = proxy;
+      const self = this as IEntity<Props>
 
       const entityHistoryCallback = {
         onAddedSnapshot: (snapshot: ISnapshot<Props>) => {
@@ -62,14 +63,16 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
           }
 
           if (typeof instance?.hooks?.onChange === 'function') {
-            instance?.hooks?.onChange(this, snapshot)
+            instance.hooks.onChange(self, snapshot)
+            if (options.isAggregate)
+              self.history?.deepWatch(self, instance.hooks.onChange);
           }
         }
       }
       this.metaHistory = new EntityMetaHistory<Props>(proxy, entityHistoryCallback)
 
-      if (options.isAggregate && typeof instance?.hooks?.onChange === 'function') {
-        this.history.deepWatch(this, instance.hooks.onChange)
+      if (options.isAggregate && typeof instance?.hooks?.onChange === 'function') { 
+        self.history?.deepWatch(self, instance.hooks.onChange)
       }
     }
     this.revalidate();
@@ -135,8 +138,8 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
           }
         })
     }
-  }
-
+  } 
+  
   /**
     @deprecated
     This method will throw an error if called.

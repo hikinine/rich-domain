@@ -1,16 +1,15 @@
 
 export type Primitives = string | number | boolean | null | undefined
-export type Optional<T> = void | T
 
 export interface EntityProps {
 	id: IdImplementation,
 	createdAt?: Date,
 	updatedAt?: Date
 }
-  
+
 type Omit_<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 type MakeOptional<T, K extends keyof T> = Omit_<T, K> & Partial<Pick<T, K>>
-export  type EntityInput<Props extends EntityProps, T extends keyof Props> = MakeOptional<Props, T>
+export type EntityInput<Props extends EntityProps, T extends keyof Props> = MakeOptional<Props, T>
 
 
 export interface IdImplementation {
@@ -41,17 +40,17 @@ export interface EventPublisher<AggregateType> {
 }
 
 export interface IEntity<Props extends EntityProps> {
-	
+
 	isEntity: boolean
 	id: IdImplementation
 	createdAt: Date
 	updatedAt: Date | null
-	history: IEntityMetaHistory<Props> | null 
+	history: IEntityMetaHistory<Props> | null
 	/**
 	@deprecated
 	*/
 	getRawProps(): Readonly<Props>
-	revalidate(): void
+	revalidate(fieldToRevalidate?: keyof Props): void
 	ensureBusinessRules(): void
 	clone(): IEntity<Props>
 	isEqual(entity?: IEntity<Props>): boolean
@@ -64,13 +63,13 @@ export interface IEntity<Props extends EntityProps> {
 	isNew(): boolean
 }
 export type IValueObject<T> = {
-	isValueObject: boolean 
+	isValueObject: boolean
 	props: Readonly<T>
 	/**
 	 * @deprecated
 	 */
 	getRawProps(): Readonly<T>
-	revalidate(): void 
+	revalidate(): void
 	toPrimitives(): Readonly<AutoMapperSerializer<T>>
 	isEqual(value?: IValueObject<T>): boolean
 	clone(): IValueObject<T>
@@ -83,8 +82,12 @@ export type IEntityMetaHistory<T extends EntityProps> = {
 	hasChange(key: keyof T): boolean
 	getSnapshotFromUpdatedKey(key: keyof T): ISnapshot<T>[]
 	subscribe<E extends IEntity<T>>(entity: E, subscribeProps: HistorySubscribe<T>): void
-  onChange?: (snapshot: ISnapshot<T>) => void
-	deepWatch<E extends IEntity<T>>(entity: E, callback: (entity: E, snapshot: ISnapshot<T>) => void): void
+	onChange: Array<(snapshot: ISnapshot<T>) => void>
+	deepWatch(
+		entity: IEntity<any>,
+		callback: (entity: IEntity<any>, snapshot: ISnapshot<T>) => void,
+		childrenEntity?: IEntity<any>
+	): void
 	resolve<T>(initialValues: T[], currentValue: T[]): {
 		toCreate: T[],
 		toUpdate: T[],
@@ -124,15 +127,15 @@ export type SnapshotTrace = {
 
 export type SnapshotInput<T> = {
 	props: T,
-	trace: SnapshotTrace 
+	trace: SnapshotTrace
 }
 
-export interface ISnapshot<T>  {
+export interface ISnapshot<T> {
 	props: T,
 	trace: SnapshotTrace
 	get timestamp(): Date
-	hasChange(key: keyof T): boolean
-} 
+	hasChange(key: keyof T | string ): boolean
+}
 
 export type SnapshotCallbacks<T> = {
 	onAddedSnapshot?: (snapshot: ISnapshot<T>) => void

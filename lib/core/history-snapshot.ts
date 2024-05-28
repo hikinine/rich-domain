@@ -13,7 +13,7 @@ export class Snapshot<T extends EntityProps> implements ISnapshot<T> {
   }
 
   hasChange(key: keyof T): boolean {
-    return this.trace.update === key;
+    return this.trace.update.split('.').includes(key as string); 
   }
    
   get timestamp(): Date {
