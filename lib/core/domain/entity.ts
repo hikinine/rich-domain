@@ -17,7 +17,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
   public isEntity = true;
 
   private _id: Id;
-  private _createdAt: Date = new Date();
+  private _createdAt: Date | null = null
   private _updatedAt: Date | null = null;
 
   protected props: Props
@@ -39,11 +39,14 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     }
 
     const props = this.transformBeforeCreate(input as Input)
-    this.assignAndRemoveTimestampSignatureFromProps(props)
 
     const assignedId = this.generateOrAssignId(props)
     this._id = assignedId
     props.id = assignedId
+    
+    this.assignAndRemoveTimestampSignatureFromProps(props)
+
+
 
     this.props = props
     this.metaHistory = null;
@@ -212,6 +215,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     const providedProps = lodash.cloneDeep(otherProps)
     const equalId = this.id.isEqual(other.id as Id);
     return equalId && lodash.isEqualWith(currentProps, providedProps, (value1, value2, key) => {
+      if (key === 'metaHistory') return true
       if (key === 'createdAt') return true
       if (key === 'updatedAt') return true
 
@@ -234,6 +238,11 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
   private assignAndRemoveTimestampSignatureFromProps(props: Props) {
     if (props?.createdAt) {
       this._createdAt = props.createdAt
+    }
+    else {
+      if (props.id.isNew()) {
+        this._createdAt = new Date()
+      }
     }
     if (props?.updatedAt) {
       this._updatedAt = props.updatedAt
