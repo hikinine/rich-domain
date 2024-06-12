@@ -53,6 +53,11 @@ export interface IEntity<Props extends EntityProps> {
 	revalidate(fieldToRevalidate?: keyof  WithoutEntityProps<Props>): void
 	ensureBusinessRules(): void
 	clone(): IEntity<Props>
+	compare(entity: IEntity<Props>): {
+		different: string[],
+		missing_from_first: string[],
+		missing_from_second: string[]
+	}
 	isEqual(entity?: IEntity<Props>): boolean
 	toPrimitives(): Readonly<AutoMapperSerializer<Props>>
 	/** 

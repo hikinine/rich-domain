@@ -1,5 +1,6 @@
 import lodash from "lodash";
 import { deepFreeze } from "../../utils/deep-freeze";
+import { lodashCompare } from "../../utils/lodash-compare";
 import validator from "../../utils/validator";
 import { DomainError } from "../errors";
 import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate, WithoutEntityProps } from "../interface/types";
@@ -226,9 +227,12 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     return equalId && lodash.isEqualWith(currentProps, providedProps, (_, __, key) => {
       if (Entity.fieldsToIgnoreOnComparsion.includes(key as string)) {
         return true
-      }
-
+      } 
     });
+  }
+
+  public compare(other?: Entity<EntityProps>) {
+    return lodashCompare(this.props, other?.props)
   }
 
   private generateOrAssignId(props: Props): Id {
