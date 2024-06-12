@@ -211,7 +211,14 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     const currentProps = lodash.cloneDeep(thisProps)
     const providedProps = lodash.cloneDeep(otherProps)
     const equalId = this.id.isEqual(other.id as Id);
-    return equalId && lodash.isEqual(currentProps, providedProps);
+    return equalId && lodash.isEqualWith(currentProps, providedProps, (value1, value2, key) => {
+      if (key === 'createdAt') return true
+      if (key === 'updatedAt') return true
+
+      if (validator.isDate(value1)) return true
+      if (validator.isDate(value2)) return true
+      
+    });
   }
 
   private generateOrAssignId(props: Props): Id {
