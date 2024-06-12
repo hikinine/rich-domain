@@ -1,7 +1,7 @@
 
+import Validator from "../../utils/validator";
 import { DomainError } from "../errors";
 import { AutoMapperSerializer, IValueObject } from "../interface/types";
-import Validator from "../utils/validator";
 import { Id } from "./ids";
 
 export class AutoMapperValueObject {

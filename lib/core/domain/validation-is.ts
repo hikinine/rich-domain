@@ -1,6 +1,6 @@
-import { isEmail } from "../utils/is-email"
-import { isUUID } from "../utils/is-uuid"
-import { isValidDate } from "../utils/is-valid-date"
+import { isEmail } from "../../utils/is-email"
+import { isUUID } from "../../utils/is-uuid"
+import { isValidDate } from "../../utils/is-valid-date"
 
 const LengthLog = (min?: number, max?: number) => {
   if (typeof min !== 'number' && typeof max !== 'number') {

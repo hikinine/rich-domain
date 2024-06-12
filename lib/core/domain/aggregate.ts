@@ -1,4 +1,12 @@
-import { DomainEventReplaceOptions, EntityConfig, EntityProps, EventPublisher, IAggregate, IDomainEvent, WithDate } from "../interface/types";
+import {
+  DomainEventReplaceOptions,
+  EntityConfig,
+  EntityProps,
+  EventPublisher,
+  IAggregate,
+  IDomainEvent,
+  WithDate
+} from "../interface/types";
 import { DomainEvent } from "./domain-event";
 import { Entity } from "./entity";
 import { EntityHook } from "./hooks";
@@ -10,7 +18,7 @@ export abstract class Aggregate<
   Props extends EntityProps,
   Input extends Partial<Props> = Props
 > extends Entity<Props, Input> implements IAggregate<Props> {
-  
+
   public isAggregate: boolean = true;
   private [DOMAIN_EVENTS]: IDomainEvent<Props>[] = [];
   protected static hooks: EntityHook<any, any>;

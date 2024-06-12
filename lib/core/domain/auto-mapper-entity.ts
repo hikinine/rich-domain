@@ -1,6 +1,6 @@
 
+import Validator from "../../utils/validator";
 import { AutoMapperSerializer, EntityProps, IEntity } from "../interface/types";
-import Validator from "../utils/validator";
 import { Id } from "./ids";
 
 export class AutoMapperEntity {

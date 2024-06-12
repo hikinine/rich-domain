@@ -1,4 +1,4 @@
-import { parseQueryWithDots } from "../utils/parsing-filter";
+import { parseQueryWithDots } from "../../utils/parsing-filter";
 
 type OrderByEnum = 'asc' | 'desc';
 type Condition = | 'equals'

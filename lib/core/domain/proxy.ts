@@ -9,7 +9,7 @@ export const mutationArrayMethods = [
   'fill',
   'copyWithin',
   'splice',
-  'reverse's
+  'reverse'
 ]
 
 export const proxyHandler = function <Props extends EntityProps>(self: IEntity<Props>, keyProp: string[] = []): ProxyHandler<Props> {

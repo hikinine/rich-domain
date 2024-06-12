@@ -1,4 +1,4 @@
-import { Entity } from "../core";
+import { Entity } from "../core/domain/entity";
 
 /**
  * @description This decorator will ensure that the business rules will be applied only after the commit.

@@ -1,7 +1,7 @@
 import lodash from "lodash"
+import Validator from "../../utils/validator"
 import { ApplicationLevelError, DomainError } from "../errors"
 import { EntityProps, HistorySubscribe, HistorySubscribeCallback, IEntity, IEntityMetaHistory, IValueObject, SnapshotCallbacks, SnapshotInput } from "../interface/types"
-import Validator from "../utils/validator"
 import { Snapshot } from "./history-snapshot"
 
 export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHistory<T> {

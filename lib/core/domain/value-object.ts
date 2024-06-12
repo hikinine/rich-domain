@@ -1,7 +1,7 @@
 
 import lodash from "lodash";
+import { deepFreeze } from "../../utils/deep-freeze";
 import { AutoMapperSerializer, IValueObject } from "../interface/types";
-import { deepFreeze } from "../utils/deep-freeze";
 import { AutoMapperValueObject } from "./auto-mapper-value-object";
 import { VoHooks } from "./hooks";
 import { RevalidateError } from "./revalidate-error";
