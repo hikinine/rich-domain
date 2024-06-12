@@ -1,4 +1,4 @@
-import { DomainError } from "./errors"
+import { DomainError } from "../errors"
 
 export const RevalidateError = (
   errorMessage: string,

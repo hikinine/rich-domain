@@ -143,7 +143,13 @@ export const is = {
 
   enumOf(enumInstance: any) {
     return function EnumOf(value: any) {
-      const enumValues = Object.values(enumInstance)
+      let thisEnum: any = enumInstance
+
+      if (typeof enumInstance === 'function') {
+        thisEnum = enumInstance()
+      }
+
+      const enumValues = Object.values(thisEnum)
       if (!enumValues.includes(value)) {
         return 'Valor enum inválido. Disponível: ' + enumValues.join(', ')
       }

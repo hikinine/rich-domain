@@ -1,11 +1,8 @@
-import {
-  Aggregate,
-  Impl,
-  Pagination,
-  PaginationCriteria,
-  WriteOptions
-} from '../core';
-import { BaseAdapter } from '../core/adapter';
+import { BaseAdapter } from '../core/application/adapter';
+import { RepositoryImplementation } from '../core/application/repository';
+import { Pagination, PaginationCriteria } from '../core/common/pagination';
+import { Aggregate } from '../core/domain/aggregate';
+import { WriteOptions } from '../core/domain/repository';
 import { UnitOfWorkService } from './unit-of-work.service';
 
 type IPrismaService = {
@@ -16,7 +13,7 @@ export abstract class PrismaRepository<
   PrismaService extends IPrismaService,
   Domain extends Aggregate<any>,
   Persistence,
-> extends Impl<any> {
+> extends RepositoryImplementation<any> {
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly adapterToDomain: BaseAdapter<Persistence, Domain>,

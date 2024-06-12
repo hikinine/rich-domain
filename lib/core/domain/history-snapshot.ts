@@ -1,4 +1,4 @@
-import { EntityProps, ISnapshot, SnapshotTrace } from "./types";
+import { EntityProps, ISnapshot, SnapshotTrace } from "../interface/types";
 
 export class Snapshot<T extends EntityProps> implements ISnapshot<T> {
   props: T;

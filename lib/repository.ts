@@ -1,13 +1,16 @@
 export {
   BaseUnitOfWork,
-  Impl,
+  RepositoryImplementation,
+  type PersistenceContext,
+  type Transaction
+} from './core/application/repository';
+
+export {
   ReadRepository,
   WriteAndRead,
-  WriteOptions,
-  type PersistenceContext,
-  type Transaction,
-  type WriteRepository
-} from './core/repository';
+  WriteOptions, WriteRepository
+} from './core/domain/repository';
 
 
+export { RepositoryImplementation as Impl } from './core/application/repository';
 

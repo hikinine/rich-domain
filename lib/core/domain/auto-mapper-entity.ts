@@ -1,7 +1,7 @@
 
+import { AutoMapperSerializer, EntityProps, IEntity } from "../interface/types";
 import Validator from "../utils/validator";
 import { Id } from "./ids";
-import { AutoMapperSerializer, EntityProps, IEntity } from "./types";
 
 export class AutoMapperEntity {
 	entityToObj<Props extends EntityProps>(entity: IEntity<Props>): AutoMapperSerializer<Props> {

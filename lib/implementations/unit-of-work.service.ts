@@ -1,4 +1,4 @@
-import { Transaction } from "../core";
+import { Transaction } from "../core/application/repository";
 
 export abstract class UnitOfWorkService {
   abstract startTransaction<T>(callback: Transaction<T>): Promise<T>;

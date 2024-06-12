@@ -1,8 +1,8 @@
 
+import { DomainError } from "../errors";
+import { AutoMapperSerializer, IValueObject } from "../interface/types";
 import Validator from "../utils/validator";
-import { DomainError } from "./errors";
 import { Id } from "./ids";
-import { AutoMapperSerializer, IValueObject } from "./types";
 
 export class AutoMapperValueObject {
 	public valueObjectToObj<Props>(valueObject: IValueObject<Props>): AutoMapperSerializer<Props> {
