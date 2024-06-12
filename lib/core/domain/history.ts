@@ -107,8 +107,8 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
       (snapshot) => {
         if (snapshot.trace.update === key) {
           return true
-        } 
-        
+        }
+
         const splitted = snapshot.trace.update.split('.')
         return splitted.includes(key as string)
       }
@@ -145,7 +145,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
         return
       }
 
-      const traces: SnapshotTrace[] = currentKeySnapshots.map((snapshot) => snapshot.trace) 
+      const traces: SnapshotTrace[] = currentKeySnapshots.map((snapshot) => snapshot.trace)
       const initialProps = entity?.history?.initialProps[key]
       const currentProps = entity['props'][key]
       if (!initialProps || !currentProps) {
@@ -161,7 +161,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
 
       if (!(Array.isArray(initialProps) && Array.isArray(currentProps))) {
         callback(
-          { entity: currentProps }, 
+          { entity: currentProps },
           traces
         )
         return
@@ -182,7 +182,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
           toCreate: resolvedValues.toCreate,
           toDelete: resolvedValues.toDelete,
           toUpdate: resolvedValues.toUpdate,
-        }, 
+        },
         traces
       )
     })
@@ -240,11 +240,11 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     return initialValues.reduce((acc, initialValue) => {
       const found = currentValues.find((value) => {
         if (Validator.isValueObject(value)) {
-          return (value as IValueObject<any>).isEqual(initialValue as any);
+          return value.isEqual(initialValue as any);
         }
         else if (Validator.isEntity(value) || Validator.isAggregate(value)) {
-          return (value as IEntity<any>).isEqual(initialValue as any)
-            || (value as IEntity<any>).id.isEqual((initialValue as any)?.id)
+          return value.isEqual(initialValue as any)
+            || value.id.isEqual((initialValue as any)?.id)
         }
         else {
           return value === initialValue
@@ -265,20 +265,22 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
   ) {
     return currentValues.reduce((acc, currentValue) => {
       let shouldUpdate = false;
-      const found = initialValues.find((value) => {
-        if (Validator.isValueObject(value)) {
-          return (value as IValueObject<any>).isEqual(currentValue as any);
+      const found = initialValues.find((initialValue) => {
+        if (Validator.isValueObject(initialValue)) {
+          return initialValue.isEqual(currentValue as IValueObject<unknown>);
         }
-        else if (Validator.isEntity(value) || Validator.isAggregate(value)) {
-          const sameID = (value as IEntity<any>).id.value === (currentValue as any).id.value;
-          const sameProps = (value as IEntity<any>).isEqual(currentValue as any)
+        else if (Validator.isEntity(initialValue) || Validator.isAggregate(initialValue)) {
+          const sameID = initialValue.id.isEqual((currentValue as IEntity<EntityProps>).id)
+          const sameProps = initialValue.isEqual(currentValue as IEntity<EntityProps>)
 
-          if (sameID && !sameProps) shouldUpdate = true;
+          if (sameID && !sameProps) {
+            shouldUpdate = true;
+          }
 
           return sameID
         }
         else {
-          return value === currentValue
+          return initialValue === currentValue
         }
       })
 
