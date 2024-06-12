@@ -57,8 +57,8 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     childrenEntity?: IEntity<any>,
   ) {
     const entityTarget = childrenEntity ?? rootEntity;
-
-    Object.entries(entityTarget?.['props']).forEach(([key, _value]: any) => {
+    const currentProps = entityTarget?.['props']
+    Object.entries(currentProps).forEach(([key, _value]: any) => {
       const value = _value as IEntity<any> | IEntity<any>[]
 
       if (Array.isArray(value)) {
@@ -69,6 +69,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
               const uniqueArrayOfKeysx = [...new Set(snapshotUpdateKeys)]
               snapshot.trace.update = uniqueArrayOfKeysx.join('.')
               onChangeCallback(rootEntity, snapshot)
+              currentValue.history?.addSnapshot(snapshot)
             })
             entityTarget.history?.deepWatch(rootEntity, onChangeCallback, currentValue)
           }
@@ -81,6 +82,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
           const uniqueArrayOfKeysx = [...new Set(snapshotUpdateKeys)]
           snapshot.trace.update = uniqueArrayOfKeysx.join('.')
           onChangeCallback(rootEntity, snapshot)
+          value.history?.addSnapshot(snapshot)
         })
         entityTarget.history?.deepWatch(rootEntity, onChangeCallback, value)
       }
