@@ -1,4 +1,4 @@
-import { DomainEventReplaceOptions, EntityConfig, EntityProps, EventPublisher, IDomainEvent, WithDate } from "../interface/types";
+import { DomainEventReplaceOptions, EntityConfig, EntityProps, EventPublisher, IAggregate, IDomainEvent, WithDate } from "../interface/types";
 import { DomainEvent } from "./domain-event";
 import { Entity } from "./entity";
 import { EntityHook } from "./hooks";
@@ -6,10 +6,15 @@ import { Id } from "./ids";
 
 
 const DOMAIN_EVENTS = Symbol('AggregateEvents');
-export abstract class Aggregate<Props extends EntityProps, Input extends Partial<Props> = Props> extends Entity<Props, Input> {
+export abstract class Aggregate<
+  Props extends EntityProps,
+  Input extends Partial<Props> = Props
+> extends Entity<Props, Input> implements IAggregate<Props> {
+  
+  public isAggregate: boolean = true;
   private [DOMAIN_EVENTS]: IDomainEvent<Props>[] = [];
   protected static hooks: EntityHook<any, any>;
-  
+
   constructor(input: Input, options?: EntityConfig);
   constructor(input: Props, options?: EntityConfig);
   constructor(input: WithDate<Props>, options?: EntityConfig)
@@ -77,7 +82,7 @@ export abstract class Aggregate<Props extends EntityProps, Input extends Partial
     for (const event of this[DOMAIN_EVENTS]) {
       promisesQueue.push(eventPublisher.publish(event))
     }
-    
+
     for (const prop in this.props) {
       const currentValue = this.props[prop]
       if (currentValue instanceof Aggregate) {
@@ -86,6 +91,6 @@ export abstract class Aggregate<Props extends EntityProps, Input extends Partial
     }
 
     await Promise.all(promisesQueue);
-    this.clearEvents(); 
+    this.clearEvents();
   }
 }

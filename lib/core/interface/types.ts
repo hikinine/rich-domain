@@ -40,7 +40,6 @@ export interface EventPublisher<AggregateType> {
 }
 
 export interface IEntity<Props extends EntityProps> {
-
 	isEntity: boolean
 	id: IdImplementation
 	createdAt: Date
@@ -62,6 +61,17 @@ export interface IEntity<Props extends EntityProps> {
 	hashCode(): IdImplementation
 	isNew(): boolean
 }
+
+export interface IAggregate<Props extends EntityProps> extends IEntity<Props> {
+	isAggregate: boolean
+	addEvent(domainEvent: IDomainEvent<Props>, replace?: DomainEventReplaceOptions): void
+	clearEvents(): void
+	removeEvent(eventName: string): void
+	getEvents<T = IDomainEvent<Props>>(eventName?: string): T[]
+	hasEvent(eventName: string): boolean
+	dispatch(eventName: string, eventPublisher: EventPublisher<Props>): Promise<void>
+}
+
 export type IValueObject<T> = {
 	isValueObject: boolean
 	props: Readonly<T>

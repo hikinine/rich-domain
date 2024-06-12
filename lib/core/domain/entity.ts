@@ -1,5 +1,6 @@
 import lodash from "lodash";
 import { DomainError } from "../errors";
+import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate } from "../interface/types";
 import { deepFreeze } from "../utils/deep-freeze";
 import validator from "../utils/validator";
 import { AutoMapperEntity } from "./auto-mapper-entity";
@@ -8,10 +9,8 @@ import { EntityHook, WithoutEntityProps } from "./hooks";
 import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
 import { RevalidateError } from "./revalidate-error";
-import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate } from "./types";
 
-export abstract class Entity<Props extends EntityProps, Input extends Partial<Props> = Props>
-  implements IEntity<Props> {
+export abstract class Entity<Props extends EntityProps, Input extends Partial<Props> = Props> implements IEntity<Props> {
   protected static autoMapper = new AutoMapperEntity();
   protected static hooks: EntityHook<any, any>;
 
