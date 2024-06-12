@@ -203,7 +203,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
 
   public isEqual(other?: IEntity<Props>): boolean {
     if (!other) return false
-    if (!(other instanceof Entity)) return false
+    //if (!(other instanceof Entity)) return false
     if (this === other) return true
 
     const thisProps = this['props']
