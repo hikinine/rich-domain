@@ -69,7 +69,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
               const uniqueArrayOfKeysx = [...new Set(snapshotUpdateKeys)]
               snapshot.trace.update = uniqueArrayOfKeysx.join('.')
               onChangeCallback(rootEntity, snapshot)
-              currentValue.history?.snapshots.push(snapshot)
+              rootEntity.history?.snapshots.push(snapshot)
             })
             entityTarget.history?.deepWatch(rootEntity, onChangeCallback, currentValue)
           }
@@ -82,7 +82,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
           const uniqueArrayOfKeysx = [...new Set(snapshotUpdateKeys)]
           snapshot.trace.update = uniqueArrayOfKeysx.join('.')
           onChangeCallback(rootEntity, snapshot)
-          value.history?.snapshots.push(snapshot)
+          rootEntity.history?.snapshots.push(snapshot)
         })
         entityTarget.history?.deepWatch(rootEntity, onChangeCallback, value)
       }
