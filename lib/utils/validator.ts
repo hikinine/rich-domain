@@ -61,10 +61,10 @@ export class Validator {
 	}
 	isEntity(props: any): props is IEntity<any> {
 		const isEntity = props?.isEntity
-		return !Validator.instance.isAggregate(props) && isEntity;
+		return  isEntity;
 	}
 	isAggregate(props: any): props is IAggregate<any> {
-		return props?.isAggregate;
+		return props?.isAggregate || props?.isEntity
 	}
 	isValueObject(props: any): props is IValueObject<unknown> {
 		return props?.isValueObject;
