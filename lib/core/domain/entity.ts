@@ -2,10 +2,10 @@ import lodash from "lodash";
 import { deepFreeze } from "../../utils/deep-freeze";
 import validator from "../../utils/validator";
 import { DomainError } from "../errors";
-import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate } from "../interface/types";
+import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate, WithoutEntityProps } from "../interface/types";
 import { AutoMapperEntity } from "./auto-mapper-entity";
 import { EntityMetaHistory } from "./history";
-import { EntityHook, WithoutEntityProps } from "./hooks";
+import { EntityHook } from "./hooks";
 import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
 import { RevalidateError } from "./revalidate-error";
@@ -193,9 +193,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
   }
 
   public toJSON(): Readonly<AutoMapperSerializer<Props>> {
-    const result = Entity.autoMapper.entityToObj<Props>(this)
-    const frozen = deepFreeze(result)
-    return frozen
+    return this.toPrimitives()
   }
 
   public hashCode(): Id {

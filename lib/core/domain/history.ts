@@ -1,7 +1,7 @@
 import lodash from "lodash"
 import Validator from "../../utils/validator"
 import { ApplicationLevelError, DomainError } from "../errors"
-import { EntityProps, HistorySubscribe, HistorySubscribeCallback, IEntity, IEntityMetaHistory, IValueObject, SnapshotCallbacks, SnapshotInput } from "../interface/types"
+import { EntityProps, HistorySubscribe, HistorySubscribeCallback, IEntity, IEntityMetaHistory, IValueObject, Paths, SnapshotCallbacks, SnapshotInput, SnapshotTrace } from "../interface/types"
 import { Snapshot } from "./history-snapshot"
 
 export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHistory<T> {
@@ -89,7 +89,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     })
   }
 
-  public getSnapshotFromUpdatedKey(key: keyof T) {
+  public getSnapshotFromUpdatedKey(key: any) {
     return this.snapshots.filter(
       (snapshot) => {
         if (snapshot.trace.update === key) {
@@ -102,7 +102,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     )
   }
 
-  public hasChange(key: keyof T) {
+  public hasChange(key: Paths<T>) {
     return this.snapshots.some(
       (snapshot) => {
         if (snapshot.trace.update === key) {
@@ -134,7 +134,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
         })
       }
 
-      let currentKeySnapshots: Snapshot<T>[]
+      let currentKeySnapshots: Snapshot<T>[] = []
       currentKeySnapshots = this.getSnapshotFromUpdatedKey(key);
 
       if (!currentKeySnapshots.length) {
@@ -145,7 +145,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
         return
       }
 
-      const traces = currentKeySnapshots.map((snapshot) => snapshot.trace)
+      const traces: SnapshotTrace[] = currentKeySnapshots.map((snapshot) => snapshot.trace) 
       const initialProps = entity?.history?.initialProps[key]
       const currentProps = entity['props'][key]
       if (!initialProps || !currentProps) {
@@ -189,7 +189,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
   }
 
   protected deepSearchSnapshots(entity: IEntity<T>, key: keyof T) {
-    const propertyOfKey = entity?.['props']?.[key];
+    const propertyOfKey = entity?.['props']?.[key] as any
 
     if (!propertyOfKey) {
       return []

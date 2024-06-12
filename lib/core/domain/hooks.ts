@@ -1,5 +1,5 @@
 
-import { EntityProps, ISnapshot, Primitives } from "../interface/types"
+import { ISnapshot, Primitives, WithoutEntityProps } from "../interface/types"
 
 
 type DefaultValuesValidation<Props, Input, InputRequiredProps = Required<WithoutEntityProps<Input>>> = {
@@ -12,7 +12,6 @@ type HookTypeValidationCallback = (value: any) => string | void | undefined
 type HookTypeValidation<Props> = {
   [K in keyof Props]: HookTypeValidationCallback;
 }
-export type WithoutEntityProps<T> = Omit<T, keyof EntityProps>
 
 export type HookConfigInput<Entity, Props, Input = Props> = {
   typeValidation?: HookTypeValidation<WithoutEntityProps<Props>>

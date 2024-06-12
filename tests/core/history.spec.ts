@@ -1,5 +1,9 @@
-import { Aggregate, EntityHook, Id } from "../../lib/core";
-import { EntityProps } from "../../lib/core/types";
+import { Aggregate } from "../../lib/core/domain/aggregate"
+import { EntityHook } from "../../lib/core/domain/hooks"
+import { Id } from "../../lib/core/domain/ids"
+import { EntityProps } from "../../lib/core/interface/types"
+
+ 
 
 
 describe('entity test', () => {
@@ -10,12 +14,15 @@ describe('entity test', () => {
 
   interface PropoalProps extends EntityProps {
     title: string
-    unit: Unit
+    unit: Unit 
     description: string
     deadline: Date
+ 
   }
   interface LeadProps extends EntityProps {
     proposals: Proposal[]
+    unit: Unit  | null
+    a: string[]
   }
 
   class Unit extends Aggregate<UnitProps> {
@@ -75,15 +82,20 @@ describe('entity test', () => {
   it('should create a new entity', () => {
     const lead = new Lead({
       id: new Id(),
-      proposals: []
+      proposals: [],
+      unit: new Unit({
+        id: new Id(),
+        name: 'unit name'
+      }),
+      a: []
     })
 
     const proposal = new Proposal({
       id: new Id(),
       unit: new Unit({
         id: new Id(),
-        name: 'unit name'
-      }),
+        name: 'unit name',
+      }), 
       deadline: new Date(Date.now() + 99999),
       description: 'proposal description',
       title: 'proposal title',
@@ -91,6 +103,7 @@ describe('entity test', () => {
     })
 
     lead.addProposal(proposal)
+    lead.history.hasChange('')
     proposal.desactive()
     proposal.unit.changeName('new unit name')
  

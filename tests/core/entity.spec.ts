@@ -1,5 +1,8 @@
-import { DomainError, Entity, EntityMetaHistory, Id } from "../../lib/core";
-import { EntityInput, EntityProps } from "../../lib/core/types";
+import { Entity } from "../../lib/core/domain/entity";
+import { EntityMetaHistory } from "../../lib/core/domain/history";
+import { Id } from "../../lib/core/domain/ids";
+import { DomainError } from "../../lib/core/errors";
+import { EntityInput, EntityProps } from "../../lib/core/interface/types";
 import { Age } from "./mocks/entity";
 
 
@@ -37,14 +40,15 @@ describe('entity test', () => {
   describe('default behavior and methods ', () => {
 
     it('should create a new entity', () => {
-      new User({ 
+      new User({
         id: new Id(),
-        age: new Age(25), 
+        age: new Age(25),
         name: 'Paulo'
       })
       const user = new User(userProps)
       expect(user).toBeInstanceOf(User)
       expect(user).toBeInstanceOf(Entity)
+      user.history.hasChange('')
     })
 
     it('should throw an domain error', () => {

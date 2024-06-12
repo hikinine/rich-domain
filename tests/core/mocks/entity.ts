@@ -1,5 +1,6 @@
-import { ValueObject, VoHooks } from "../../../lib/core";
-import { is } from "../../../lib/core/validation-is";
+import { VoHooks } from "../../../lib/core/domain/hooks";
+import { is } from "../../../lib/core/domain/validation-is";
+import { ValueObject } from "../../../lib/core/domain/value-object";
 
 
 

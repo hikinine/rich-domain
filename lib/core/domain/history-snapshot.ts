@@ -12,7 +12,7 @@ export class Snapshot<T extends EntityProps> implements ISnapshot<T> {
     this.trace = input.trace
   }
 
-  hasChange(key: keyof T): boolean {
+  hasChange(key: any): boolean {
     return this.trace.update.split('.').includes(key as string); 
   }
    

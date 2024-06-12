@@ -1,7 +1,13 @@
-import { DomainError, Entity, EntityHook, Id, ValueObject } from "../../lib/core"
-import { EntityInput, EntityProps } from "../../lib/core/types"
-import { is } from "../../lib/core/validation-is"
+import { Entity } from "../../lib/core/domain/entity"
+import { EntityHook } from "../../lib/core/domain/hooks"
+import { Id } from "../../lib/core/domain/ids"
+import { is } from "../../lib/core/domain/validation-is"
+import { ValueObject } from "../../lib/core/domain/value-object"
+import { DomainError } from "../../lib/core/errors"
+import { EntityInput, EntityProps } from "../../lib/core/interface/types"
 import { Age } from "./mocks/entity"
+
+ 
 
 describe('entity hooks', () => {
   let userProps: UserProps
@@ -156,6 +162,7 @@ describe('entity hooks', () => {
       expect(user).toBeInstanceOf(User)
       expect(spy).toBeCalledTimes(1)
 
+      user.history.hasChange('')
       user.ensureBusinessRules()
       expect(spy).toBeCalledTimes(2)
 

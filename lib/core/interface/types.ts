@@ -29,6 +29,7 @@ export interface IDomainEvent<T> {
 	eventName: string
 }
 
+export type WithoutEntityProps<T> = Omit<T, keyof EntityProps>
 export interface EntityMapperPayload {
 	id: string
 	createdAt: Date
@@ -40,16 +41,16 @@ export interface EventPublisher<AggregateType> {
 }
 
 export interface IEntity<Props extends EntityProps> {
-	isEntity: boolean
-	id: IdImplementation
+	isEntity: boolean 
+	id: IdImplementation 
 	createdAt: Date
 	updatedAt: Date | null
-	history: IEntityMetaHistory<Props> | null
+	history: IEntityMetaHistory<Props> | null 
 	/**
 	@deprecated
 	*/
 	getRawProps(): Readonly<Props>
-	revalidate(fieldToRevalidate?: keyof Props): void
+	revalidate(fieldToRevalidate?: keyof  WithoutEntityProps<Props>): void
 	ensureBusinessRules(): void
 	clone(): IEntity<Props>
 	isEqual(entity?: IEntity<Props>): boolean
@@ -60,6 +61,7 @@ export interface IEntity<Props extends EntityProps> {
 	toJSON(): Readonly<AutoMapperSerializer<Props>>
 	hashCode(): IdImplementation
 	isNew(): boolean
+	subscribe(props: HistorySubscribe<Props>): void
 }
 
 export interface IAggregate<Props extends EntityProps> extends IEntity<Props> {
@@ -89,8 +91,8 @@ export type IEntityMetaHistory<T extends EntityProps> = {
 	initialProps: T
 	snapshots: ISnapshot<T>[]
 	addSnapshot(data: SnapshotInput<T>): void
-	hasChange(key: keyof T): boolean
-	getSnapshotFromUpdatedKey(key: keyof T): ISnapshot<T>[]
+	hasChange(key: UnresolvedPaths<T>): boolean
+	getSnapshotFromUpdatedKey(key: any): ISnapshot<T>[]
 	subscribe<E extends IEntity<T>>(entity: E, subscribeProps: HistorySubscribe<T>): void
 	onChange: Array<(snapshot: ISnapshot<T>) => void>
 	deepWatch(
@@ -144,7 +146,7 @@ export interface ISnapshot<T> {
 	props: T,
 	trace: SnapshotTrace
 	get timestamp(): Date
-	hasChange(key: keyof T | string ): boolean
+	hasChange(key: UnresolvedPaths<T>): boolean
 }
 
 export type SnapshotCallbacks<T> = {
@@ -203,4 +205,30 @@ export interface EntityConfig extends BaseAggregateConfig {
 export interface BaseAggregateConfig {
 	preventHistoryTracker?: boolean
 }
+  
 
+type UnresolvedPaths<T> = T & any
+export type Paths<T> = WithoutUndefined<WithoutDot<IPaths<T>>>
+export type IPaths<T> = T extends object
+	? {
+		[K in keyof T]:
+		T[K] extends IValueObject<any>
+		? `${Exclude<K, symbol>}${"" | `.${Paths<T[K]['props']>}`}` 
+		: T[K] extends IEntity<any>
+		? `${Exclude<K, symbol>}${"" | `.${Paths<ReturnType<T[K]['getRawProps']>>}`}`
+		: T[K] extends Array<any> 
+		? `${Exclude<K, symbol>}${"" | `.${Paths<T[K][0]['props']>}`}` 
+		: null extends T[K] 
+		? K
+		: ''
+	}[keyof T]
+	: never
+
+export type Leaves<T> = T extends object ? { [K in keyof T]:
+	`${Exclude<K, symbol>}${Leaves<T[K]> extends never ? "" : `.${Leaves<T[K]>}`}`
+}[keyof T] : never
+ 
+type WithoutDot<T> = T extends `${infer P}.` ? P : T
+type WithoutUndefined<T> =  T extends `${infer P}.undefined` ? P : T
+
+ 
