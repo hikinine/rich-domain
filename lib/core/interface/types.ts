@@ -43,7 +43,7 @@ export interface EventPublisher<AggregateType> {
 export interface IEntity<Props extends EntityProps> {
 	isEntity: boolean 
 	id: IdImplementation 
-	createdAt: Date
+	createdAt: Date | null
 	updatedAt: Date | null
 	history: IEntityMetaHistory<Props> | null 
 	/**

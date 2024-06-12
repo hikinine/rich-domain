@@ -43,7 +43,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     const assignedId = this.generateOrAssignId(props)
     this._id = assignedId
     props.id = assignedId
-    
+
     this.assignAndRemoveTimestampSignatureFromProps(props)
 
 
@@ -73,7 +73,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
       }
       this.metaHistory = new EntityMetaHistory<Props>(proxy, entityHistoryCallback)
 
-      if (options.isAggregate && typeof instance?.hooks?.onChange === 'function') { 
+      if (options.isAggregate && typeof instance?.hooks?.onChange === 'function') {
         self.history?.deepWatch(self, instance.hooks.onChange)
       }
     }
@@ -140,8 +140,8 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
           }
         })
     }
-  } 
-  
+  }
+
   /**
     @deprecated
     This method will throw an error if called.
@@ -204,9 +204,18 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     return new Id(`entity@${name?.constructor?.name}:${this.id.value}`)
   }
 
+
+  protected static fieldsToIgnoreOnComparsion = [
+    'metaHistory',
+    'createdAt',
+    'updatedAt',
+    '_createdAt',
+    '_updatedAt',
+    'rulesIsLocked'
+  ]
   public isEqual(other?: IEntity<Props>): boolean {
     if (!other) return false
-    //if (!(other instanceof Entity)) return false
+    if (!(other instanceof Entity)) return false
     if (this === other) return true
 
     const thisProps = this['props']
@@ -214,14 +223,11 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     const currentProps = lodash.cloneDeep(thisProps)
     const providedProps = lodash.cloneDeep(otherProps)
     const equalId = this.id.isEqual(other.id as Id);
-    return equalId && lodash.isEqualWith(currentProps, providedProps, (value1, value2, key) => {
-      if (key === 'metaHistory') return true
-      if (key === 'createdAt') return true
-      if (key === 'updatedAt') return true
+    return equalId && lodash.isEqualWith(currentProps, providedProps, (_, __, key) => {
+      if (Entity.fieldsToIgnoreOnComparsion.includes(key as string)) {
+        return true
+      }
 
-      if (validator.isDate(value1)) return true
-      if (validator.isDate(value2)) return true
-      
     });
   }
 
