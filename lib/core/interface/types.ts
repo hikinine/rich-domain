@@ -40,6 +40,11 @@ export interface EventPublisher<AggregateType> {
 	publish(event: IDomainEvent<AggregateType>): void | Promise<void>;
 }
 
+export type EntityCompareResult = {
+	different: string[],
+	missing_from_first: string[],
+	missing_from_second: string[]
+}
 export interface IEntity<Props extends EntityProps> {
 	isEntity: boolean 
 	id: IdImplementation 
@@ -53,11 +58,7 @@ export interface IEntity<Props extends EntityProps> {
 	revalidate(fieldToRevalidate?: keyof  WithoutEntityProps<Props>): void
 	ensureBusinessRules(): void
 	clone(): IEntity<Props>
-	compare(entity: IEntity<Props>): {
-		different: string[],
-		missing_from_first: string[],
-		missing_from_second: string[]
-	}
+	compare(entity?: IEntity<Props>): EntityCompareResult
 	isEqual(entity?: IEntity<Props>): boolean
 	toPrimitives(): Readonly<AutoMapperSerializer<Props>>
 	/** 
@@ -91,6 +92,7 @@ export type IValueObject<T> = {
 	isEqual(value?: IValueObject<T>): boolean
 	clone(): IValueObject<T>
 }
+
 
 export type IEntityMetaHistory<T extends EntityProps> = {
 	initialProps: T
@@ -149,7 +151,7 @@ export type SnapshotInput<T> = {
 
 export interface ISnapshot<T> {
 	props: T,
-	trace: SnapshotTrace
+	trace: SnapshotTrace 
 	get timestamp(): Date
 	hasChange(key: UnresolvedPaths<T>): boolean
 }

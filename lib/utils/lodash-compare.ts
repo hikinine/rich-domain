@@ -1,23 +1,19 @@
 import lodash from "lodash";
+import { EntityCompareResult } from "../core/interface/types";
 
 export function lodashCompare(a: any, b: any) {
   const result = {
     different: [],
     missing_from_first: [],
     missing_from_second: []
-  } as {
-    different: string[],
-    missing_from_first: string[],
-    missing_from_second: string[]
-  }
+  } as EntityCompareResult;
 
   lodash.reduce(a, function (result, value, key) {
     if (b?.hasOwnProperty(key)) {
       if (lodash.isEqual(value, b[key])) {
         return result;
       } else {
-        if (typeof (a[key]) != typeof ({}) || typeof (b[key]) != typeof ({})) {
-          //dead end.
+        if (typeof (a[key]) != typeof ({}) || typeof (b[key]) != typeof ({})) { 
           result.different.push(key);
           return result;
         } else {

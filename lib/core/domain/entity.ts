@@ -3,7 +3,7 @@ import { deepFreeze } from "../../utils/deep-freeze";
 import { lodashCompare } from "../../utils/lodash-compare";
 import validator from "../../utils/validator";
 import { DomainError } from "../errors";
-import { AutoMapperSerializer, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate, WithoutEntityProps } from "../interface/types";
+import { AutoMapperSerializer, EntityCompareResult, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate, WithoutEntityProps } from "../interface/types";
 import { AutoMapperEntity } from "./auto-mapper-entity";
 import { EntityMetaHistory } from "./history";
 import { EntityHook } from "./hooks";
@@ -231,7 +231,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     });
   }
 
-  public compare(other?: Entity<EntityProps>) {
+  public compare(other?: Entity<Props>): EntityCompareResult {
     return lodashCompare(this.props, other?.props)
   }
 
