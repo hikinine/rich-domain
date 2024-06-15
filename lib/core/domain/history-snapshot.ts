@@ -1,8 +1,10 @@
 import { EntityProps, ISnapshot, SnapshotTrace } from "../interface/types";
 
 export class Snapshot<T extends EntityProps> implements ISnapshot<T> {
-  props: T;
-  trace: SnapshotTrace;
+  public readonly props: T;
+  public trace: SnapshotTrace;
+  public fromDeepWatch: boolean = false;
+  public deepWatchPath: string | null = null
 
   constructor(input: {
     props: T;
@@ -13,9 +15,9 @@ export class Snapshot<T extends EntityProps> implements ISnapshot<T> {
   }
 
   hasChange(key: any): boolean {
-    return this.trace.update.split('.').includes(key as string); 
+    return this.trace.update.split('.').includes(key as string);
   }
-   
+
   get timestamp(): Date {
     return this.trace.updatedAt;
   }

@@ -13,17 +13,18 @@ export const mutationArrayMethods = [
 ]
 
 export const proxyHandler = function <Props extends EntityProps>(self: IEntity<Props>, keyProp: string[] = []): ProxyHandler<Props> {
+
   return {
     get: function (target, prop: string, receiver) {
       if (Array.isArray(target[prop])) {
-        return new Proxy(target[prop], proxyHandler(self, [...(keyProp || []), prop]));
+        return new Proxy(target[prop], proxyHandler(self, [...keyProp, prop]));
       }
 
       const accessor = Reflect.get(target, prop, receiver);
 
-      if (typeof accessor === 'function' && mutationArrayMethods.includes(prop)) { 
+      if (typeof accessor === 'function' && mutationArrayMethods.includes(prop)) {
         return function (...args: unknown[]) {
-          const result = Array.prototype[prop].apply(target, args);
+          const result = Array.prototype[prop].apply(target, args); 
           self.history?.addSnapshot({
             props: self['props'],
             trace: {
@@ -44,13 +45,12 @@ export const proxyHandler = function <Props extends EntityProps>(self: IEntity<P
       const oldValue = Reflect.get(target, prop, receiver);
       Reflect.set(target, prop, value, receiver);
       if (!Array.isArray(receiver)) {
-        let prefix = keyProp?.join?.(".");
-        if (prefix) prefix += ".";
+
         self?.history?.addSnapshot({
           props: self['props'],
           trace: {
             updatedAt: new Date(),
-            update: prefix + prop?.toString(),
+            update: prop?.toString?.(),
             from: oldValue,
             to: value,
           }

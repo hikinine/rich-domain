@@ -60,16 +60,14 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     const currentProps = entityTarget?.['props']
     Object.entries(currentProps).forEach(([key, _value]: any) => {
       const value = _value as IEntity<any> | IEntity<any>[]
-
       if (Array.isArray(value)) {
         value.forEach((currentValue) => {
           if (currentValue?.isEntity && currentValue?.history) {
             currentValue.history.onChange.push((snapshot: Snapshot<T>) => {
-              const snapshotUpdateKeys = [key, ...snapshot.trace.update.split('.')]
-              const uniqueArrayOfKeysx = [...new Set(snapshotUpdateKeys)]
-              snapshot.trace.update = uniqueArrayOfKeysx.join('.')
-              onChangeCallback(rootEntity, snapshot)
-              rootEntity.history?.snapshots.push(snapshot)
+              const clonedSnapshot = lodash.cloneDeep(snapshot)
+              clonedSnapshot.fromDeepWatch = true
+              clonedSnapshot.deepWatchPath = key
+              onChangeCallback(rootEntity, clonedSnapshot)
             })
             entityTarget.history?.deepWatch(rootEntity, onChangeCallback, currentValue)
           }
@@ -78,11 +76,10 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
 
       else if (value?.isEntity && value?.history) {
         value.history.onChange.push((snapshot: Snapshot<T>) => {
-          const snapshotUpdateKeys = [key, ...snapshot.trace.update.split('.')]
-          const uniqueArrayOfKeysx = [...new Set(snapshotUpdateKeys)]
-          snapshot.trace.update = uniqueArrayOfKeysx.join('.')
-          onChangeCallback(rootEntity, snapshot)
-          rootEntity.history?.snapshots.push(snapshot)
+          const clonedSnapshot = lodash.cloneDeep(snapshot)
+          clonedSnapshot.fromDeepWatch = true
+          clonedSnapshot.deepWatchPath = key
+          onChangeCallback(rootEntity, clonedSnapshot)
         })
         entityTarget.history?.deepWatch(rootEntity, onChangeCallback, value)
       }

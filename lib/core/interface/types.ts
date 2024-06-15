@@ -46,16 +46,16 @@ export type EntityCompareResult = {
 	missing_from_second: string[]
 }
 export interface IEntity<Props extends EntityProps> {
-	isEntity: boolean 
-	id: IdImplementation 
+	isEntity: boolean
+	id: IdImplementation
 	createdAt: Date | null
 	updatedAt: Date | null
-	history: IEntityMetaHistory<Props> | null 
+	history: IEntityMetaHistory<Props>
 	/**
 	@deprecated
 	*/
 	getRawProps(): Readonly<Props>
-	revalidate(fieldToRevalidate?: keyof  WithoutEntityProps<Props>): void
+	revalidate(fieldToRevalidate?: keyof WithoutEntityProps<Props>): void
 	ensureBusinessRules(): void
 	clone(): IEntity<Props>
 	compare(entity?: IEntity<Props>): EntityCompareResult
@@ -150,8 +150,10 @@ export type SnapshotInput<T> = {
 }
 
 export interface ISnapshot<T> {
-	props: T,
-	trace: SnapshotTrace 
+	readonly props: T,
+	trace: SnapshotTrace
+	fromDeepWatch: boolean
+	deepWatchPath: string | null
 	get timestamp(): Date
 	hasChange(key: UnresolvedPaths<T>): boolean
 }
@@ -173,13 +175,35 @@ export type SelfHistoryProp<Props, OmitProps> = {
 	self: Omit<Props, keyof OmitProps>
 }
 
+
+
+
 export type HistorySubscribe<
-	Props extends EntityProps,
+	Props,
+	Entity = Props,
 	KeysToExtract extends keyof Props = ExtractEntityAndValueObjectKeys<Props>,
 	OmitProps = Pick<Props, KeysToExtract>,
 	ResolvedProps = OmitProps | SelfHistoryProp<Props, OmitProps>
 > = {
-		[key in keyof ResolvedProps]?: HistorySubscribeCallback<ResolvedProps[key]>;
+		[key in keyof ResolvedProps]?:
+		key extends 'self'
+		? HistorySubscribeCallback<Entity>
+		: HistorySubscribe<
+			ResolvedProps[key] extends IEntity<any>
+			? ReturnType<ResolvedProps[key]['getRawProps']>
+			: ResolvedProps[key] extends IValueObject<any>
+			? ResolvedProps[key]['props']
+			: ResolvedProps[key] extends Array<IEntity<any>>
+			? ReturnType<ResolvedProps[key][0]['getRawProps']>
+			: ResolvedProps[key] extends Array<IValueObject<any>>
+			? ResolvedProps[key][0]['props']
+			: (a: string) => void,
+
+			ResolvedProps[key] extends DomainEntityAggregateOrValueObject
+			? ResolvedProps[key]
+			: (a: string) => void
+		>
+
 	}
 
 export type HistorySubscribeCallback<TKey> = (
@@ -195,14 +219,17 @@ export type HistorySubscribeCallback<TKey> = (
 ) => void
 
 type ExtractKeysOfValueType<T, K> = { [I in keyof T]: T[I] extends K ? I : T[I] extends Readonly<K> ? I : never }[keyof T];
-export type ExtractEntityAndValueObjectKeys<T> = ExtractKeysOfValueType<
-	T,
+
+type DomainEntityAggregateOrValueObject =
 	| IEntity<any>
+	| IAggregate<any>
 	| Array<any>
 	| Array<IEntity<any>>
+	| Array<IAggregate<any>>
 	| Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>
 	| Array<Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>>
->
+
+export type ExtractEntityAndValueObjectKeys<T> = ExtractKeysOfValueType<T, DomainEntityAggregateOrValueObject>
 
 type NotPrimitive = object | Array<any>
 
@@ -210,9 +237,21 @@ export interface EntityConfig extends BaseAggregateConfig {
 	isAggregate?: boolean
 }
 export interface BaseAggregateConfig {
+	/**
+	 * Prevent the history tracker to be created.
+	 * That means that the entity will not have the history of changes.
+	 * @default false
+	 */
 	preventHistoryTracker?: boolean
+	/**
+	 * It's useful only on development mode.
+	 * Every time that entity is mutated, @type {ISnapshot} will deepClone the props state to ensure
+	 * that you have the time based props before it changed.
+	 * @default false
+	 */
+	onSnapshotAddedDeepClonePropsState?: boolean
 }
-  
+
 
 type UnresolvedPaths<T> = T & any
 export type Paths<T> = WithoutUndefined<WithoutDot<IPaths<T>>>
@@ -220,12 +259,12 @@ export type IPaths<T> = T extends object
 	? {
 		[K in keyof T]:
 		T[K] extends IValueObject<any>
-		? `${Exclude<K, symbol>}${"" | `.${Paths<T[K]['props']>}`}` 
+		? `${Exclude<K, symbol>}${"" | `.${Paths<T[K]['props']>}`}`
 		: T[K] extends IEntity<any>
 		? `${Exclude<K, symbol>}${"" | `.${Paths<ReturnType<T[K]['getRawProps']>>}`}`
-		: T[K] extends Array<any> 
-		? `${Exclude<K, symbol>}${"" | `.${Paths<T[K][0]['props']>}`}` 
-		: null extends T[K] 
+		: T[K] extends Array<any>
+		? `${Exclude<K, symbol>}${"" | `.${Paths<T[K][0]['props']>}`}`
+		: null extends T[K]
 		? K
 		: ''
 	}[keyof T]
@@ -234,8 +273,7 @@ export type IPaths<T> = T extends object
 export type Leaves<T> = T extends object ? { [K in keyof T]:
 	`${Exclude<K, symbol>}${Leaves<T[K]> extends never ? "" : `.${Leaves<T[K]>}`}`
 }[keyof T] : never
- 
-type WithoutDot<T> = T extends `${infer P}.` ? P : T
-type WithoutUndefined<T> =  T extends `${infer P}.undefined` ? P : T
 
- 
+type WithoutDot<T> = T extends `${infer P}.` ? P : T
+type WithoutUndefined<T> = T extends `${infer P}.undefined` ? P : T
+

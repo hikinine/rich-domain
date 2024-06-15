@@ -1,7 +1,6 @@
 import lodash from "lodash";
 import { deepFreeze } from "../../utils/deep-freeze";
 import { lodashCompare } from "../../utils/lodash-compare";
-import validator from "../../utils/validator";
 import { DomainError } from "../errors";
 import { AutoMapperSerializer, EntityCompareResult, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate, WithoutEntityProps } from "../interface/types";
 import { AutoMapperEntity } from "./auto-mapper-entity";
@@ -17,12 +16,11 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
 
   public isEntity = true;
 
-  private _id: Id;
+  private _id: Id | null = null
   private _createdAt: Date | null = null
   private _updatedAt: Date | null = null;
-
   protected props: Props
-  protected metaHistory: EntityMetaHistory<Props> | null
+  protected metaHistory: EntityMetaHistory<Props> | null = null
   protected rulesIsLocked: boolean = false;
 
   constructor(input: Input, options?: EntityConfig);
@@ -31,81 +29,51 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
   constructor(input: Props | WithDate<Props> | Input, options: EntityConfig = {}) {
     const instance = this.constructor as typeof Entity<Props>
 
-    if (input instanceof Entity) {
-      throw new DomainError('Entity instance cannot be passed as argument')
-    }
-
     if (!input || typeof input !== 'object') {
       throw new DomainError('Entity input must be an object reference to "' + instance?.name + 'Props"')
     }
 
-    const props = this.transformBeforeCreate(input as Input)
-
-    const assignedId = this.generateOrAssignId(props)
-    this._id = assignedId
-    props.id = assignedId
-
-    this.assignAndRemoveTimestampSignatureFromProps(props)
-
-
-
-    this.props = props
-    this.metaHistory = null;
-
-    if (!options?.preventHistoryTracker) {
-      const proxy = new Proxy<Props>(this.props, proxyHandler(this as IEntity<Props>));
-      this.props = proxy;
-      const self = this as IEntity<Props>
-
-      const entityHistoryCallback = {
-        onAddedSnapshot: (snapshot: ISnapshot<Props>) => {
-          const field = snapshot.trace.update
-          this.revalidate(field as keyof WithoutEntityProps<Props>)
-          if (!this.rulesIsLocked) {
-            this.ensureBusinessRules()
-          }
-
-          if (typeof instance?.hooks?.onChange === 'function') {
-            instance.hooks.onChange(self, snapshot)
-            if (options.isAggregate)
-              self.history?.deepWatch(self, instance.hooks.onChange);
-          }
-        }
-      }
-      this.metaHistory = new EntityMetaHistory<Props>(proxy, entityHistoryCallback)
-
-      if (options.isAggregate && typeof instance?.hooks?.onChange === 'function') {
-        self.history?.deepWatch(self, instance.hooks.onChange)
-      }
+    if (input instanceof Entity) {
+      throw new DomainError('Entity instance cannot be passed as argument')
     }
+
+    this.props = this.transformBeforeCreate(input as Input)
+    this.generateOrAssignId(this.props)
+    this.assignAndRemoveTimestampSignatureFromProps(this.props)
     this.revalidate();
     this.ensureBusinessRules()
 
     if (!options?.isAggregate) {
       this.onEntityCreate()
     }
-  }
 
-  private transformBeforeCreate(props: Input | Props): Props {
-    const instance = this.constructor as typeof Entity<Props>
+    if (!options?.preventHistoryTracker) {
+      this.props = this.generateProxyProps() 
+      const self = this
 
-    if (!instance?.hooks?.defaultValues) {
-      return props as unknown as Props
-    }
-
-    if (instance?.hooks?.defaultValues) {
-      Object.entries(instance.hooks.defaultValues).forEach(([key, defaultValue]) => {
-        if (props[key] === undefined) {
-          if (typeof defaultValue === 'function')
-            props[key] = defaultValue?.(props[key], props)
-          else
-            props[key] = defaultValue
+      const onAddedSnapshot = (snapshot: ISnapshot<Props>) => {
+        const field = snapshot.trace.update
+        self.revalidate(field as keyof WithoutEntityProps<Props>)
+        if (!self.rulesIsLocked) {
+          self.ensureBusinessRules()
         }
-      })
-    }
 
-    return props as unknown as Props
+        if (typeof instance?.hooks?.onChange === 'function') {
+          instance.hooks.onChange(self, snapshot)
+          if (options.isAggregate)
+            self.history.deepWatch(self, instance.hooks.onChange);
+        }
+      }
+
+      this.metaHistory = new EntityMetaHistory<Props>(this.props, { onAddedSnapshot });
+
+      if (options.isAggregate && typeof instance?.hooks?.onChange === 'function') {
+        this.history.deepWatch(this, instance.hooks.onChange)
+      }
+    }
   }
+
+
   public subscribe(props: HistorySubscribe<Props>) {
     if (!this.history) {
       throw new DomainError('History is not enabled for this entity')
@@ -151,10 +119,6 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     throw new DomainError('Method .getRawProps() is not allowed.')
   }
 
-  private onEntityCreate() {
-    const instance = this.constructor as typeof Entity<Props>
-    instance?.hooks?.onCreate?.(this)
-  }
   public ensureBusinessRules() {
     const instance = this.constructor as typeof Entity<Props>
     instance?.hooks?.rules?.(this)
@@ -176,6 +140,10 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
   }
 
   get id(): Id {
+    if (!this._id) {
+      throw new DomainError('Entity id is not defined')
+    }
+
     return this._id;
   }
 
@@ -227,7 +195,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     return equalId && lodash.isEqualWith(currentProps, providedProps, (_, __, key) => {
       if (Entity.fieldsToIgnoreOnComparsion.includes(key as string)) {
         return true
-      } 
+      }
     });
   }
 
@@ -235,14 +203,45 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     return lodashCompare(this.props, other?.props)
   }
 
-  private generateOrAssignId(props: Props): Id {
-    const id = props?.id
-    const isAlreadyAnIdInstance = validator.isID(id);
-    if (isAlreadyAnIdInstance) return id as Id;
-    if (validator.isString(id)) {
-      return new Id(id as any)
+  private transformBeforeCreate(props: Input | Props): Props {
+    const instance = this.constructor as typeof Entity<Props>
+
+    if (!instance?.hooks?.defaultValues) {
+      return props as unknown as Props
     }
-    return new Id()
+
+    if (instance?.hooks?.defaultValues) {
+      Object.entries(instance.hooks.defaultValues).forEach(([key, defaultValue]) => {
+        if (props[key] === undefined) {
+          if (typeof defaultValue === 'function')
+            props[key] = defaultValue?.(props[key], props)
+          else
+            props[key] = defaultValue
+        }
+      })
+    }
+
+    return props as unknown as Props
+  }
+
+  private onEntityCreate() {
+    const instance = this.constructor as typeof Entity<Props>
+    instance?.hooks?.onCreate?.(this)
+  }
+  
+  private generateProxyProps() {
+    return new Proxy<Props>(this.props, proxyHandler(this));
+  }
+
+  private generateOrAssignId(props: Props) {
+    if (props.id instanceof Id) {
+      this._id = props.id;
+    }
+    else {
+      const id = new Id(typeof props.id === 'string' ? props.id : undefined)
+      this._id = id
+      props.id = id
+    }
   }
 
   private assignAndRemoveTimestampSignatureFromProps(props: Props) {
