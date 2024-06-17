@@ -1,7 +1,7 @@
 import lodash from "lodash"
 import Validator from "../../utils/validator"
 import { ApplicationLevelError, DomainError } from "../errors"
-import { EntityProps, HistorySubscribe, HistorySubscribeCallback, IEntity, IEntityMetaHistory, IValueObject, Paths, SnapshotCallbacks, SnapshotInput, SnapshotTrace } from "../interface/types"
+import { EntityProps, HistorySubscribe, IEntity, IEntityMetaHistory, IValueObject, Paths, SnapshotCallbacks, SnapshotInput } from "../interface/types"
 import { Snapshot } from "./history-snapshot"
 
 export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHistory<T> {
@@ -112,76 +112,74 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     )
   }
 
-  public subscribe<E extends IEntity<T>>(entity: E, subscribeProps: HistorySubscribe<T>) {
-    if (!entity || !entity.history) {
-      throw new DomainError('History is not enabled for this entity', entity?.constructor?.name)
+  public subscribe<E extends IEntity<T>>(
+    entity: E | E[],
+    subscribeProps: HistorySubscribe<T>,
+    initialProps?: E[]
+  ) {
+    if (!entity) {
+      throw new DomainError('History is not enabled for this entity', entity)
     }
-    Object.entries(subscribeProps).forEach((props: any) => {
-      const [key, callback] = props as [keyof T, HistorySubscribeCallback<any>]
-      if (key === 'self') {
-        throw new DomainError('"self" is not implemented yet')
-      }
-      if (typeof callback !== 'function') {
-        throw new ApplicationLevelError(
-          'Callback must be a function', {
-          entity: entity?.constructor?.name,
-          path: key,
-          key,
-          callback
-        })
-      }
 
-      let currentKeySnapshots: Snapshot<T>[] = []
-      currentKeySnapshots = this.getSnapshotFromUpdatedKey(key);
+    if (typeof subscribeProps !== 'object') {
+      throw new ApplicationLevelError('Subscribe props must be an object', subscribeProps)
+    }
 
-      if (!currentKeySnapshots.length) {
-        currentKeySnapshots = this.deepSearchSnapshots(entity, key)
+    const onChange = subscribeProps['onChange'];
+
+    if (typeof onChange === 'function') {
+      if (Array.isArray(entity)) {
+        const { toCreate, toDelete, toUpdate } = this.resolve(initialProps ?? [], entity)
+        const trace = entity.map(e => e.history.snapshots.map((snapshot) => snapshot.trace)).flat()
+
+        if (trace.length)
+          onChange(
+            { entity, toCreate, toUpdate, toDelete },
+            trace
+          )
       }
-
-      if (currentKeySnapshots.length < 1) {
-        return
+      else {
+        const trace = entity.history.snapshots.map((snapshot) => snapshot.trace)
+        if (trace.length) {
+          onChange({ entity }, trace)
+        }
       }
+    }
 
-      const traces: SnapshotTrace[] = currentKeySnapshots.map((snapshot) => snapshot.trace)
-      const initialProps = entity?.history?.initialProps[key]
-      const currentProps = entity['props'][key]
-      if (!initialProps || !currentProps) {
-        throw new ApplicationLevelError(
-          'Initial or current props not found. Check if the path is correct. Ensure that you have getters implemented.', {
-          entity: entity?.constructor?.name,
-          path: key,
-          key,
-          hasInitialProps: !!initialProps,
-          hasCurrentProps: !!currentProps
-        })
+    Object.entries(subscribeProps).forEach((entries) => {
+      const [key, value] = entries;
+      if (key === 'onChange') return
+      if (typeof value !== 'object') return
+
+      if (!Array.isArray(entity)) {
+        const nextEntity = entity['props'][key]
+        const nextInitialProps = entity.history.initialProps[key]
+        return this.subscribe(nextEntity, value, nextInitialProps)
       }
 
-      if (!(Array.isArray(initialProps) && Array.isArray(currentProps))) {
-        callback(
-          { entity: currentProps },
-          traces
-        )
-        return
+      const nextEntity = entity.flatMap((entity) => entity['props'][key])
+      const nextInitialProps = entity.flatMap((entity) => entity.history.initialProps[key])
+
+      const isEntity = nextEntity.every((entity) => entity?.isEntity)
+      if (isEntity) {
+        return this.subscribe(nextEntity, value, nextInitialProps)
       }
 
-      if (!entity.history) {
-        throw new DomainError('History is not enabled for this entity ->' + key?.toString())
+      const isValueObject = nextEntity.every((entity) => entity?.isValueObject)
+
+      if (isValueObject) {
+        const { toCreate, toDelete, toUpdate } = this.resolve(nextInitialProps, nextEntity)
+        const trace = entity.map(e => e.history.snapshots.map((snapshot) => snapshot.trace)).flat()
+
+        const onChange = value?.['onChange']
+        if (trace.length && typeof onChange === 'function') {
+          onChange(
+            { entity: nextEntity, toCreate, toUpdate, toDelete },
+            trace
+          )
+          return; 
+        }
       }
-
-      const resolvedValues = entity.history.resolve(
-        initialProps,
-        currentProps
-      )
-
-      callback(
-        {
-          entity: currentProps,
-          toCreate: resolvedValues.toCreate,
-          toDelete: resolvedValues.toDelete,
-          toUpdate: resolvedValues.toUpdate,
-        },
-        traces
-      )
     })
   }
 

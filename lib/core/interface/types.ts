@@ -67,7 +67,7 @@ export interface IEntity<Props extends EntityProps> {
 	toJSON(): Readonly<AutoMapperSerializer<Props>>
 	hashCode(): IdImplementation
 	isNew(): boolean
-	subscribe(props: HistorySubscribe<Props>): void
+	subscribe(props: HistorySubscribe<Props, this>): void
 }
 
 export interface IAggregate<Props extends EntityProps> extends IEntity<Props> {
@@ -100,7 +100,7 @@ export type IEntityMetaHistory<T extends EntityProps> = {
 	addSnapshot(data: SnapshotInput<T>): void
 	hasChange(key: UnresolvedPaths<T>): boolean
 	getSnapshotFromUpdatedKey(key: any): ISnapshot<T>[]
-	subscribe<E extends IEntity<T>>(entity: E, subscribeProps: HistorySubscribe<T>): void
+	subscribe<E extends IEntity<T>>(entity: E, subscribeProps: HistorySubscribe<T>, initialProps?: E[]): void
 	onChange: Array<(snapshot: ISnapshot<T>) => void>
 	deepWatch(
 		entity: IEntity<any>,
@@ -168,15 +168,8 @@ export type WithDate<T> = T & {
 }
 
 export type SelfHistoryProp<Props, OmitProps> = {
-	/**
-	 * Self reference to the entity changes
-	 * @throws NOT IMPLEMENTED
-	 */
-	self: Omit<Props, keyof OmitProps>
+	onChange: Omit<Props, keyof OmitProps>
 }
-
-
-
 
 export type HistorySubscribe<
 	Props,
@@ -186,7 +179,7 @@ export type HistorySubscribe<
 	ResolvedProps = OmitProps | SelfHistoryProp<Props, OmitProps>
 > = {
 		[key in keyof ResolvedProps]?:
-		key extends 'self'
+		key extends 'onChange'
 		? HistorySubscribeCallback<Entity>
 		: HistorySubscribe<
 			ResolvedProps[key] extends IEntity<any>
@@ -194,14 +187,14 @@ export type HistorySubscribe<
 			: ResolvedProps[key] extends IValueObject<any>
 			? ResolvedProps[key]['props']
 			: ResolvedProps[key] extends Array<IEntity<any>>
-			? ReturnType<ResolvedProps[key][0]['getRawProps']>
+			? ReturnType<ResolvedProps[key][number]['getRawProps']>
 			: ResolvedProps[key] extends Array<IValueObject<any>>
-			? ResolvedProps[key][0]['props']
-			: (a: string) => void,
+			? ResolvedProps[key][number]['props']
+			: never,
 
 			ResolvedProps[key] extends DomainEntityAggregateOrValueObject
 			? ResolvedProps[key]
-			: (a: string) => void
+			: never
 		>
 
 	}
@@ -231,7 +224,7 @@ type DomainEntityAggregateOrValueObject =
 
 export type ExtractEntityAndValueObjectKeys<T> = ExtractKeysOfValueType<T, DomainEntityAggregateOrValueObject>
 
-type NotPrimitive = object | Array<any>
+export type NotPrimitive = object | Array<any>
 
 export interface EntityConfig extends BaseAggregateConfig {
 	isAggregate?: boolean

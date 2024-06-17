@@ -24,8 +24,10 @@ describe('entity test', () => {
 
   class Consumption extends ValueObject<{
     value: number
+    z: V[]
   }> { }
 
+  class V extends ValueObject<{ value: number }> { }
   class Unit extends Aggregate<UnitProps> {
     protected static hooks = new EntityHook<Unit, UnitProps, UnitProps>({
       onChange: (_, snapshot) => {
@@ -79,15 +81,17 @@ describe('entity test', () => {
 
   it('create lead', () => {
 
-    const unit1 = new Unit({ id: new Id('unit-1'), consumption: [new Consumption({ value: 1 })] })
-    const unit2 = new Unit({ id: new Id(), consumption: [new Consumption({ value: 2 })] })
-    const unit3 = new Unit({ id: new Id(), consumption: [new Consumption({ value: 3 })] })
-    const unit4 = new Unit({ id: new Id(), consumption: [new Consumption({ value: 4 })] })
+    const unit1 = new Unit({ id: new Id('unit-1'), consumption: [new Consumption({ value: 1, z: [] })] })
+    const unit2 = new Unit({ id: new Id(), consumption: [new Consumption({ value: 2, z: [] })] })
+    const unit3 = new Unit({ id: new Id(), consumption: [new Consumption({ value: 3 , z: []})] })
+    const unit4 = new Unit({ id: new Id(), consumption: [new Consumption({ value: 4, z: [] })] })
+    const unit5 = new Unit({ id: new Id(), consumption: [new Consumption({ value: 5, z: [] })] })
 
     const proposal1 = new Proposal({ id: new Id('proposal-1'), unit: [unit1, unit2] })
     const proposal2 = new Proposal({ id: new Id(), unit: [unit3, unit4] })
+    const proposal3 = new Proposal({ id: new Id(), unit: [unit5] })
 
-    const lead = new Lead({ id: new Id(), proposals: [proposal1, proposal2], proposal: proposal1 })
+    const lead = new Lead({ id: new Id(), proposals: [proposal1, proposal2], proposal: proposal3 })
 
     function onlyTrace(snapshot: Snapshot<any>) {
       return snapshot
@@ -103,46 +107,58 @@ describe('entity test', () => {
     if (!proposal) throw new Error('Proposal not found')
     const unit = proposal.getUnit(new Id('unit-1'))
     if (!unit) throw new Error('Unit not found')
-    unit.changeConsumption([new Consumption({ value: 1 })])
+    unit.changeConsumption([new Consumption({ value: 1, z: [] })])
     console.log('🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷')
-    const consumption = new Consumption({ value: 1 })
+    const consumption = new Consumption({ value: 1, z: [] })
     const p = lead.proposals[0]
     const u = p.unit[0]
     u.consumption.push(consumption)
 
     console.log('🔷🔷🔷🔷🔷🔷🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶')
 
-    lead.addProposal(
-      new Proposal({ id: new Id(), unit: [new Unit({ id: new Id(), consumption: [new Consumption(13)] })] })
+  /**
+   *     lead.addProposal(
+      new Proposal({ id: new Id(), unit: [new Unit({ id: new Id(), consumption: [new Consumption({ value: 13})] })] })
     )
+   */
 
-
-    console.log('💢💢💢💢💢💢💢💢💢')
+    console.log('🔷🔷🔷🔷🔷🔷🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶')
+ 
     console.log('lead history', lead.history.snapshots.flatMap(onlyTrace))
     console.log('every proposal history', lead.proposals.flatMap(p => p.history.snapshots.flatMap(onlyTrace)).flat())
     console.log('every unit history', lead.proposals.flatMap(p => p.unit.flatMap(u => u.history.snapshots.map(onlyTrace))))
 
-    lead.subscribe({
-      self: (a) => {
-          
-        },
-      proposals: {
-        self: (a) => {
+    console.log('💢💢💢💢💢💢💢💢💢')
+    lead.subscribe({ 
 
+      onChange: ( ) => { 
+        console.log('lead change2222222') 
+      },
+      proposals: {
+        onChange: ( ) => { 
+          console.log('proposals change2222222') 
+        },
+        unit: {
+          consumption: {},
+          onChange: () => {
+            console.log('proposals.unit change2222222')  
+          },
+          
         }
       },
       proposal: {
-        self: (a) => {
-
+        onChange: ( ) => { 
+          console.log('proposal change2222222') 
         },
         unit: {
-          self: (a) => {
-
+          onChange: (a) => { 
+            console.log('unit change2222222') 
+            console.log(a)
           },
           consumption: {
-            self: (a) => {
-
-            }
+            onChange: ( ) => { 
+              console.log('consumption change2222222') 
+            },
           }
         }
       }

@@ -4,6 +4,7 @@ import { lodashCompare } from "../../utils/lodash-compare";
 import { DomainError } from "../errors";
 import { AutoMapperSerializer, EntityCompareResult, EntityConfig, EntityProps, HistorySubscribe, IEntity, ISnapshot, WithDate, WithoutEntityProps } from "../interface/types";
 import { AutoMapperEntity } from "./auto-mapper-entity";
+import { isEqualWithoutCompareSpecifiedKeys } from "./entity-keys-to-exclude-on-compare";
 import { EntityMetaHistory } from "./history";
 import { EntityHook } from "./hooks";
 import { Id } from "./ids";
@@ -74,11 +75,11 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
   }
 
 
-  public subscribe(props: HistorySubscribe<Props>) {
+  public subscribe(props: HistorySubscribe<Props, this>) {
     if (!this.history) {
       throw new DomainError('History is not enabled for this entity')
     }
-    return this.history.subscribe(this, props)
+    return this.history.subscribe(this, props as any)
   }
 
   // Dispatch Entity Hook Validation
@@ -173,15 +174,6 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     return new Id(`entity@${name?.constructor?.name}:${this.id.value}`)
   }
 
-
-  protected static fieldsToIgnoreOnComparsion = [
-    'metaHistory',
-    'createdAt',
-    'updatedAt',
-    '_createdAt',
-    '_updatedAt',
-    'rulesIsLocked'
-  ]
   public isEqual(other?: IEntity<Props>): boolean {
     if (!other) return false
     if (!(other instanceof Entity)) return false
@@ -192,11 +184,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     const currentProps = lodash.cloneDeep(thisProps)
     const providedProps = lodash.cloneDeep(otherProps)
     const equalId = this.id.isEqual(other.id as Id);
-    return equalId && lodash.isEqualWith(currentProps, providedProps, (_, __, key) => {
-      if (Entity.fieldsToIgnoreOnComparsion.includes(key as string)) {
-        return true
-      }
-    });
+    return equalId && lodash.isEqualWith(currentProps, providedProps, isEqualWithoutCompareSpecifiedKeys);
   }
 
   public compare(other?: Entity<Props>): EntityCompareResult {

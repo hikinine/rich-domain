@@ -1,4 +1,5 @@
 import lodash from "lodash";
+import { isEqualWithoutCompareSpecifiedKeys } from "../core/domain/entity-keys-to-exclude-on-compare";
 import { EntityCompareResult } from "../core/interface/types";
 
 export function lodashCompare(a: any, b: any) {
@@ -10,7 +11,7 @@ export function lodashCompare(a: any, b: any) {
 
   lodash.reduce(a, function (result, value, key) {
     if (b?.hasOwnProperty(key)) {
-      if (lodash.isEqual(value, b[key])) {
+      if (lodash.isEqualWith(value, b[key], isEqualWithoutCompareSpecifiedKeys)) {
         return result;
       } else {
         if (typeof (a[key]) != typeof ({}) || typeof (b[key]) != typeof ({})) { 
