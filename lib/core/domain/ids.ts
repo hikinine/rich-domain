@@ -12,7 +12,7 @@ export class Id implements IdImplementation {
   private _value: string;
   private _isNew: boolean;
 
-  constructor(id?: string) {
+  constructor(id?: string, isNew?: boolean) {
     if (typeof id === 'undefined') {
       const uuid = randomUUID()
       this._value = short.fromUUID(uuid);
@@ -23,13 +23,18 @@ export class Id implements IdImplementation {
       this._value = isString ? id : String(id);
       this._isNew = false;
     }
+
+    if (typeof isNew === 'boolean') {
+      this._isNew = isNew;
+    }
   }
+ 
 
   public static generate(): Id {
     return new Id()
   }
   
-  private setAsNew(): void {
+  public setAsNew(): void {
     this._isNew = true;
   }
   

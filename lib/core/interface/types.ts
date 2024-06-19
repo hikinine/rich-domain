@@ -16,6 +16,7 @@ export interface IdImplementation {
 	value: string;
 	longValue: string;
 	isNew(): boolean;
+	setAsNew(): void;
 	isEqual(id: IdImplementation): boolean;
 	cloneAsNew(): IdImplementation;
 	clone(): IdImplementation;
