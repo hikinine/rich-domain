@@ -18,9 +18,16 @@ describe('entity test', () => {
     unit: Unit[]
 
   }
+  class Address extends ValueObject<{
+    street: string
+    city: string
+    state: string
+    zip: string
+  }> { }
   interface LeadProps extends EntityProps {
     proposals: Proposal[]
     proposal: Proposal | null
+    address: Address
     rat: string 
   }
 
@@ -69,6 +76,9 @@ describe('entity test', () => {
     protected static hooks = new EntityHook<Lead, LeadProps, LeadProps>({
      
     })
+    get address() {
+      return this.props.address
+    }
     get proposals() {
       return this.props.proposals
     }
@@ -83,6 +93,14 @@ describe('entity test', () => {
 
     public getProposal(id: Id) {
       return this.props.proposals.find(p => p.id.isEqual(id))
+    }
+
+    get proposal() {
+      return this.props.proposal
+    }
+
+    public changeAddress(address: Address) {  
+      this.props.address = address
     }
   }
 
@@ -100,7 +118,10 @@ describe('entity test', () => {
     const proposal2 = new Proposal({ id: new Id(), unit: [unit3, unit4] })
     const proposal3 = new Proposal({ id: new Id(), unit: [unit5] })
 
-    const lead = new Lead({ id: new Id(), proposals: [proposal1, proposal2], proposal: proposal3, rat: '3232' })
+    const lead = new Lead({ id: new Id(), proposals: [proposal1, proposal2], proposal: proposal3, rat: '3232', 
+
+      address: new Address({ city: 'city', state: 'state', street: 'street', zip: 'zip' })
+     })
  
 
  
@@ -169,6 +190,15 @@ describe('entity test', () => {
           }
         }
       })
+    })
+    console.log('◽◽◽◽◽◽◽◽◽◽') 
+    lead.changeAddress(new Address({ city: 'city', state: 'state', street: 'street', zip: 'zip' }))
+    lead.subscribe({
+      address: {
+        onChange: (entit) => {
+          console.log('address changed', entit)
+        }
+      }
     })
      
   })

@@ -28,17 +28,17 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
         fieldKey: data.trace.fieldKey,
         instanceKey: data.trace.instanceKey,
         instanceId: data.trace.instanceId,
-      }, 
+      },
 
     });
- 
+
 
     if (!data.trace.action) {
       snapshot.trace.from = data.trace.from
       snapshot.trace.to = data.trace.to
     }
     else {
-      snapshot.trace.action = data.trace.action 
+      snapshot.trace.action = data.trace.action
     }
 
     if (typeof data.trace.position !== 'undefined') {
@@ -198,32 +198,71 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
       if (!Array.isArray(entity)) {
         const nextEntity = entity['props'][key]
         const nextInitialProps = entity.history.initialProps[key]
-        return this.subscribe(nextEntity, value, nextInitialProps)
-      }
 
-      const nextEntity = entity.flatMap((entity) => entity['props'][key])
-      const nextInitialProps = entity.flatMap((entity) => entity.history.initialProps[key])
+        if (nextEntity?.isEntity) {
+          return this.subscribe(nextEntity, value, nextInitialProps)
+        }
 
-      const isEntity = nextEntity.every((entity) => entity?.isEntity)
-      if (isEntity) {
-        return this.subscribe(nextEntity, value, nextInitialProps)
-      }
+        if (nextEntity?.isValueObject) {
+          const trace = entity.history.snapshots.map((snapshot) => snapshot.trace)
+          const onChange = value?.['onChange']
+          if (trace.length && typeof onChange === 'function') { 
+            onChange(
+              { entity: nextEntity  },
+              trace
+            ) 
+          } 
+          return
+        }
 
-      const isValueObject = nextEntity.every((entity) => entity?.isValueObject)
+        if (Array.isArray(nextEntity)) {
+          const everyPropIsEntity = nextEntity.every((prop) => prop?.isEntity)
+          if (everyPropIsEntity) {
+            return this.subscribe(nextEntity, value, nextInitialProps)
+          }
 
-      if (isValueObject) {
-        const { toCreate, toDelete, toUpdate } = this.resolve(nextInitialProps, nextEntity)
-        const trace = entity.map(e => e.history.snapshots.map((snapshot) => snapshot.trace)).flat()
-
-        const onChange = value?.['onChange']
-        if (trace.length && typeof onChange === 'function') {
-          onChange(
-            { entity: nextEntity, toCreate, toUpdate, toDelete },
-            trace
-          )
-          return;
+          const everyPropIsValueObject = nextEntity.every((prop) => prop?.isValueObject)
+          if (everyPropIsValueObject) {
+            const { toCreate, toDelete, toUpdate } = this.resolve(nextInitialProps, nextEntity)
+            const trace = entity.history.snapshots.map((snapshot) => snapshot.trace)
+            const onChange = value?.['onChange']
+            if (trace.length && typeof onChange === 'function') { 
+              onChange(
+                { entity: nextEntity, toCreate, toUpdate, toDelete },
+                trace
+              ) 
+            }
+          }
         }
       }
+
+      else {
+        const nextEntity = entity.flatMap((entity) => entity['props'][key])
+        const nextInitialProps = entity.flatMap((entity) => entity.history.initialProps[key])
+
+        const isEntity = nextEntity.every((entity) => entity?.isEntity)
+        if (isEntity) {
+          return this.subscribe(nextEntity, value, nextInitialProps)
+        }
+
+        const isValueObject = nextEntity.every((entity) => entity?.isValueObject)
+
+        if (isValueObject) {
+          const { toCreate, toDelete, toUpdate } = this.resolve(nextInitialProps, nextEntity)
+          const trace = entity.map(e => e.history.snapshots.map((snapshot) => snapshot.trace)).flat()
+
+          const onChange = value?.['onChange']
+          if (trace.length && typeof onChange === 'function') {
+            onChange(
+              { entity: nextEntity, toCreate, toUpdate, toDelete },
+              trace
+            )
+            return;
+          }
+        }
+      }
+
+
     })
   }
 
