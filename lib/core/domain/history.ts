@@ -21,19 +21,24 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
 
   public addSnapshot(data: SnapshotInput<T>) {
     const snapshot = new Snapshot<T>({
-      props: lodash.cloneDeep(data.props),
+      props: null as unknown as T, //lodash.cloneDeep(data.props),
       trace: {
         updatedAt: data.trace.updatedAt,
-        update: data.trace.update
-      },
-    })
+        update: data.trace.update,
+        fieldKey: data.trace.fieldKey,
+        instanceKey: data.trace.instanceKey,
+        instanceId: data.trace.instanceId,
+      }, 
+
+    });
+ 
 
     if (!data.trace.action) {
       snapshot.trace.from = data.trace.from
       snapshot.trace.to = data.trace.to
     }
     else {
-      snapshot.trace.action = data.trace.action
+      snapshot.trace.action = data.trace.action 
     }
 
     if (typeof data.trace.position !== 'undefined') {
@@ -112,10 +117,49 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     )
   }
 
+  public subs<E extends IEntity<T>>(
+    entity: E,
+    onChange: (snapshot: Snapshot<T>, ...rest: IEntity<any>[]) => any,
+    parents: IEntity<any>[] = [],
+    result: any[] = []
+  ) {
+    const history = entity.history
+
+    if (!(entity.isEntity)) {
+      throw new DomainError('Entity is not an entity', entity)
+    }
+    if (!history) {
+      throw new DomainError('History is not enabled for this entity', entity)
+    }
+
+    const currentResult = history.snapshots.map((snapshot) => onChange(snapshot, ...parents))
+    result.push(...currentResult)
+
+
+    Object.values(entity['props']).forEach((value) => {
+      if (Array.isArray(value)) {
+        value.forEach((possibleEntity) => {
+          if (possibleEntity?.isEntity) {
+            const partial = possibleEntity.history.subs(possibleEntity, onChange, [...parents, entity])
+            result.push(...partial)
+          }
+        })
+      }
+      else if ((value as any)?.isEntity) {
+        const partial = (value as any).history.subs(value, onChange, [...parents, entity])
+        result.push(...partial)
+      }
+
+    })
+
+    return result
+  }
+
+
   public subscribe<E extends IEntity<T>>(
     entity: E | E[],
     subscribeProps: HistorySubscribe<T>,
-    initialProps?: E[]
+    initialProps?: E[],
   ) {
     if (!entity) {
       throw new DomainError('History is not enabled for this entity', entity)
@@ -177,7 +221,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
             { entity: nextEntity, toCreate, toUpdate, toDelete },
             trace
           )
-          return; 
+          return;
         }
       }
     })

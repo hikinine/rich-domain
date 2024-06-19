@@ -24,16 +24,18 @@ export const proxyHandler = function <Props extends EntityProps>(self: IEntity<P
 
       if (typeof accessor === 'function' && mutationArrayMethods.includes(prop)) {
         return function (...args: unknown[]) {
-          const result = Array.prototype[prop].apply(target, args); 
+          const result = Array.prototype[prop].apply(target, args);  
           self.history?.addSnapshot({
-            props: self['props'],
+            props: self['props'],  
             trace: {
+              instanceId: self.id.value,
+              instanceKey: self.constructor.name,
+              fieldKey: keyProp?.join(".")!,
               updatedAt: new Date(),
               update: keyProp?.join(".")!,
-              action: prop
-            }
-          });
-
+              action: prop, 
+            }, 
+          }); 
           return result
         };
       }
@@ -47,8 +49,12 @@ export const proxyHandler = function <Props extends EntityProps>(self: IEntity<P
       if (!Array.isArray(receiver)) {
 
         self?.history?.addSnapshot({
-          props: self['props'],
+          props: self['props'], 
           trace: {
+            instanceId: self.id.value,
+            instanceKey: self.constructor.name,
+            fieldKey: prop?.toString?.() ?? '',
+            
             updatedAt: new Date(),
             update: prop?.toString?.(),
             from: oldValue,
