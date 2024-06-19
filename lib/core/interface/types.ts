@@ -137,6 +137,9 @@ export type AutoMapperSerializer<Props> = {
 
 export type SnapshotTrace = {
 	updatedAt: Date,
+	instanceId?: string,
+	instanceKey: string,
+	fieldKey: string,
 	update: string,
 	position?: number,
 	action?: string
@@ -148,7 +151,10 @@ export type SnapshotInput<T> = {
 	props: T,
 	trace: SnapshotTrace
 }
-
+export type ISnapshotAggregate = {
+	aggregateName: string
+	actionName: string
+}
 export interface ISnapshot<T> {
 	readonly props: T,
 	trace: SnapshotTrace
@@ -221,6 +227,17 @@ type DomainEntityAggregateOrValueObject =
 	| Array<IAggregate<any>>
 	| Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>
 	| Array<Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>>
+	| (null | IEntity<any>)
+	| (null | IAggregate<any>)
+	| (null | Array<any>)
+	| (null | Array<IEntity<any>>)
+	| (null | Array<IAggregate<any>>)
+	| (null | Array<Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>>)
+	| (null | Array<Array<any>>)
+	| (null | Array<Array<IEntity<any>>>)
+	| (null | Array<Array<IAggregate<any>>>)
+	| (null | Array<Array<Omit<IValueObject<NotPrimitive>, 'props' | 'getRawProps' | 'toPrimitives'>>>)
+
 
 export type ExtractEntityAndValueObjectKeys<T> = ExtractKeysOfValueType<T, DomainEntityAggregateOrValueObject>
 
