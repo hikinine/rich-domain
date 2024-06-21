@@ -1,4 +1,5 @@
-import { Pagination, PaginationCriteria } from "../common/pagination";
+import { Pagination } from "../common/pagination";
+import { PaginationCriteria } from "../common/pagination-criteria";
 import { Aggregate as BaseAggregate } from "./aggregate";
 
 export type PersistenceContext = unknown;
