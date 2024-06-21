@@ -1,5 +1,7 @@
 export { BaseAdapter as Adapter, BaseAdapter } from './core/application/adapter'
-export { Filtering, Pagination, PaginationCriteria, PaginationResult } from './core/common/pagination'
+export { Pagination } from './core/common/pagination'
+export { PaginationCriteria } from './core/common/pagination-criteria'
+export { Condition, Filtering, OrderByEnum, Ordering, PaginationQuery, PaginationQueryConfig, PaginationResult } from './core/common/pagination-types'
 export * from './domain'
 export * as Domain from './domain'
 export * from './errors'

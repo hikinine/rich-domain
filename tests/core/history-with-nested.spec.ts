@@ -131,7 +131,8 @@ describe('entity test', () => {
     if (!proposal) throw new Error('Proposal not found')
     const unit = proposal.getUnit(new Id('unit-1'))
     if (!unit) throw new Error('Unit not found')
-    unit.changeConsumption([new Consumption({ value: 7777, })])
+/**
+ *     unit.changeConsumption([new Consumption({ value: 7777, })])
     unit.changeConsumption([new Consumption({ value: 4232, })])
     unit.changeChargeModel('bx')
 
@@ -142,7 +143,7 @@ describe('entity test', () => {
     proposal.removeLastUnit() 
 
     const unit222 = proposal.getUnit(unit2.id)
-    unit222?.changeChargeModel('dx')  
+    unit222?.changeChargeModel('dx') */  
 
     function generatePrismaProps(snapshot: Snapshot<EntityProps>) {
       return snapshot
@@ -163,8 +164,7 @@ describe('entity test', () => {
       return acc
     }, {} as Record<string, Snapshot<EntityProps>[]>)
 
-  
-    console.log(JSON.stringify(groupedByAggregateName, null ,2))
+   
 
     const resultData: string[] = []
 
@@ -191,14 +191,13 @@ describe('entity test', () => {
         }
       })
     })
-    console.log('◽◽◽◽◽◽◽◽◽◽') 
-    lead.changeAddress(new Address({ city: 'city', state: 'state', street: 'street', zip: 'zip' }))
+    console.log('◽◽◽◽◽◽◽◽◽◽')  
+    lead.addProposal(new Proposal({ id: new Id(), unit: [new Unit({ id: new Id(), chargingModel: 'cx', consumption: [new Consumption({ value: 7 })] })] }))
+
+    console.log('lead snap', lead.history.snapshots)
+    console.log('proposal snap', lead.proposals.map(p => p.history.snapshots))
     lead.subscribe({
-      address: {
-        onChange: (entit) => {
-          console.log('address changed', entit)
-        }
-      }
+      
     })
      
   })

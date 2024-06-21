@@ -1,6 +1,8 @@
 import { BaseAdapter } from '../core/application/adapter';
 import { RepositoryImplementation } from '../core/application/repository';
-import { Pagination, PaginationCriteria } from '../core/common/pagination';
+import { Pagination } from '../core/common/pagination';
+import { PaginationCriteria } from '../core/common/pagination-criteria';
+import { Filtering } from '../core/common/pagination-types';
 import { Aggregate } from '../core/domain/aggregate';
 import { WriteOptions } from '../core/domain/repository';
 import { UnitOfWorkService } from './unit-of-work.service';
@@ -32,33 +34,34 @@ export abstract class PrismaRepository<
     return unitOfWorkContext || options?.context || this.prisma;
   }
 
-  protected generateFindQuery(criteria: PaginationCriteria) {
+  protected generateFindQuery(criteria: PaginationCriteria<object>) {
     const query = {} as any;
     query.skip = criteria.offset;
     query.take = criteria.limit;
 
-    if (criteria.filter || criteria.businessFilter) {
-      query.where = criteria.adaptFiltersToPrisma();
+
+    const filter = { AND: [] as Filtering[] };
+
+    if (criteria.businessFilter) {
+      filter.AND.push(criteria.businessFilter);
     }
 
     if (criteria.search) {
       query.skip = 0;
-      if (criteria.businessFilter) {
-        const partialQuery = criteria.adaptOnlyBusinessFiltersToPrisma();
-        if (!partialQuery) throw new Error('should have business filter');
-
-        partialQuery.AND.push(this.generateSearchQuery(criteria.search));
-        query.where = partialQuery;
-      } else {
-        query.where = this.generateSearchQuery(criteria.search);
-      }
+      filter.AND.push(this.generateSearchQuery(criteria.search));
     }
+
+    if (criteria.filter) {
+      filter.AND.push(criteria.filter);
+    }
+
+    if (filter.AND.length > 0) query.where = filter
 
     if (criteria.orderBy) {
-      query.orderBy = criteria.orderBy.map(([field, direction]) => ({
-        [field]: direction,
-      }));
+      query.orderBy = criteria.orderBy
     }
+
+
     return query;
   }
 
@@ -76,13 +79,13 @@ export abstract class PrismaRepository<
 
     const result = (models as unknown as Persistence[]).map((value) =>
       this.adapterToDomain.build(value),
-    );
+    ) as Domain[];
 
     const pagination = new Pagination<Domain>(criteria, {
       result,
       total,
-    }); 
-    
+    });
+
     return pagination;
   }
 
