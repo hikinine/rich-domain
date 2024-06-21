@@ -10,4 +10,4 @@ export * from './repository'
 export * as Repository from './repository'
 
 export { ApplyRulesOnlyAfterCommitsSync } from './decorators/apply-rules-only-after-ends'
-
+ 

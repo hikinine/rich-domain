@@ -13,4 +13,6 @@ export {
 
 
 export { RepositoryImplementation as Impl } from './core/application/repository';
+export { PrismaRepository as ImplementationPrismaRepository } from './implementations/prisma.repository';
+export { UnitOfWorkService } from './implementations/unit-of-work.service';
 
