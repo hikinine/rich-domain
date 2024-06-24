@@ -24,7 +24,7 @@ export class Pagination<Aggregate> {
     }
   }
 
-  public convertTo<DtoOutput>(clazzDto: ConstructorTypeof<DtoOutput>): Pagination<Aggregate> {
+  public convertTo(clazzDto: ConstructorTypeof<any>): Pagination<any> {
     this.result = this.result.map((item) => new clazzDto(item)) as unknown as Aggregate[]
     return this
   }
