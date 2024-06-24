@@ -117,49 +117,14 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     )
   }
 
-  public subs<E extends IEntity<T>>(
-    entity: E,
-    onChange: (snapshot: Snapshot<T>, ...rest: IEntity<any>[]) => any,
-    parents: IEntity<any>[] = [],
-    result: any[] = []
-  ) {
-    const history = entity.history
-
-    if (!(entity.isEntity)) {
-      throw new DomainError('Entity is not an entity', entity)
-    }
-    if (!history) {
-      throw new DomainError('History is not enabled for this entity', entity)
-    }
-
-    const currentResult = history.snapshots.map((snapshot) => onChange(snapshot, ...parents))
-    result.push(...currentResult)
-
-
-    Object.values(entity['props']).forEach((value) => {
-      if (Array.isArray(value)) {
-        value.forEach((possibleEntity) => {
-          if (possibleEntity?.isEntity) {
-            const partial = possibleEntity.history.subs(possibleEntity, onChange, [...parents, entity])
-            result.push(...partial)
-          }
-        })
-      }
-      else if ((value as any)?.isEntity) {
-        const partial = (value as any).history.subs(value, onChange, [...parents, entity])
-        result.push(...partial)
-      }
-
-    })
-
-    return result
-  }
-
-
   public subscribe<E extends IEntity<T>>(
     entity: E | E[],
     subscribeProps: HistorySubscribe<T>,
     initialProps?: E[],
+    parent?: {
+      key: string
+      entity: IEntity<any> | IEntity<any>[]
+    }
   ) {
     if (!entity) {
       throw new DomainError('History is not enabled for this entity', entity)
@@ -175,11 +140,38 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
       if (Array.isArray(entity)) {
         const { toCreate, toDelete, toUpdate } = this.resolve(initialProps ?? [], entity)
         const trace = entity.map(e => e.history.snapshots.map((snapshot) => snapshot.trace)).flat()
-        onChange({ entity, toCreate, toUpdate, toDelete }, trace)
+        if (toCreate.length || toDelete.length || toUpdate.length) {
+          onChange({ entity, toCreate, toUpdate, toDelete }, trace)
+        }
       }
       else {
         const trace = entity.history.snapshots.map((snapshot) => snapshot.trace)
-        onChange({ entity }, trace)
+        /**
+         * Caso tenha um snapshot, trigger onChange
+         * Caso não tenha, verificar se o parent tem snapshot da KEY em especifico
+         * 
+         * No maximo 1 onChange vai ser chamado
+         */
+        if (trace.length) {
+          onChange({ entity }, trace)
+        }
+        else if (parent) {
+          if (Array.isArray(parent?.entity)) { 
+            const parentHasSnapshot = parent.entity.some((parentEntity) => parentEntity.history.snapshots.find((snapshot) => snapshot.trace.update === parent.key))
+            if (parentHasSnapshot) {
+              onChange({ entity }, trace)
+            }
+          }
+          else {
+            const parentHasSnapshot = 
+              parent.entity?.isEntity &&
+              parent.entity.history.snapshots.find((snapshot) => snapshot.trace.update === parent.key);
+
+            if (parentHasSnapshot) {
+              onChange({ entity }, trace)
+            }
+          }
+        }
       }
     }
 
@@ -193,7 +185,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
         const nextInitialProps = entity.history.initialProps[key]
 
         if (nextEntity?.isEntity) {
-          return this.subscribe(nextEntity, value, nextInitialProps)
+          return this.subscribe(nextEntity, value, nextInitialProps, { key, entity })
         }
 
         if (nextEntity?.isValueObject) {
@@ -212,7 +204,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
         if (Array.isArray(nextEntity)) {
           const everyPropIsEntity = nextEntity.every((prop) => prop?.isEntity)
           if (everyPropIsEntity) {
-            return this.subscribe(nextEntity, value, nextInitialProps)
+            return this.subscribe(nextEntity, value, nextInitialProps, { key, entity })
           }
 
           const everyPropIsValueObject = nextEntity.every((prop) => prop?.isValueObject)
@@ -236,7 +228,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
 
         const isEntity = nextEntity.every((entity) => entity?.isEntity)
         if (isEntity) {
-          return this.subscribe(nextEntity, value, nextInitialProps)
+          return this.subscribe(nextEntity, value, nextInitialProps, { key, entity })
         }
 
         const isValueObject = nextEntity.every((entity) => entity?.isValueObject)
