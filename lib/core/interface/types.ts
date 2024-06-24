@@ -99,7 +99,7 @@ export type IEntityMetaHistory<T extends EntityProps> = {
 	initialProps: T
 	snapshots: ISnapshot<T>[]
 	addSnapshot(data: SnapshotInput<T>): void
-	hasChange(key: UnresolvedPaths<T>): boolean
+	hasChange(key: string): boolean
 	getSnapshotFromUpdatedKey(key: any): ISnapshot<T>[]
 	subscribe<E extends IEntity<T>>(entity: E, subscribeProps: HistorySubscribe<T>, initialProps?: E[]): void
 	onChange: Array<(snapshot: ISnapshot<T>) => void>
@@ -162,7 +162,7 @@ export interface ISnapshot<T> {
 	fromDeepWatch: boolean
 	deepWatchPath: string | null
 	get timestamp(): Date
-	hasChange(key: UnresolvedPaths<T>): boolean
+	hasChange(key: string): boolean
 }
 
 export type SnapshotCallbacks<T> = {
@@ -262,29 +262,6 @@ export interface BaseAggregateConfig {
 	 */
 	onSnapshotAddedDeepClonePropsState?: boolean
 }
+ 
 
-
-type UnresolvedPaths<T> = T & any
-export type Paths<T> = WithoutUndefined<WithoutDot<IPaths<T>>>
-export type IPaths<T> = T extends object
-	? {
-		[K in keyof T]:
-		T[K] extends IValueObject<any>
-		? `${Exclude<K, symbol>}${"" | `.${Paths<T[K]['props']>}`}`
-		: T[K] extends IEntity<any>
-		? `${Exclude<K, symbol>}${"" | `.${Paths<ReturnType<T[K]['getRawProps']>>}`}`
-		: T[K] extends Array<any>
-		? `${Exclude<K, symbol>}${"" | `.${Paths<T[K][0]['props']>}`}`
-		: null extends T[K]
-		? K
-		: ''
-	}[keyof T]
-	: never
-
-export type Leaves<T> = T extends object ? { [K in keyof T]:
-	`${Exclude<K, symbol>}${Leaves<T[K]> extends never ? "" : `.${Leaves<T[K]>}`}`
-}[keyof T] : never
-
-type WithoutDot<T> = T extends `${infer P}.` ? P : T
-type WithoutUndefined<T> = T extends `${infer P}.undefined` ? P : T
-
+ 

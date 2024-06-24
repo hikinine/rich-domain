@@ -1,7 +1,7 @@
 import lodash from "lodash"
 import Validator from "../../utils/validator"
 import { ApplicationLevelError, DomainError } from "../errors"
-import { EntityProps, HistorySubscribe, IEntity, IEntityMetaHistory, IValueObject, Paths, SnapshotCallbacks, SnapshotInput } from "../interface/types"
+import { EntityProps, HistorySubscribe, IEntity, IEntityMetaHistory, IValueObject, SnapshotCallbacks, SnapshotInput } from "../interface/types"
 import { Snapshot } from "./history-snapshot"
 
 export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHistory<T> {
@@ -104,7 +104,7 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
     )
   }
 
-  public hasChange(key: Paths<T>) {
+  public hasChange(key: string) {
     return this.snapshots.some(
       (snapshot) => {
         if (snapshot.trace.update === key) {
