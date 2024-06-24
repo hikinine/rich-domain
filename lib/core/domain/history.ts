@@ -175,18 +175,11 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
       if (Array.isArray(entity)) {
         const { toCreate, toDelete, toUpdate } = this.resolve(initialProps ?? [], entity)
         const trace = entity.map(e => e.history.snapshots.map((snapshot) => snapshot.trace)).flat()
-
-        if (trace.length)
-          onChange(
-            { entity, toCreate, toUpdate, toDelete },
-            trace
-          )
+        onChange({ entity, toCreate, toUpdate, toDelete }, trace)
       }
       else {
         const trace = entity.history.snapshots.map((snapshot) => snapshot.trace)
-        if (trace.length) {
-          onChange({ entity }, trace)
-        }
+        onChange({ entity }, trace)
       }
     }
 
@@ -206,13 +199,14 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
         if (nextEntity?.isValueObject) {
           const trace = entity.history.snapshots.map((snapshot) => snapshot.trace)
           const onChange = value?.['onChange']
-          if (trace.length && typeof onChange === 'function') { 
+          if (trace.length && typeof onChange === 'function') {
             onChange(
-              { entity: nextEntity  },
+              { entity: nextEntity },
               trace
-            ) 
-          } 
+            )
+          }
           return
+
         }
 
         if (Array.isArray(nextEntity)) {
@@ -226,11 +220,11 @@ export class EntityMetaHistory<T extends EntityProps> implements IEntityMetaHist
             const { toCreate, toDelete, toUpdate } = this.resolve(nextInitialProps, nextEntity)
             const trace = entity.history.snapshots.map((snapshot) => snapshot.trace)
             const onChange = value?.['onChange']
-            if (trace.length && typeof onChange === 'function') { 
+            if (trace.length && typeof onChange === 'function') {
               onChange(
                 { entity: nextEntity, toCreate, toUpdate, toDelete },
                 trace
-              ) 
+              )
             }
           }
         }
