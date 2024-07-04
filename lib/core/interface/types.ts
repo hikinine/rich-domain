@@ -96,6 +96,7 @@ export type IValueObject<T> = {
 }
 
 
+
 export type IEntityMetaHistory<T extends EntityProps> = {
 	initialProps: T
 	snapshots: ISnapshot<T>[]
@@ -122,19 +123,20 @@ export type AutoMapperSerializer<Props> = Props extends Primitives ? Props : {
 	[key in keyof Props]:
 	Props[key] extends IValueObject<any>
 	? AutoMapperSerializer<SerializerValueObjectReturnType<Props[key]>>
+	: Props[key] extends IValueObject<Primitives>
+	? AutoMapperSerializer<SerializerValueObjectReturnType<Props[key]>>
 	: Props[key] extends IEntity<any>
 	? AutoMapperSerializer<SerializerEntityReturnType<Props[key]>> & EntityMapperPayload
-	: Props[key] extends Array<any>
-	? Array<
-		AutoMapperSerializer<ReturnType<Props[key][0]['getRawProps']>>
-		& (
-			Props[key][0] extends IEntity<any>
-			? EntityMapperPayload
-			: {}
-		)
-	>
+	: Props[key] extends Array<IEntity<any>>
+	? Array<AutoMapperSerializer<ReturnType<Props[key][0]['getRawProps']>> & EntityMapperPayload>
+	: Props[key] extends Array<IValueObject<any>>
+	? Array<AutoMapperSerializer<ReturnType<Props[key][0]['getRawProps']>>>
+	: Props[key] extends Array<IValueObject<Primitives>>
+	? Array<AutoMapperSerializer<ReturnType<Props[key][0]['getRawProps']>>>
+	: Props[key] extends Array<Primitives>
+	? Array<Props[key][0]>
 	: Props[key]
-} 
+}
 
 export type SnapshotTrace = {
 	updatedAt: Date,
@@ -262,6 +264,5 @@ export interface BaseAggregateConfig {
 	 */
 	onSnapshotAddedDeepClonePropsState?: boolean
 }
- 
 
- 
+
