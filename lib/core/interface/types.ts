@@ -132,7 +132,7 @@ export type AutoMapperSerializer<Props> = {
 			: {}
 		)
 	>
-	: string
+	: Props[key]
 }
 
 
