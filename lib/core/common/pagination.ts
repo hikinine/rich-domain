@@ -1,5 +1,5 @@
 import { PaginationCriteria } from "./pagination-criteria";
-import { ConstructorTypeof, PaginationQuery, PaginationResult } from './pagination-types';
+import { PaginationQuery, PaginationResult } from './pagination-types';
 
 export class Pagination<Aggregate> {
   public readonly query: PaginationQuery
@@ -24,8 +24,28 @@ export class Pagination<Aggregate> {
     }
   }
 
-  public convertTo(clazzDto: ConstructorTypeof<any>): Pagination<any> {
-    this.result = this.result.map((item) => new clazzDto(item)) as unknown as Aggregate[]
-    return this
+
+  public toJSON<T>(transformer?: (aggregate: Aggregate) => T): Pagination<T> {
+    if (typeof transformer === 'function') {
+      this.result = this.result.map(transformer) as unknown[] as Aggregate[]
+    }
+
+    if (!this.result.length) {
+      return this as unknown as Pagination<T>
+    }
+
+    const [item] = this.result
+
+    if (typeof item !== 'object') {
+      return this as unknown as Pagination<T>
+    }
+
+    if (typeof (item as any)?.toJSON !== 'function') {
+      throw new Error('toJSON method is not implemented in the pagination item. Please provide a transformer function in pagination.toJSON() method. Example pagination.toJSON((item) => item.toJSON())')
+    }
+
+    this.result = this.result.map((item: any) => item.toJSON()) 
+
+    return this as unknown as Pagination<T>
   }
 } 
