@@ -9,7 +9,7 @@ export type Condition = | 'equals'
   | 'contains'
   | 'startsWith'
   | 'endsWith'
-  | 'not' 
+  | 'not'
 
 export type Value =
   | string
@@ -18,7 +18,7 @@ export type Value =
   | Date
   | null
   | string[]
-  | number[]; 
+  | number[];
 
 export type PaginationResult<Aggregate> = {
   result: Aggregate[];
@@ -44,16 +44,16 @@ export type PaginationQueryConfig = {
   orderBy?: Ordering
 }
 
-export type Filtering<T = object> = {
-  [key in keyof T]?: Omit<Value, 'Date'> | {
+export type Filtering = {
+  [key: string]: Omit<Value, 'Date'> | {
     [condition in Condition]?: Value;
   };
 } & {
-  OR?: Filtering<T> | Filtering<T>[]
-  AND?: Filtering<T> | Filtering<T>[]
-  NOT?: Filtering<T> | Filtering<T>[]
+  OR?: Filtering | Filtering[]
+  AND?: Filtering | Filtering[]
+  NOT?: Filtering | Filtering[]
 }
 
-export type Ordering<T = object> = {
-  [key in keyof T]?: OrderByEnum
+export type Ordering = {
+  [key: string]: OrderByEnum
 }

@@ -28,6 +28,7 @@ export class Pagination<Aggregate> {
   public toJSON<T>(transformer?: (aggregate: Aggregate) => T): Pagination<T> {
     if (typeof transformer === 'function') {
       this.result = this.result.map(transformer) as unknown[] as Aggregate[]
+      return this as unknown as Pagination<T>
     }
 
     if (!this.result.length) {
