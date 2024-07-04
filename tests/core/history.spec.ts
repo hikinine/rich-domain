@@ -1,32 +1,37 @@
 import { Aggregate } from "../../lib/core/domain/aggregate"
 import { EntityHook } from "../../lib/core/domain/hooks"
 import { Id } from "../../lib/core/domain/ids"
+import { ValueObject } from "../../lib/core/domain/value-object"
 import { EntityProps } from "../../lib/core/interface/types"
 
- 
+
 
 
 describe('entity test', () => {
-
+  class Email extends ValueObject<number> {
+  }
   interface UnitProps extends EntityProps {
     name: string
   }
 
   interface PropoalProps extends EntityProps {
     title: string
-    unit: Unit 
+    unit: Unit
     description: string
     deadline: Date
- 
+
   }
+
+
   interface LeadProps extends EntityProps {
     proposals: Proposal[]
-    unit: Unit  | null
+    email: Email
+    unit: Unit | null
     a: string[]
   }
 
   class Unit extends Aggregate<UnitProps> {
- 
+
     changeName(name: string) {
       this.props.name = name
     }
@@ -62,9 +67,12 @@ describe('entity test', () => {
   class Lead extends Aggregate<LeadProps> {
     protected static hooks = new EntityHook<Lead, LeadProps, LeadProps>({
       onChange: (_, snapshot) => {
-        console.log('snapshot on lead', snapshot.trace) 
+        console.log('snapshot on lead', snapshot.trace)
       }
     })
+    get email() {
+      return this.props.email
+    }
     public addProposal(proposal: Proposal) {
       this.props.proposals.push(proposal)
     }
@@ -85,17 +93,22 @@ describe('entity test', () => {
       proposals: [],
       unit: new Unit({
         id: new Id(),
-        name: 'unit name'
+        name: 'unit name',
+        createdAt: new Date(),
+        updatedAt: new Date()
       }),
-      a: []
+      a: [],
+      email: new Email(5),  
     })
+
+    const x = lead.toJSON().createdAt
 
     const proposal = new Proposal({
       id: new Id(),
       unit: new Unit({
         id: new Id(),
         name: 'unit name',
-      }), 
+      }),
       deadline: new Date(Date.now() + 99999),
       description: 'proposal description',
       title: 'proposal title',
@@ -106,11 +119,11 @@ describe('entity test', () => {
     lead.history.hasChange('')
     proposal.desactive()
     proposal.unit.changeName('new unit name')
- 
+
 
     console.log('lead', lead.history.onChange)
-    console.log('proposal', proposal.history.onChange )
-    console.log('unit', proposal.unit.history.onChange )
+    console.log('proposal', proposal.history.onChange)
+    console.log('unit', proposal.unit.history.onChange)
     expect(lead.proposals.length).toBe(1)
 
   })

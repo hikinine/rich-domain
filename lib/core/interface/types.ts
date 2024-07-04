@@ -3,8 +3,8 @@ export type Primitives = string | number | boolean | null | undefined
 
 export interface EntityProps {
 	id: IdImplementation,
-	createdAt?: Date,
-	updatedAt?: Date
+	createdAt: Date | null | undefined,
+	updatedAt: Date | null | undefined
 }
 
 type Omit_<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
@@ -46,7 +46,7 @@ export type EntityCompareResult = {
 	missing_from_first: string[],
 	missing_from_second: string[]
 }
-export interface IEntity<Props extends EntityProps> {
+export interface IEntity<Props extends EntityProps > {
 	isEntity: boolean
 	id: IdImplementation
 	createdAt: Date | null
@@ -116,17 +116,23 @@ export type IEntityMetaHistory<T extends EntityProps> = {
 		toDelete: T[],
 	}
 }
+type SerializerEntityNullableReturnType<ThisEntity extends (null | IEntity<any>)> = ThisEntity extends IEntity<any> ? ReturnType<ThisEntity['getRawProps']> : null
 type SerializerEntityReturnType<ThisEntity extends IEntity<any>> = ReturnType<ThisEntity['getRawProps']>
+type SerializerValueObjectNullableReturnType<ThisValueObject extends (null | IValueObject<any>)> = ThisValueObject extends IValueObject<any> ? ReturnType<ThisValueObject['getRawProps']> : null
 type SerializerValueObjectReturnType<ThisValueObject extends IValueObject<any>> = ReturnType<ThisValueObject['getRawProps']>
 
 export type AutoMapperSerializer<Props> = Props extends Primitives ? Props : {
 	[key in keyof Props]:
 	Props[key] extends IValueObject<any>
 	? AutoMapperSerializer<SerializerValueObjectReturnType<Props[key]>>
+ :	Props[key] extends (null | IValueObject<any>)
+	? AutoMapperSerializer<SerializerValueObjectNullableReturnType<Props[key]>>
 	: Props[key] extends IValueObject<Primitives>
 	? AutoMapperSerializer<SerializerValueObjectReturnType<Props[key]>>
 	: Props[key] extends IEntity<any>
 	? AutoMapperSerializer<SerializerEntityReturnType<Props[key]>> & EntityMapperPayload
+	: Props[key] extends (null | IEntity<any>)
+	? AutoMapperSerializer<SerializerEntityNullableReturnType<Props[key]>> & EntityMapperPayload
 	: Props[key] extends Array<IEntity<any>>
 	? Array<AutoMapperSerializer<ReturnType<Props[key][0]['getRawProps']>> & EntityMapperPayload>
 	: Props[key] extends Array<IValueObject<any>>
@@ -135,9 +141,15 @@ export type AutoMapperSerializer<Props> = Props extends Primitives ? Props : {
 	? Array<AutoMapperSerializer<ReturnType<Props[key][0]['getRawProps']>>>
 	: Props[key] extends Array<Primitives>
 	? Array<Props[key][0]>
+	: key extends 'id'
+	? string
+	: key extends 'createdAt'
+	? Exclude<Props[key],  undefined | null>
+	: key extends 'updatedAt'
+	? Exclude<Props[key],  undefined | null>
 	: Props[key]
 }
-
+ 
 export type SnapshotTrace = {
 	updatedAt: Date,
 	instanceId?: string,
@@ -175,6 +187,7 @@ export type WithDate<T> = T & {
 	createdAt: Date,
 	updatedAt?: Date
 }
+ 
 
 export type SelfHistoryProp<Props, OmitProps> = {
 	onChange: Omit<Props, keyof OmitProps>

@@ -11,7 +11,7 @@ import { Id } from "./ids";
 import { proxyHandler } from "./proxy";
 import { RevalidateError } from "./revalidate-error";
 
-export abstract class Entity<Props extends EntityProps, Input extends Partial<Props> = Props> implements IEntity<Props> {
+export abstract class Entity<Props extends EntityProps, Input extends Partial<Props> = Partial<Props>> implements IEntity<Props> {
   protected static autoMapper = new AutoMapperEntity();
   protected static hooks: EntityHook<any, any>;
 
@@ -26,8 +26,8 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
 
   constructor(input: Input, options?: EntityConfig);
   constructor(input: Props, options?: EntityConfig);
-  constructor(input: WithDate<Props>, options?: EntityConfig)
-  constructor(input: Props | WithDate<Props> | Input, options: EntityConfig = {}) {
+  constructor(input: WithDate<Props>, options?: EntityConfig) 
+  constructor(input: Props   | WithDate<Props> | Input, options: EntityConfig = {}) {
     const instance = this.constructor as typeof Entity<Props>
 
     if (!input || typeof input !== 'object') {

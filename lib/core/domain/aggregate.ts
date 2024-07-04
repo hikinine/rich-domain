@@ -16,7 +16,7 @@ import { Id } from "./ids";
 const DOMAIN_EVENTS = Symbol('AggregateEvents');
 export abstract class Aggregate<
   Props extends EntityProps,
-  Input extends Partial<Props> = Props
+  Input extends Partial<Props> = Partial<Props>
 > extends Entity<Props, Input> implements IAggregate<Props> {
 
   public isAggregate: boolean = true;
