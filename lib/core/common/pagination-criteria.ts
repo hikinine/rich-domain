@@ -1,33 +1,33 @@
 import { Filtering, Ordering } from './pagination-types';
 
-type PaginationCriteriaInput<T> = {
+type PaginationCriteriaInput = {
   offset?: number;
   limit?: number;
   search?: string
-  filter?: Filtering<T> | string
-  orderBy?: Ordering<T> | string
+  filter?: Filtering | string
+  orderBy?: Ordering | string
 }
-export class PaginationCriteria<T = unknown> {
+export class PaginationCriteria  {
   public offset: number;
   public limit: number;
   public search?: string
-  public businessFilter?: Filtering<T>
-  public filter?: Filtering<T>
-  public orderBy?: Ordering<T>
+  public businessFilter?: Filtering 
+  public filter?: Filtering
+  public orderBy?: Ordering 
 
-  constructor(props: PaginationCriteriaInput<T>) {
+  constructor(props: PaginationCriteriaInput) {
     this.offset = Number(props?.offset ?? 0)
     this.limit = Number(props?.limit ?? 10)
 
     if (props?.orderBy && props.orderBy !== 'undefined' && props.orderBy !== 'null') {
       this.orderBy = typeof props.orderBy === 'string'
-        ? JSON.parse(props.orderBy) as Ordering<T>
+        ? JSON.parse(props.orderBy) as Ordering
         : props.orderBy
     }
 
     if (props?.filter) {
       this.filter = typeof props.filter === 'string'
-        ? JSON.parse(props.filter) as Filtering<T>
+        ? JSON.parse(props.filter) as Filtering
         : props.filter
     }
 
