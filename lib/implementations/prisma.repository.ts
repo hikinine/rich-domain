@@ -34,7 +34,7 @@ export abstract class PrismaRepository<
     return unitOfWorkContext || options?.context || this.prisma;
   }
 
-  protected generateFindQuery(criteria: PaginationCriteria<object>) {
+  protected generateFindQuery(criteria: PaginationCriteria ) {
     const query = {} as any;
     query.skip = criteria.offset;
     query.take = criteria.limit;
