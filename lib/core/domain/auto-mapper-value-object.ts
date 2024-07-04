@@ -15,7 +15,7 @@ export class AutoMapperValueObject {
 		const obj = Object.entries(value)
 			.reduce((accumulator, [key, instance]) => {
 				if (instance instanceof Array) {
-					accumulator[key] = instance.map((item) => {
+					accumulator![key] = instance.map((item) => {
 						if (Validator.isEntity(item) || Validator.isAggregate(item)) 
 							throw new DomainError("Entity cannot be a value object children.")
 						if (Validator.isValueObject(item))
@@ -28,12 +28,12 @@ export class AutoMapperValueObject {
 					if (Validator.isEntity(instance) || Validator.isAggregate(instance)) 
 						throw new DomainError("Entity cannot be a value object children.")
 					if (Validator.isValueObject(instance))
-						accumulator[key] = instance.toPrimitives()
+						accumulator![key] = instance.toPrimitives()
 					else if ((instance) instanceof Id) {
-						accumulator[key] = instance.value
+						accumulator![key] = instance.value
 					}
 					else
-						accumulator[key] = instance;
+						accumulator![key] = instance;
 				}
 
 

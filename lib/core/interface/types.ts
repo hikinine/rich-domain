@@ -92,6 +92,7 @@ export type IValueObject<T> = {
 	toPrimitives(): Readonly<AutoMapperSerializer<T>>
 	isEqual(value?: IValueObject<T>): boolean
 	clone(): IValueObject<T>
+	get value(): Readonly<T>
 }
 
 
@@ -117,7 +118,7 @@ export type IEntityMetaHistory<T extends EntityProps> = {
 type SerializerEntityReturnType<ThisEntity extends IEntity<any>> = ReturnType<ThisEntity['getRawProps']>
 type SerializerValueObjectReturnType<ThisValueObject extends IValueObject<any>> = ReturnType<ThisValueObject['getRawProps']>
 
-export type AutoMapperSerializer<Props> = {
+export type AutoMapperSerializer<Props> = Props extends Primitives ? Props : {
 	[key in keyof Props]:
 	Props[key] extends IValueObject<any>
 	? AutoMapperSerializer<SerializerValueObjectReturnType<Props[key]>>
@@ -133,8 +134,7 @@ export type AutoMapperSerializer<Props> = {
 		)
 	>
 	: Props[key]
-}
-
+} 
 
 export type SnapshotTrace = {
 	updatedAt: Date,
