@@ -3,8 +3,8 @@ export type Primitives = string | number | boolean | null | undefined
 
 export interface EntityProps {
 	id: IdImplementation,
-	createdAt: Date | null | undefined,
-	updatedAt: Date | null | undefined
+	createdAt?: Date | null | undefined,
+	updatedAt?: Date | null | undefined
 }
 
 type Omit_<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
@@ -144,9 +144,9 @@ export type AutoMapperSerializer<Props> = Props extends Primitives ? Props : {
 	: key extends 'id'
 	? string
 	: key extends 'createdAt'
-	? Exclude<Props[key],  undefined | null>
+	? any
 	: key extends 'updatedAt'
-	? Exclude<Props[key],  undefined | null>
+	? any
 	: Props[key]
 }
  
@@ -187,8 +187,7 @@ export type WithDate<T> = T & {
 	createdAt: Date,
 	updatedAt?: Date
 }
- 
-
+  
 export type SelfHistoryProp<Props, OmitProps> = {
 	onChange: Omit<Props, keyof OmitProps>
 }

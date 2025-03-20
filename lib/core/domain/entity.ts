@@ -26,8 +26,8 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
 
   constructor(input: Input, options?: EntityConfig);
   constructor(input: Props, options?: EntityConfig);
-  constructor(input: WithDate<Props>, options?: EntityConfig) 
-  constructor(input: Props   | WithDate<Props> | Input, options: EntityConfig = {}) {
+  constructor(input: WithDate<Props>, options?: EntityConfig)
+  constructor(input: Props | WithDate<Props> | Input, options: EntityConfig = {}) {
     const instance = this.constructor as typeof Entity<Props>
 
     if (!input || typeof input !== 'object') {
@@ -49,7 +49,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     }
 
     if (!options?.preventHistoryTracker) {
-      this.props = this.generateProxyProps() 
+      this.props = this.generateProxyProps()
       const self = this
 
       const onAddedSnapshot = (snapshot: ISnapshot<Props>) => {
@@ -216,7 +216,7 @@ export abstract class Entity<Props extends EntityProps, Input extends Partial<Pr
     const instance = this.constructor as typeof Entity<Props>
     instance?.hooks?.onCreate?.(this)
   }
-  
+
   private generateProxyProps() {
     return new Proxy<Props>(this.props, proxyHandler(this));
   }
